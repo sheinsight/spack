@@ -1,0 +1,45 @@
+name: Release Full
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: choice
+        description: "Release Npm Tag"
+        required: true
+        default: "latest"
+        options:
+          - canary
+          - nightly
+          - latest
+          - beta
+          - alpha
+      test:
+        type: boolean
+        description: "Run tests before release"
+        required: true
+        default: true
+      dry_run:
+        type: boolean
+        description: "DryRun release"
+        required: true
+        default: false
+      push_tags:
+        type: boolean
+        description: "push tags to github"
+        required: true
+        default: true
+
+permissions:
+  # To publish packages with provenance
+  id-token: write
+  # Allow commenting on issues for `reusable-build.yml`
+  issues: write
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release
+        run: |
+          echo "Release"

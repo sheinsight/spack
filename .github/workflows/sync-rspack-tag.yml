@@ -1,0 +1,196 @@
+name: Sync Rspack Tag
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Rspack tag to sync (e.g., v1.4.0)'
+        required: true
+        type: string
+
+
+env:
+  RSPACK_TAG: ${{ github.event.inputs.tag }}
+  SYNC_BRANCH: upstream/${{ github.event.inputs.tag }}
+  RSPACK_REPO: web-infra-dev/rspack
+  RSPACK_REPO_URL: https://github.com/web-infra-dev/rspack.git
+
+jobs:
+  sync-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write  # 需要写入.github/workflows文件
+    
+    steps: 
+      - name: Clone rspack repository
+        run: |
+          # 直接克隆指定tag
+          if git clone --depth 1 --branch "$RSPACK_TAG" $RSPACK_REPO_URL rspack-source; then
+            echo "✅ Successfully cloned rspack at tag $RSPACK_TAG"
+          else
+            echo "❌ Failed to clone tag $RSPACK_TAG, it may not exist"
+            echo "🔄 Checking available tags..."
+            
+            # 获取可用tags列表
+            git ls-remote --tags $RSPACK_REPO_URL | \
+              grep -E 'refs/tags/v[0-9]' | \
+              sed 's/.*refs\/tags\///' | \
+              sort -V | \
+              tail -10
+            exit 1
+          fi
+      
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          path: target-repo
+      
+      - name: Create sync branch from target repo
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          echo "SYNC_BRANCH=$SYNC_BRANCH" >> $GITHUB_ENV
+
+          cd target-repo
+          
+          # 确保在main分支
+          git checkout main
+          git pull origin main
+          
+          # 检查并清理可能存在的远程同步分支
+          if git ls-remote --heads origin "$SYNC_BRANCH" | grep -q "$SYNC_BRANCH"; then
+            echo "⚠️ Remote branch $SYNC_BRANCH already exists, deleting it..."
+            git push origin --delete "$SYNC_BRANCH" || echo "Failed to delete remote branch, will force push later"
+          fi
+          
+          # 删除可能存在的本地同步分支
+          if git branch | grep -q " $SYNC_BRANCH$"; then
+            echo "🔄 Deleting existing local branch $SYNC_BRANCH..."
+            git branch -D "$SYNC_BRANCH" || echo "Failed to delete local branch"
+          fi
+          
+          # 基于main分支创建同步分支（保持git历史连接）
+          git checkout -b "$SYNC_BRANCH"
+          
+          echo "✅ Created sync branch: $SYNC_BRANCH based on main"
+      
+      - name: Sync rspack content
+        run: |
+          cd target-repo
+          
+          # 清空当前内容（保留.git目录）
+          echo "🗑️ Clearing current content..."
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          
+          # 复制rspack内容
+          echo "📋 Copying rspack content..."
+          
+          # 检查源目录内容
+          echo "📋 Source directory contents:"
+          ls -la ../rspack-source/
+          
+          # 复制rspack的所有内容，包括workflows
+          if [ -d "../rspack-source" ]; then
+            # 完全复制rspack的所有内容（包括.github目录和所有workflows）
+            if command -v rsync >/dev/null 2>&1; then
+              echo "📋 Using rsync to copy all rspack content (including .github workflows)"
+              rsync -av --exclude='.git' ../rspack-source/ ./
+            else
+              echo "📋 rsync not available, using cp"
+              # 复制除了.git目录之外的所有内容
+              find ../rspack-source -maxdepth 1 -mindepth 1 \
+                -not -name '.git' \
+                -exec cp -r {} ./ \;
+            fi
+            
+            # 验证关键目录是否被正确复制
+            if [ -d "packages" ]; then
+              echo "✅ packages/ directory copied"
+            fi
+            if [ -d "crates" ]; then
+              echo "✅ crates/ directory copied"  
+            fi
+            if [ -f "package.json" ]; then
+              echo "✅ package.json copied"
+            fi
+            if [ -f "Cargo.toml" ]; then
+              echo "✅ Cargo.toml copied"
+            fi
+            if [ -d ".github/workflows" ]; then
+              echo "✅ .github/workflows directory copied"
+              echo "📋 Rspack workflows available:"
+              ls -la .github/workflows/
+            fi
+            
+            echo "✅ Rspack content copied successfully (complete sync including all workflows)"
+          else
+            echo "❌ Source directory not found"
+            exit 1
+          fi
+          
+          # 验证复制结果
+          echo "📋 Target directory contents after copy:"
+          ls -la .
+          
+          echo "✅ Content synced successfully"
+      
+      - name: Commit and push changes
+        run: |          
+          cd target-repo
+          
+          # 配置git使用token进行认证
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 设置远程URL以使用token
+          git remote set-url origin https://x-access-token:${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # 添加所有文件
+          git add .
+          
+          # 显示将要提交的文件
+          echo "📋 Files to be committed:"
+          git status --porcelain
+          echo "📋 Added files count: $(git status --porcelain | wc -l)"
+          
+          # 检查是否有变更
+          if git diff --staged --quiet; then
+            echo "📋 No changes to commit"
+            echo "NO_CHANGES=true" >> $GITHUB_ENV
+          else
+            # 提交变更
+            git commit -m "🔄 Sync to rspack $RSPACK_TAG" -m "Synced from: $RSPACK_REPO $RSPACK_TAG" -m "Note: Complete sync including all rspack workflows"
+            
+            # 显示分支信息用于调试
+            echo "📋 Branch status before push:"
+            git log --oneline -5
+            git status
+            
+            # 处理可能的分支冲突，强制推送或删除远程分支
+            echo "📋 Checking if remote branch exists..."
+            if git ls-remote --heads origin "$SYNC_BRANCH" | grep -q "$SYNC_BRANCH"; then
+              echo "⚠️ Remote branch $SYNC_BRANCH already exists"
+              echo "🔄 Force pushing to update remote branch..."
+              git push --force origin "$SYNC_BRANCH"
+            else
+              echo "📋 Remote branch doesn't exist, pushing new branch..."
+              git push origin "$SYNC_BRANCH"
+            fi
+            
+            echo "✅ Changes committed and pushed"
+            echo "NO_CHANGES=false" >> $GITHUB_ENV
+          fi
+      
+      - name: Summary
+        run: |
+          echo "## 📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Method**: Git clone with history preservation" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: rspack $RSPACK_TAG" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: $SYNC_BRANCH" >> $GITHUB_STEP_SUMMARY
+          if [ "$NO_CHANGES" = "true" ]; then
+            echo "- **Status**: ✅ No changes needed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Status**: ✅ Sync completed" >> $GITHUB_STEP_SUMMARY
+          fi 
