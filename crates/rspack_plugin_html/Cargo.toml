@@ -1,0 +1,37 @@
+[package]
+description = "rspack html plugin"
+edition     = "2021"
+license     = "MIT"
+name        = "rspack_plugin_html"
+repository  = "https://github.com/web-infra-dev/rspack"
+version     = "0.2.0"
+[features]
+default = []
+
+[dependencies]
+anyhow            = { workspace = true }
+cow-utils         = { workspace = true }
+dashmap           = { workspace = true }
+futures           = { workspace = true }
+itertools         = { workspace = true }
+path-clean        = { workspace = true }
+rayon             = { workspace = true }
+rspack_base64     = { workspace = true }
+rspack_core       = { workspace = true }
+rspack_dojang     = { workspace = true }
+rspack_error      = { workspace = true }
+rspack_hook       = { workspace = true }
+rspack_paths      = { workspace = true }
+rspack_util       = { workspace = true }
+serde             = { workspace = true, features = ["derive"] }
+serde_json        = { workspace = true }
+sha2              = { workspace = true }
+sugar_path        = { workspace = true }
+swc_core          = { workspace = true }
+swc_html          = { workspace = true }
+swc_html_minifier = { workspace = true, features = ["custom-css-minifier"] }
+tracing           = { workspace = true }
+urlencoding       = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["tracing"]

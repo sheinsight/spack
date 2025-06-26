@@ -1,0 +1,579 @@
+import Mermaid from '@components/Mermaid';
+import CompilerType from '../../types/compiler.mdx';
+import CompilationType from '../../types/compilation.mdx';
+import StatsType from '../../types/stats.mdx';
+import { Collapse, CollapsePanel } from '@components/Collapse';
+import Columns from '@components/Columns';
+import { NoSSR } from 'rspress/runtime';
+
+# Compiler 钩子
+
+## Overview
+
+<NoSSR>
+
+<Columns>
+
+<div>
+
+<Mermaid title="rspack()" style={{width: '20rem'}}>
+
+{`
+flowchart TD
+CallRspack("rspack()") --> CreateCompiler("创建 Compiler 实例")
+CreateCompiler --> ApplyNodeEnvPlugin(执行 NodeEnvironmentPlugin)
+ApplyNodeEnvPlugin --> ApplyDefaultOptions(合并默认配置)
+ApplyDefaultOptions --> ApplyCustomPlugins(执行自定义插件)
+ApplyCustomPlugins --> HookEnvironment(<a href="#environment">hooks.environment</a>)
+HookEnvironment --> HookAfterEnvironment(<a href="#afterenvironment">hooks.afterEnvironment</a>)
+HookAfterEnvironment --> ApplyRspackPlugins(执行内部插件)
+ApplyRspackPlugins <--> HookEntryOptions(<a href="#entryoption">hooks.entryOption</a>)
+ApplyRspackPlugins --> HookAfterPlugins(<a href="#afterplugins">hooks.afterPlugins</a>)
+HookAfterPlugins --> ResolveOptions(获取路径解析配置（resolveOptions）)
+ResolveOptions --> HookAfterResolvers(<a href="#afterresolvers">hooks.afterResolvers</a>)
+HookAfterResolvers --> HookInitialize(<a href="#initialize">hooks.initialize</a>)
+HookInitialize --> compiler("返回 compiler 实例")
+
+class CallRspack flow-start
+class compiler flow-end
+class CreateCompiler,ApplyNodeEnvPlugin,ApplyDefaultOptions,ApplyCustomPlugins,ApplyRspackPlugins,ResolveOptions flow-process
+class HookEnvironment,HookAfterEnvironment,HookEntryOptions,HookAfterPlugins,HookAfterResolvers,HookInitialize flow-hook
+`}
+
+</Mermaid>
+
+<br />
+
+<Mermaid title="compiler.compile()">
+
+{`
+flowchart TD
+Compile("compiler.compile(callback)") --> CompilationParams("创建模块工厂")
+CompilationParams --> HookNormalModuleFactory(hooks.normalModuleFactory)
+CompilationParams --> HookContextModuleFactory(hooks.contextModuleFactory)
+CompilationParams --> HookBeforeCompile(<a href="#beforecompile">hooks.beforeCompile</a>)
+HookBeforeCompile --> HookCompile(<a href="#compile">hooks.compile</a>)
+HookCompile --> Compilation("创建 Compilation 实例")
+Compilation --> HookThisCompilation(<a href="#thiscompilation">hooks.thisCompilation</a>)
+HookThisCompilation --> HookCompilation(<a href="#compilation">hooks.compilation</a>)
+HookCompilation --> HookMake(<a href="#make">hooks.make</a>)
+HookMake --> CreateModuleGraph(创建模块图)
+CreateModuleGraph <--> RunLoaders(执行 loader 编译模块)
+CreateModuleGraph --> HookFinishMake(<a href="#finishmake">hooks.finishMake</a>)
+HookFinishMake --> CompilationFinish("compilation.finish()")
+CompilationFinish --> CompilationSeal("compilation.seal()")
+CompilationSeal --> HookAfterCompile(<a href="#aftercompile">hooks.afterCompile</a>)
+HookAfterCompile --> Callback("callback()")
+
+class Compile flow-start
+class Callback,CloseCallback flow-end
+class CompilationParams,Compilation,CreateModuleGraph,RunLoaders,CompilationFinish,CompilationSeal flow-process
+class HookBeforeCompile,HookCompile,HookThisCompilation,HookCompilation,HookMake,HookFinishMake,HookAfterCompile flow-hook
+class HookNormalModuleFactory,HookContextModuleFactory flow-hook-non-support
+`}
+
+</Mermaid>
+
+</div>
+
+<Mermaid title="compiler.watch/run/close()">
+
+{`
+flowchart TD
+WatchCompiler("compiler.watch(options, callback)") --> CreateWatching("创建 Watching 实例")
+RunCompiler("compiler.run(callback)") --> HookBeforeRun(<a href="#beforerun">hooks.beforeRun</a>)
+HookBeforeRun --> HookRun(<a href="#run">hooks.run</a>)
+HookRun --> HookReadRecords(hooks.readRecords)
+CreateWatching --> HookReadRecords
+HookReadRecords --> Compile("compiler.compile()")
+HookWatchRun --> Compile
+HookReadRecords --> HookWatchRun(<a href="#watchrun">hooks.watchRun</a>)
+Compile --> HookShouldEmit{<a href="#shouldemit">hooks.shouldEmit</a>}
+HookShouldEmit --> |是| HookEmit(<a href="#emit">hooks.emit</a>)
+HookShouldEmit --> |否| HookDone(<a href="#done">hooks.done</a>)
+HookEmit --> EmitAssets(生成产物文件)
+EmitAssets <--> HookAssetEmitted(hooks.assetEmitted)
+EmitAssets --> HookAfterEmit(<a href="#afteremit">hooks.afterEmit</a>)
+HookAfterEmit --> HookNeedAdditionalPass{hooks.needAdditionalPass}
+HookNeedAdditionalPass --> |是| HookAdditionalDone(hooks.done)
+HookAdditionalDone --> HookAdditionPass(hooks.additionalPass)
+HookAdditionPass --> Compile
+HookNeedAdditionalPass --> |否| HookEmitRecords(hooks.emitRecords)
+HookEmitRecords --> HookDone
+HookDone --> HookFailed(<a href="#failed">hooks.failed</a>)
+HookFailed --> Callback("callback(err, stats)")
+Callback --> WatchingWatch("watching.watch()")
+WatchingWatch --> HookAfterDone(<a href="#afterdone">hooks.afterDone</a>)
+WatchingWatch --> CollectFileChanges("收集文件变更")
+CollectFileChanges --> HookReadRecords
+Callback --> HookAfterDone
+
+HookAfterDone -.-> CloseCompile("compiler.close(callback)")
+CloseCompile --> WatchingClose("watching.close()")
+WatchingClose --> HookWatchClose(<a href="#watchclose">hooks.watchClose</a>)
+HookWatchClose --> CloseCallback("callback()")
+CloseCallback --> HookShutdown(<a href="#shutdown">hooks.shutdown</a>)
+
+class RunCompiler,WatchCompiler flow-start
+class Callback flow-end
+class Compile,EmitAssets,CollectFileChanges,CreateWatching,WatchingWatch flow-process
+class HookBeforeRun,HookRun,HookShouldEmit,HookEmit,HookAfterEmit,HookDone,HookFailed,HookAfterDone,HookWatchRun flow-hook
+class HookReadRecords,HookAssetEmitted,HookNeedAdditionalPass,HookAdditionPass,HookAdditionalDone,HookEmitRecords flow-hook-non-support
+
+class CloseCompile flow-start
+class CloseCallback flow-end
+class WatchingClose flow-process
+class HookWatchClose,HookShutdown flow-hook
+`}
+
+</Mermaid>
+
+</Columns>
+
+</NoSSR>
+
+## `environment`
+
+在编译器准备环境时，初始化插件之后调用。
+
+- **类型：** `SyncHook<[]>`
+
+## `afterEnvironment`
+
+当编译器环境准备完成后，在 `environment` 钩子后直接调用。
+
+- **类型：** `SyncHook<[]>`
+
+## `entryOption`
+
+在 Rspack 选项中的 [`entry`](/config/entry) 被处理过之后调用。
+
+- **类型：** `SyncBailHook<[string, EntryNormalized]>`
+- **参数：**
+  - `string`: 等同于 [`context`](/config/context) 配置
+  - `EntryNormalized`: 处理后的 [`entry`](/config/entry) 配置
+
+## `afterPlugins`
+
+在初始化内部插件完成之后调用。
+
+- **类型：** `SyncHook<[Compiler]>`
+- **参数：**
+  - `Compiler`: 当前 Compiler 实例
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compiler.ts"
+    key="Compiler"
+  >
+    <CompilerType />
+  </CollapsePanel>
+</Collapse>
+
+## `afterResolvers`
+
+resolver 设置完成之后触发。
+
+- **类型：** `SyncHook<[Compiler]>`
+- **参数：**
+  - `Compiler`: 当前 Compiler 实例
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compiler.ts"
+    key="Compiler"
+  >
+    <CompilerType />
+  </CollapsePanel>
+</Collapse>
+
+## `initialize`
+
+当编译器被初始化时调用。
+
+- **类型：** `SyncHook<[]>`
+
+## `beforeRun`
+
+在开始执行一次构建之前调用。
+
+:::note
+这个钩子仅在调用 [compiler.run()](/api/javascript-api/index#compilerrun) 时触发（对应 `rspack build` 命令），在监听模式（watch mode）下不会执行。在监听模式下，你可以使用 [watchRun](#watchrun) 钩子。
+:::
+
+- **类型：** `AsyncSeriesHook<[Compiler]>`
+- **参数：**
+  - `Compiler`: 当前 Compiler 实例
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compiler.ts"
+    key="Compiler"
+  >
+    <CompilerType />
+  </CollapsePanel>
+</Collapse>
+
+- **示例：** 同步操作
+
+```js
+class ExamplePlugin {
+  apply(compiler) {
+    compiler.hooks.beforeRun.tap('ExamplePlugin', compiler => {
+      console.log('Build is about to start...');
+    });
+  }
+}
+```
+
+- **示例：** 异步操作
+
+```js
+class ExamplePlugin {
+  apply(compiler) {
+    compiler.hooks.beforeRun.tapPromise(
+      'ExamplePlugin',
+      (compiler) => {
+        console.log('Build is about to start...');
+
+        await someAsyncOperation();
+      },
+    );
+  }
+}
+```
+
+## `run`
+
+在开始执行一次构建时调用。
+
+:::note
+这个钩子仅在调用 [compiler.run()](/api/javascript-api/index#compilerrun) 时触发（对应 `rspack build` 命令），在监听模式（watch mode）下不会执行。在监听模式下，你可以使用 [watchRun](#watchrun) 钩子。
+:::
+
+- **类型：** `AsyncSeriesHook<[Compiler]>`
+- **参数：**
+  - `Compiler`: 当前 Compiler 实例
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compiler.ts"
+    key="Compiler"
+  >
+    <CompilerType />
+  </CollapsePanel>
+</Collapse>
+
+- **示例：** 同步操作
+
+```js
+class ExamplePlugin {
+  apply(compiler) {
+    compiler.hooks.beforeRun.tap('ExamplePlugin', compiler => {
+      console.log('Build start...');
+    });
+  }
+}
+```
+
+- **示例：** 异步操作
+
+```js
+class ExamplePlugin {
+  apply(compiler) {
+    compiler.hooks.beforeRun.tapPromise(
+      'ExamplePlugin',
+      (compiler) => {
+        console.log('Build start...');
+
+        await someAsyncOperation();
+      },
+    );
+  }
+}
+```
+
+## `watchRun`
+
+在监听模式下，开始执行一次构建时调用。
+
+你可以通过 `compiler.modifiedFiles` 和 `compiler.removedFiles` 获取变更的文件路径和删除的文件路径。
+
+:::note
+这个钩子仅在调用 [compiler.watch()](/api/javascript-api/index#compilerwatch) 时触发，在非监听模式下不会执行。在非监听模式下，你可以使用 [run](#run) 或 [beforeRun](#beforerun) 钩子。
+:::
+
+- **类型：** `AsyncSeriesHook<[Compiler]>`
+- **参数：**
+  - `Compiler`: 当前 Compiler 实例
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compiler.ts"
+    key="Compiler"
+  >
+    <CompilerType />
+  </CollapsePanel>
+</Collapse>
+
+- **示例：** 同步操作
+
+```js
+class ExamplePlugin {
+  apply(compiler) {
+    compiler.hooks.watchRun.tap('ExamplePlugin', compiler => {
+      const { modifiedFiles, removedFiles } = compiler;
+      if (modifiedFiles) {
+        console.log('Changed files:', Array.from(modifiedFiles));
+      }
+      if (removedFiles) {
+        console.log('Removed files:', Array.from(removedFiles));
+      }
+    });
+  }
+}
+```
+
+- **示例：** 异步操作
+
+```js
+class ExamplePlugin {
+  apply(compiler) {
+    compiler.hooks.watchRun.tapPromise('ExamplePlugin', compiler => {
+      await someAsyncOperation();
+    });
+  }
+}
+```
+
+## `beforeCompile`
+
+在编译参数创建后执行插件。
+
+- **类型：** `AsyncSeriesHook<[]>`
+
+## `compile`
+
+在一个新的 compilation 创建之前调用。
+
+- **类型：** `SyncHook<[]>`
+
+## `thisCompilation`
+
+创建 compilation 时调用，在触发 compilation 钩子之前调用。
+
+- **类型：** `SyncHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 创建的 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+## `compilation`
+
+compilation 创建之后执行。
+
+- **类型：** `SyncHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 创建的 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+## `make`
+
+在 make 阶段开始前调用，在 make 阶段会以 entry 为起点构建模块依赖图，并使用 loader 处理各个模块。
+
+- **类型：** `AsyncParallelHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 当前 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+## `finishMake`
+
+在 make 阶段结束后调用。在 make 阶段，Rspack 会以 entry 为起点构建模块依赖图，并使用 loader 处理各个模块，当这个过程完成时会触发此钩子。
+
+- **类型：** `AsyncSeriesHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 当前 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+## `afterCompile`
+
+在 make 阶段结束后 seal 阶段开始前调用，在 seal 阶段会从模块图优化并创建 chunk 图，以生成产物信息。
+
+- **类型：** `AsyncSeriesHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 当前 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+## `shouldEmit`
+
+返回值为一个布尔值，用于决定是否将资源写入到磁盘中。
+
+- **类型：** `SyncBailHook<[Compilation], boolean>`
+- **参数：**
+  - `Compilation`: 当前 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+- **示例：**
+
+```js
+compiler.hooks.shouldEmit.tap('MyPlugin', compilation => {
+  // 返回 true 以输出 output 结果，否则返回 false
+  return true;
+});
+```
+
+## `emit`
+
+在产物输出到结果目录前执行。
+
+- **类型：** `AsyncSeriesHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 当前 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+## `afterEmit`
+
+输出产物到结果目录后执行。
+
+- **类型：** `AsyncSeriesHook<[Compilation]>`
+- **参数：**
+  - `Compilation`: 当前 [Compilation](/api/javascript-api/compilation) 对象
+
+<Collapse>
+  <CollapsePanel
+    className="collapse-code-panel"
+    header="Compilation.ts"
+    key="Compilation"
+  >
+    <CompilationType />
+  </CollapsePanel>
+</Collapse>
+
+## `done`
+
+当前 Compilation 处理完成时执行。
+
+- **类型：** `AsyncSeriesHook<Stats>`
+- **参数：**
+  - `Stats`: 生成的 Stats 对象
+
+<Collapse>
+  <CollapsePanel className="collapse-code-panel" header="Stats.ts" key="Stats">
+    <StatsType />
+  </CollapsePanel>
+</Collapse>
+
+## `afterDone`
+
+当前 Compilation 处理完成且 `done` 钩子调用之后执行。
+
+- **类型：** `SyncHook<Stats>`
+- **参数：**
+  - `Stats`: 生成的 Stats 对象
+
+<Collapse>
+  <CollapsePanel className="collapse-code-panel" header="Stats.ts" key="Stats">
+    <StatsType />
+  </CollapsePanel>
+</Collapse>
+
+## `failed`
+
+当前 Compilation 失败时调用。
+
+- **类型：** `SyncHook<[Error]>`
+
+## `invalid`
+
+当监听模式下的编译因文件变更而失效时执行。这个 hook 不会被复制到 child compiler 中。
+
+- **类型：** `SyncHook<[string | null, number]>`
+- **参数：**
+  - `fileName`: 失效的文件路径
+  - `changeTime`: 失效的文件修改时间戳
+
+在触发重新编译时，这个 hook 可以用于获取变更的文件路径和修改时间，例如：
+
+```ts
+compiler.hooks.invalid.tap('MyPlugin', (fileName, changeTime) => {
+  console.log(`Changed file: ${fileName}, change time: ${changeTime}`);
+});
+```
+
+## `watchClose`
+
+停止监听时调用。
+
+- **类型：** `SyncHook<[]>`
+
+## `shutdown`
+
+当前 Compiler 关闭时调用。
+
+- **Type:** `AsyncSeriesHook<[]>`

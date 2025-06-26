@@ -1,0 +1,23 @@
+{
+  "name": "workflow",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@actions/core": "1.11.1",
+    "chalk": "^5.4.1",
+    "fs-extra": "^11.3.0",
+    "typescript": "^5.7.3",
+    "jest-environment-jsdom": "^29.7.0",
+    "glob":"^11.0.1",
+    "semver": "^7.7.1",
+    "zx": "8.4.1"
+  }
+}

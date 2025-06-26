@@ -1,0 +1,125 @@
+import WebpackLicense from '@components/WebpackLicense';
+
+<WebpackLicense from="https://webpack.docschina.org/guides/tree-shaking/" />
+
+# Tree shaking
+
+Rspack 支持 tree shaking 功能，这是一个在 JavaScript 生态中广泛使用的术语，主要用于去除未被访问的代码，俗称“死代码”。当一个模块的某些导出未被使用且不存在副作用时，这部分代码就可以被安全地删除，以减小最终产物的体积。
+
+在设置 `mode` 为 `production` 后，Rspack 会默认启用一系列与 tree shaking 相关的优化措施。
+
+- [usedExports](/config/optimization#optimizationusedexports) 检查模块导出是否被使用到，没被使用到的导出可以被移除。
+- [sideEffects](/config/optimization#optimizationsideeffects) 检查模块是否包含副作用，如果不包含副作用可以被重导出优化。
+- [providedExports](/config/optimization#optimizationprovidedExports) 分析模块的所有导出和重导出来源。
+- [innerGraph](/config/optimization#optimizationsinnergraph) 追踪变量的传递，更加准确地判断导出是否真的被使用到。
+
+下面有一些例子来说明各个配置项的作用。
+
+:::info
+需要注意的是，Rspack 本身不直接删除死代码，而是标记未使用的导出为可能的“死代码”。这些代码能被后续的压缩工具识别并处理。因此，如果压缩功能被关闭，你将不会看到代码有任何实际的删除效果。为了增强文档的可读性，我们可能会使用伪代码来展示代码的删除效果。
+:::
+
+让我们通过一个例子来更好地理解这一机制，假设 `src/main.js` 是项目的入口文件：
+
+```js title='src/main.js'
+import { foo } from './util.js';
+
+console.log(foo);
+// `bar` is not used
+```
+
+```js title='src/util.js'
+export const foo = 1;
+export const bar = 2;
+```
+
+在上述示例中，`util.js` 中的 `bar` 没有被使用。在 `production` 模式下，Rspack 会默认启用 [usedExports](/config/optimization#optimizationusedexports) 优化，这能检测出哪些导出实际被使用了。未使用的导出如 `bar`，将被安全删除。最终的产物将类似：
+
+```js title='dist/main.js'
+const foo = 1;
+
+console.log(foo);
+```
+
+## 副作用分析
+
+在 `production` 模式中，Rspack 也会默认分析模块是否含有副作用。如果一个模块的所有导出都未被使用且没有副作用，那么整个模块都可以被删除。我们对上面的例子做一些修改：
+
+```diff title='src/main.js'
+import { foo } from './util.js';
+
+- console.log(foo);
+// `bar` is not used
+```
+
+此时 `util.js` 文件中的导出都没有被使用，且可以分析出该文件没有副作用，所以 `util.js` 可以被整个删除。
+
+你也可以通过 `package.json` 或 `module.rules` 来手动标记模块是否包含副作用，如何标记请查看 [sideEffects](/config/optimization#optimizationsideeffects)。
+
+## 重导出分析
+
+重导出在开发中非常常见，但如果一个模块中包含重导出过多，这个模块会引入太多的其他模块，但一般我们只需要其中的一小部分，Rspack 能够优化这种场景，确保引用方可以直接访问到实际的导出模块。看以下包含重导出的例子：
+
+```js title='src/main.js'
+import { value } from './re-exports.js';
+console.log(value);
+```
+
+```js title='src/re-exports.js'
+export * from './value.js';
+export * from './other.js'; // this can be removed if `other.js` does not have any side effects
+```
+
+```js title='src/value.js'
+export const value = 42;
+export const foo = 42; // not used
+```
+
+Rspack 默认开启 [providedExports](/config/optimization#optimizationprovidedexports)，这可以分析出重导出模块中的所有导出以及他们各自的来源。
+
+如果 `src/re-exports.js` 不包含副作用，Rspack 可以将 `src/main.js` 中对 `src/re-exports.js` 的引入，直接转换成对 `src/value.js` 的引入，效果类似于：
+
+```diff title='src/main.js'
+- import { value } from './re-exports.js';
++ import { value } from './value.js';
+console.log(value);
+```
+
+这样做的好处是可以直接忽略掉整个 `src/re-exports.js` 模块。
+
+由于能够分析出 `src/re-exports.js` 所有的重导出，可以知道 `src/value.js` 中的 `foo` 并未使用到，最终产物中 `foo` 会被删掉。
+
+## 变量传递
+
+有时候，即使导出被访问到，它们也可能并不会被实际使用到。例如：
+
+```js title='src/main.js'
+import { foo } from './value.js';
+
+function log() {
+  console.log(foo);
+} // `log` is not used
+
+const bar = foo; // `foo` is not used
+```
+
+在上例中，即使 `log` 函数和 `bar` 变量依赖了 `foo`，由于他们自身未被使用到，`foo` 仍然可以被视为死代码并删除。
+
+在开启 [innerGraph](/config/optimization#optimizationinnergraph) 优化后（在 `production` 模式下默认开启），针对跨模块的复杂情形，Rspack 依然能够追踪变量的使用情况，从而实现精确的代码优化。
+
+```js title='src/main.js'
+import { value } from './bar.js';
+console.log(value);
+```
+
+```js title='src/bar.js'
+import { foo } from './foo.js';
+const bar = foo;
+export const value = bar;
+```
+
+```js title='src/foo.js'
+export const foo = 42;
+```
+
+在这种情况下，由于 `value` 最终被使用，它所依赖的 `foo` 也得以保留。

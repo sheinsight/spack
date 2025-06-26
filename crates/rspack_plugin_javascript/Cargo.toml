@@ -1,0 +1,60 @@
+[package]
+description = "rspack javascript plugin"
+edition     = "2021"
+license     = "MIT"
+name        = "rspack_plugin_javascript"
+repository  = "https://github.com/web-infra-dev/rspack"
+version     = "0.2.0"
+[dependencies]
+anymap = { workspace = true }
+async-trait = { workspace = true }
+bitflags = { workspace = true }
+cow-utils = { workspace = true }
+dashmap = { workspace = true }
+either = { workspace = true }
+fast-glob = "0.4.4"
+indexmap = { workspace = true }
+indoc = { workspace = true }
+itertools = { workspace = true }
+linked_hash_set = { workspace = true }
+num-bigint = { version = "0.4.6" }
+once_cell = { workspace = true }
+rayon = { workspace = true }
+regex = { workspace = true }
+ropey = { workspace = true }
+rspack_ast = { workspace = true }
+rspack_cacheable = { workspace = true }
+rspack_collections = { workspace = true }
+rspack_core = { workspace = true }
+rspack_error = { workspace = true }
+rspack_futures = { workspace = true }
+rspack_hash = { workspace = true }
+rspack_hook = { workspace = true }
+rspack_ids = { workspace = true }
+rspack_paths = { workspace = true }
+rspack_regex = { workspace = true }
+rspack_util = { workspace = true }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true }
+sugar_path = { workspace = true }
+swc_core = { workspace = true, features = [
+  "__parser",
+  "__utils",
+  "common_sourcemap",
+  "ecma_preset_env",
+  "ecma_transforms_optimization",
+  "ecma_transforms_module",
+  "ecma_transforms_compat",
+  "ecma_transforms_typescript",
+  "base",
+  "ecma_quote",
+] }
+swc_node_comments = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+stacker = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["tracing"]

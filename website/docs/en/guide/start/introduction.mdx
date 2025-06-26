@@ -1,0 +1,109 @@
+import compare from '../../../public/compare.png';
+import rspackAudio from '../../../public/rspack.mp3';
+
+<audio id="rspack-audio">
+  <source src={rspackAudio} type="audio/mpeg"></source>
+</audio>
+
+# Introduction
+
+<div>
+  <span>Rspack (pronounced as `/'ɑrespæk/`, </span>
+  <button
+    style={{
+      border: 'none',
+      padding: '3px',
+      verticalAlign: 'middle',
+      display: 'inline',
+    }}
+    id="play-rspack-audio"
+    onClick={() => {
+      document.getElementById('rspack-audio').play();
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 32 32"
+    >
+      <path
+        fill="currentColor"
+        d="m27.16 8.08l-1.53 1.29a10 10 0 0 1-.29 13.23l1.47 1.4a12 12 0 0 0 .35-15.88Z"
+      />
+      <path
+        fill="currentColor"
+        d="M21.58 12a6 6 0 0 1-.18 7.94l1.47 1.36a8 8 0 0 0 .23-10.59zM18 30a1 1 0 0 1-.71-.3L9.67 22H3a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h6.67l7.62-7.7a1 1 0 0 1 1.41 0a1 1 0 0 1 .3.7v26a1 1 0 0 1-1 1zM4 20h6.08a1 1 0 0 1 .71.3L17 26.57V5.43l-6.21 6.27a1 1 0 0 1-.71.3H4z"
+      />
+    </svg>
+  </button>
+  <p style={{ display: 'inline', lineHeight: '1.75rem' }}>
+    <span>) is a high performance JavaScript bundler</span>
+    <span>written in Rust. It offers strong</span>
+    <span>compatibility with the webpack ecosystem,</span>
+    <span>allowing for seamless replacement of webpack,</span>
+    <span>and provides lightning fast build speeds.</span>
+  </p>
+</div>
+
+## Why Rspack?
+
+Rspack was initially created to solve performance problems encountered at ByteDance, a tech company that maintains many large monolithic app projects with complex bundling requirements. Production build times had grown to ten minutes or even half an hour in some cases, and cold start times could exceed several minutes. After experimenting with many bundlers and optimization ideas, a common set of requirements emerged:
+
+- **Dev mode startup performance.** `npm run dev` is a command that developers may invoke many times per hour. Engineering productivity suffers if startup time exceeds 10-15 seconds.
+- **Fast builds.** `npm run build` is used in CI/CD pipelines and directly impacts merging productivity and application delivery time. Large applications may spend 20-30 minutes running these pipelines, and bundling time is often a major contributor.
+- **Flexible configuration.** From experimenting with various popular bundlers, we found that one-size-fits-all configurations encountered many problems when trying to accommodate real world projects. A major advantage of webpack is its flexibility and ease of accommodating customized requirements for each project. This in turn may pose steep migration costs for legacy projects that try to migrate away from webpack.
+- **Production optimization capabilities.** All of the existing bundling solutions also had various limitations when optimizing for a production environment, such as insufficiently fine-grained code splitting, etc. Rspack has an opportunity to rethink these optimizations from the ground up, leveraging Rust-specific features such as multithreading.
+
+## Current status of Rspack
+
+As of August 2024, we have released [Rspack 1.0](/blog/announcing-1-0), which is now what we consider production-ready as it covers most of webpack's APIs and features.
+
+Rspack is currently compatible with almost all loaders in the community. For the 50 most downloaded [webpack plugins](/guide/compatibility/plugin), more than 85% can be used in Rspack or have an alternative.
+
+:::tip Learn more
+
+- See [Rspack blogs](/blog/index) for the latest updates on Rspack.
+- See [Roadmap](/misc/planning/roadmap) for the future plans of Rspack.
+
+:::
+
+## Comparisons with other tools
+
+### Compared with webpack
+
+[webpack](https://webpack.js.org/) is perhaps the most mature modern bundler, with an active ecosystem, flexible configuration, and rich features.
+
+- **Rust language efficiency:** webpack's competitors frequently challenge it based on performance, especially for larger projects. Rspack solves this using the Rust language, which was specifically designed to prioritize performance, topping benchmarks for both speed and memory management. Rust also provides many compiler safeguards to avoid common pitfalls of other native languages such as C++.
+
+- **Highly parallelized architecture:** webpack is limited by JavaScript's weak support for multithreading. By contrast, Rspack's native code takes full advantage of modern multi-core CPUs.
+
+- **Built-in implementations of essential bundling features:** webpack's hook system famously enables a vast landscape of loaders and plugins contributed by the community. Unfortunately these third-party packages can frequently lead to performance bottlenecks, perhaps because the authors did not have deep knowledge of webpack internals, or simply because the hook system by nature limits interaction of algorithms. Rspack provides built-in plugins for key features to improve performance.
+
+- **Optimized hot module replacement (HMR):** No matter how large your project is, ensuring a great experience for HMR places even steeper demands for build times than ordinary bundling. Rspack incorporates a specialized incremental compilation strategy to address this requirement.
+
+### Compared with Vite
+
+[Vite](https://vitejs.dev/) offers a great developer experience, but its reliance on [Rollup](https://rollupjs.org/) for production builds faces similar performance costs as other JavaScript-based algorithms. The same tradeoffs of webpack versus Rollup also apply, for example missing flexibility of the [optimization.splitChunks](/config/optimization#optimizationsplitchunks) feature.
+
+### Compared with esbuild
+
+[esbuild](https://esbuild.github.io/) achieves very good performance by implementing nearly all operations in Golang except for some JavaScript plugins. However, esbuild's feature set is not as complete as webpack, for example missing HMR and [optimization.splitChunks](/config/optimization#optimizationsplitchunks) features.
+
+### Compared with Turbopack
+
+[Turbopack](https://turbo.build/) is implemented in Rust like Rspack, but Turbopack started over with a redesigned architecture and configuration. This brings some benefits, but presents a steeper migration cost for projects that rely on webpack and its extensive ecosystem.
+
+### Compared with Rollup
+
+Rspack and Rollup are both bundling tools, but they focus on different areas. Rollup is more suitable for bundling libraries, while Rspack is more suitable for bundling applications. Therefore, Rspack has optimized many features for bundling applications, such as HMR and Bundle splitting. Rollup produces ESM outputs that are more friendly to libraries than Rspack. There are also many tools in the community that encapsulate Rollup to some extent and provide more friendly support for bundling applications, such as vite and wmr. Currently, Rspack has better production build performance than rollup.
+
+### Compared with Parcel
+
+The overall architecture of Rspack shares many similarities with [Parcel](https://parceljs.org/). For example, both treat CSS assets as first-class citizens and both support filter-based transformers. However, Parcel focuses more on out-of-the-box usability, while Rspack focuses more on providing flexible configuration for higher-level frameworks and tools. Parcel innovatively designed features like the Unified Graph and making HTML a first-class citizen. Rspack also plans to support these features in the future.
+
+## Next step
+
+Please read [Quick start](/guide/start/quick-start) to start using Rspack.
+
+Welcome to the [GitHub Discussions](https://github.com/web-infra-dev/rspack/discussions) and [Discord](https://discord.gg/sYK4QjyZ4V) to communicate with us.

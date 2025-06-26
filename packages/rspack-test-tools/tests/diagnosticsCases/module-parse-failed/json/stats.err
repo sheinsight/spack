@@ -1,0 +1,12 @@
+ERROR in ./syntax-error.json
+  × Module parse failed:
+  ╰─▶   × Json parsing error: Unexpected character }
+         ╭─[3:0]
+       1 │ {
+       2 │   "a"
+       3 │ }
+         · ─
+         ╰────
+      
+  help: 
+        You may need an appropriate loader to handle this file type.

@@ -1,0 +1,196 @@
+import WebpackLicense from '@components/WebpackLicense';
+
+<WebpackLicense from="https://webpack.docschina.org/guides/code-splitting/" />
+
+# 代码分割
+
+Rspack 支持代码分割特性，允许让你对代码进行分割，控制生成的资源体积和资源数量来获取资源加载性能的提升。
+
+这里提出一个概念叫做 Chunk，一个 Chunk 为一个浏览器需要加载的资源。
+
+## 动态导入（dynamic import）
+
+当涉及到动态代码拆分时， Rspack 使用符合 ECMAScript 提案的 [import()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) 语法来实现动态导入。
+
+我们在 `index.js` 通过 `import()` 来动态导入 2 个模块，从而分离出一个新的 Chunk。
+
+```js title=index.js
+import('./foo.js');
+import('./bar.js');
+```
+
+```js title=foo.js
+import './shared.js';
+console.log('foo.js');
+```
+
+```js title=bar.js
+import './shared.js';
+console.log('bar.js');
+```
+
+此时我们执行构建，会得到 3 个 Chunk ，`src_bar_js.js`，`src_foo_js.js` 以及 `main.js`，如果我们查看他们，会发现 `src_bar_js.js` 和 `src_foo_js.js` 中有重复的部分：`shared.js`，我们后面会介绍为何存在重复模块，以及如何去除重复模块。
+
+:::tip
+参考 [模块方法 - Dynamic import()](/api/runtime-api/module-methods#dynamic-import) 了解详细的 dynamic import API，以及如何在 dynamic import 中使用动态表达式和 magic comments。
+:::
+
+:::info
+虽然 `shared.js` 在 2 个 Chunk 中重复出现，但它只会被执行一次，不用担心重复模块会重复执行的问题。
+:::
+
+## 分割入口起点（entry point）
+
+这是最简单直观分离代码的方式。但这种方式需要我们手动对 Rspack 进行配置。我们来看看如何从通过多个入口起点分割出多个 Chunk 。
+
+```js title="rspack.config.mjs"
+export default {
+  mode: 'development',
+  entry: {
+    index: './src/index.js',
+    another: './src/another-module.js',
+  },
+  stats: 'normal',
+};
+```
+
+```js title=index.js
+import './shared';
+console.log('index.js');
+```
+
+```js title=another-module.js
+import './shared';
+console.log('another-module');
+```
+
+这将生成如下构建结果：
+
+```
+...
+     Asset      Size   Chunks             Chunk Names
+another.js  1.07 KiB  another  [emitted]  another
+  index.js  1.06 KiB    index  [emitted]  index
+Entrypoint another = another.js
+Entrypoint index = index.js
+[./src/index.js] 41 bytes {another} {index}
+[./src/shared.js] 24 bytes {another} {index}
+```
+
+同样的，如果你查看他们会发现他们都会包含有重复的 `shared.js`。
+
+## SplitChunksPlugin
+
+上面的代码分割是很符合直觉的分割逻辑，但现代浏览器大多支持并发网络请求，如果我们将一个 SPA 应用中每一个页面分为一个 Chunk ，当用户切换页面的时候请求一个较大体积的 Chunk ，这显然不能很好利用到浏览器的并发网络请求能力，因此我们可以将 Chunk 拆分成更小的多个 Chunk ，需要请求这个 Chunk 的时候，我们改为同时请求这些更小的 Chunk ，这样会让浏览器请求更加高效。
+
+Rspack 默认会对 `node_modules` 目录下的文件以及重复模块进行拆分，将这些模块从他们所属的原 Chunk 抽离到单独的新 Chunk 中。那为何我们上面例子中，`shared.js` 还是在多个 Chunk 中重复出现了呢？这是因为我们例子中的 `shared.js` 体积很小，如果对一个很小的模块单独拆成一个 Chunk 让浏览器加载，可能反而会让加载更慢。
+
+我们可以配置最小拆分体积为 0 ，来让 `shared.js` 被单独抽离。
+
+```diff title="rspack.config.mjs"
+export default {
+  entry: {
+    index: './src/index.js',
+  },
++  optimization: {
++    splitChunks: {
++      minSize: 0,
++    }
++  }
+};
+```
+
+重新打包会发现 `shared.js` 被单独抽离出去，产物中多了一个包含有 `shared.js` 的 Chunk。
+
+### 强制拆分某些模块
+
+我们可以通过 `optimization.splitChunks.cacheGroups.{cacheGroup}.name` 强制将指定模块分到一个 Chunk 中去，例如如下配置：
+
+```js title="rspack.config.mjs"
+export default {
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        someLib: {
+          test: /\/some-lib\//,
+          name: 'lib',
+        },
+      },
+    },
+  },
+};
+```
+
+通过如上配置，可以将路径中包含 `some-lib` 目录的文件，全部提取到一个名为 `lib` 的 Chunk 中，如果 `some-lib` 的模块几乎不会更改，该 Chunk 会一直命中用户的浏览器缓存，因此合理进行这样的配置可以提高缓存命中率。
+
+然而 `some-lib` 被单独拆成一个独立的 Chunk 也会有坏处，假设某个 Chunk 只依赖 `some-lib` 中的一个很小的文件，但由于 `some-lib` 所有文件都被拆到了一个单独的 Chunk 中，因此这个 Chunk 不得不依赖全部的 `some-lib` Chunk ，导致加载体积更大，因此使用 `cacheGroups.{cacheGroup}.name` 的时候需要小心考虑。
+
+下图是一个例子，展示了 cacheGroup 中是否带 name 配置对最终产物 Chunk 的影响。
+
+![](https://assets.rspack.dev/rspack/assets/rspack-splitchunks-name-explain.png)
+
+## Prefetching/Preloading 模块
+
+声明 `import` 时使用下列内置指令可以让 Rspack 产出标签以触发浏览器：
+
+- **预取（prefetch）**: 将来某些导航下可能需要的资源
+- **预载（preload）**: 当前导航下可能需要资源
+
+试想一下下面的场景：现有一个 `HomePage` 组件，其内部渲染了一个 `LoginButton` 组件，点击该按钮后按需加载 `LoginModal` 组件。
+
+```js title=LoginButton.js
+//...
+import(/* webpackPrefetch: true */ './path/to/LoginModal.js');
+```
+
+上面的代码在构建时会生成 `<link rel="prefetch" href="login-modal-chunk.js">` 并添加到页面头部，以此触发浏览器在空闲时预取 `login-modal-chunk.js` 文件。
+
+:::info
+Rspack 将在父 chunk 加载后添加预取标签。
+:::
+
+预载与预取有如下不同点：
+
+- 预载 chunk 与父 chunk 同时并行加载，而预取 chunk 则在父 chunk 加载结束后开始加载。
+- 预载 chunk 具有中等优先级并立即加载，而预取 chunk 则需要等待浏览器空闲
+- 预载 chunk 会在父 chunk 中立即请求，而预取 chunk 则会在未来某个时间点被使用
+- 浏览器支持程度不同
+
+如以下示例，一个 Component 依赖一个大型库，该库被拆分到了一个独立 chunk 中
+
+假设一个 `ChartComponent` 组件 需要一个大型 `ChartingLibrary` 库。它会在渲染时显示一个 `LoadingIndicator` 组件，然后立即按需引入 `ChartingLibrary`：
+
+```js title=ChartComponent.js
+//...
+import(/* webpackPreload: true */ 'ChartingLibrary');
+```
+
+当请求使用 `ChartComponent` 的页面时，也会通过 `<link rel="preload">` 请求 `charting-library-chunk`。假设 `page-chunk` 较小且完成得更快，页面将显示`LoadingIndicator`，直到已请求的 `charting-library-chunk` 完成。这将带来一点加载时间的提升，因为它只需要一次往返而不是两次。尤其是在高延迟环境中。
+
+:::info
+错误地使用 webpackPreload 也会导致性能劣化，请谨慎使用。
+:::
+
+有时你需要对预载拥有自己的控制权。例如，可以通过异步脚本完成任何动态导入的预载。这在流式服务器端渲染的情况下会很有用。
+
+```js
+const lazyComp = () =>
+  import('DynamicComponent').catch(error => {
+    // Do something with the error.
+    // For example, we can retry the request in case of any net error
+  });
+```
+
+如果在 Rspack 开始加载该脚本之前脚本加载失败（如果该脚本不在页面上，Rspack 创建一个 script 标签来加载代码），则该异常将无法被捕获，直到 chunkLoadTimeout 超时。这可能出乎预料但可解释为 —— Rspack 无法抛出任何异常，因为 Rspack 并不知道该脚本失败了。Rspack 将在错误发生后立即为 script 标签添加 onerror 监听。
+
+为了避免发生这类问题，你可以添加自己的 onerror 监听，在发生异常时删除该 script：
+
+```html
+<script
+  src="https://example.com/dist/dynamicComponent.js"
+  async
+  onerror="this.remove()"
+></script>
+```
+
+在这个示例中，发生错误的 script 将被移除。Rspack 会创建自己的 script 并在超时前处理任何发生的异常。

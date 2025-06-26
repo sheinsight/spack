@@ -1,0 +1,259 @@
+import { PackageManagerTabs } from '@theme';
+
+# CSS
+
+CSS 是 Rspack 的一等公民，Rspack 内置了多种能力来支持 CSS 打包。
+
+## 开启 CSS 支持
+
+你可以从以下方式中进行选择：
+
+### 原生 CSS 支持
+
+Rspack 提供了 [experiment.css](/config/experiments#experimentscss) 选项，这是从 webpack 5 开始引入的实验性功能，用于开启 CSS 原生支持。Rspack 进一步完善了该功能，并计划在 Rspack 2.0 默认开启它。
+
+> 如果你基于 Rspack 创建了一个新项目，那么推荐使用该方式。
+
+```js title="rspack.config.mjs"
+export default {
+  experiments: {
+    css: true,
+  },
+};
+```
+
+开启 `experiment.css` 后，Rspack 将支持以下三种模块类型，你可以在 `rule` 上通过 `type` 来设置它们：
+
+- `css`：用于处理普通的 CSS 文件。
+- `css/module`：用于处理 [CSS Modules](https://github.com/css-modules/css-modules)。
+- `css/auto`：基于文件扩展名自动判断是普通 CSS 文件还是 CSS Modules，`*.module.css` 结尾的文件视为 CSS Modules。
+
+对于 `*.css` 结尾的文件，Rspack 会默认将其视为 `type: 'css/auto'`，你也可以通过配置 `type: 'css/auto'`，自定义将哪些文件视为 CSS 文件。比如，将 `.less` 文件视为 CSS 文件：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        type: 'css/auto', // 👈
+        use: ['less-loader'],
+      },
+    ],
+  },
+};
+```
+
+### 使用 CssExtractRspackPlugin
+
+Rspack 支持使用 [css-loader](https://github.com/webpack-contrib/css-loader) 和 [CssExtractRspackPlugin](/plugins/rspack/css-extract-rspack-plugin)，用于生成独立的 CSS 文件。
+
+如果你正在迁移一个使用 [mini-css-extract-plugin](https://github.com/webpack-contrib/mini-css-extract-plugin) 的 webpack 项目，那么推荐使用 CssExtractRspackPlugin 来替换 mini-css-extract-plugin，它们的功能和配置方式基本一致。
+
+- 安装 css-loader：
+
+<PackageManagerTabs command="add css-loader -D" />
+
+- 添加配置：
+
+```js title="rspack.config.mjs"
+import { rspack } from '@rspack/core';
+
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: [rspack.CssExtractRspackPlugin.loader, 'css-loader'],
+        type: 'javascript/auto',
+      },
+    ],
+  },
+  plugins: [new rspack.CssExtractRspackPlugin({})],
+};
+```
+
+> 参考 [迁移指南](/guide/migration/webpack#mini-css-extract-plugin--rspackcssextractrspackplugin) 了解如何从 webpack 进行迁移。
+
+:::tip
+CssExtractRspackPlugin 不能与 `type: 'css'`、`type: 'css/auto'` 或 `type: 'css/module'` 同时使用，因为这些 type 是由 `experiments.css` 提供的。
+:::
+
+### 使用 style-loader
+
+Rspack 支持使用 [css-loader](https://github.com/webpack-contrib/css-loader) 和 [style-loader](https://github.com/webpack-contrib/style-loader)，将 CSS 通过 `<style>` 标签注入。这种方式不会生成独立的 CSS 文件，而是将 CSS 的内容内联到 JS 文件中。
+
+- 安装 css-loader 和 style-loader：
+
+<PackageManagerTabs command="add css-loader style-loader -D" />
+
+- 添加配置：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: ['style-loader', 'css-loader'],
+        type: 'javascript/auto',
+      },
+    ],
+  },
+};
+```
+
+:::tip
+style-loader 不能与 `type: 'css'`、`type: 'css/auto'` 或 `type: 'css/module'` 同时使用，因为这些 type 是由 `experiments.css` 提供的。
+:::
+
+## CSS Modules
+
+Rspack 默认将扩展名为 `*.module.css` 的文件视为 [CSS Modules](https://github.com/css-modules/css-modules)，你可以在 JavaScript 文件中导入它，然后将 CSS 文件中定义的每个类作为模块的导出来访问。
+
+```css title="index.module.css"
+.red {
+  color: red;
+}
+```
+
+你可以使用命名空间导入：
+
+```ts title="index.js"
+import * as styles from './index.module.css';
+document.getElementById('element').className = styles.red;
+```
+
+也可以使用具名导入：
+
+```ts
+import { red } from './index.module.css';
+document.getElementById('element').className = red;
+```
+
+要在 Rspack 中启用默认导入方式，你需要在 Rspack 配置中将 `namedExports` 配置为 `false`。这允许你在用到 CSS Modules 时，除了命名空间导入和具名导入，也能通过默认导入整个样式模块：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'css/auto': {
+        namedExports: false,
+      },
+    },
+  },
+};
+```
+
+现在你可以使用默认导入：
+
+```js
+import styles from './index.module.css';
+document.getElementById('element').className = styles.red;
+```
+
+更多关于 CSS Modules 的配置请参考 [module.parser.css](/config/module#moduleparsercss)。
+
+## PostCSS
+
+Rspack 支持使用 [postcss-loader](https://github.com/webpack-contrib/postcss-loader)，你可以这样配置：
+
+<PackageManagerTabs command="add postcss postcss-loader -D" />
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                // ...
+              },
+            },
+          },
+        ],
+        // 如果你需要将 '*.module.css' 视为 CSS Modules 那么将 'type' 设置为 'css/auto' 否则设置为 'css'
+        type: 'css/auto',
+      },
+    ],
+  },
+};
+```
+
+上述配置会将所有 `*.css` 文件经过 [postcss-loader](https://github.com/webpack-contrib/postcss-loader) 处理，并将生成的结果交给 Rspack 完成 CSS 后续流程的处理。
+
+## Sass
+
+Rspack 支持使用 [sass-loader](https://github.com/webpack-contrib/sass-loader)，你可以这样配置：
+
+<PackageManagerTabs command="add sass-embedded sass-loader -D" />
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.(sass|scss)$/,
+        use: [
+          {
+            loader: 'sass-loader',
+            options: {
+              // 同时使用 `modern-compiler` 和 `sass-embedded` 可以显著提升构建性能
+              // 需要 `sass-loader >= 14.2.1`
+              api: 'modern-compiler',
+              implementation: require.resolve('sass-embedded'),
+            },
+          },
+        ],
+        // 如果你需要将 '*.module.(sass|scss)' 视为 CSS Modules 那么将 'type' 设置为 'css/auto' 否则设置为 'css'
+        type: 'css/auto',
+      },
+    ],
+  },
+};
+```
+
+上述配置会将所有 `*.sass` 和 `*.scss` 文件经过 [sass-loader](https://github.com/webpack-contrib/sass-loader) 处理，并将生成的结果交给 Rspack 完成 CSS 后续流程的处理。
+
+## Less
+
+Rspack 支持使用 [less-loader](https://github.com/webpack-contrib/less-loader)，你可以这样配置：
+
+<PackageManagerTabs command="add less less-loader -D" />
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        use: [
+          {
+            loader: 'less-loader',
+            options: {
+              // ...
+            },
+          },
+        ],
+        // 如果你需要将 '*.module.less' 视为 CSS Modules 那么将 'type' 设置为 'css/auto' 否则设置为 'css'
+        type: 'css/auto',
+      },
+    ],
+  },
+};
+```
+
+上述配置会将所有 `*.less` 文件经过 [less-loader](https://github.com/webpack-contrib/less-loader) 处理，并将生成的结果交给 Rspack 完成 CSS 后续流程的处理。
+
+## Tailwind CSS
+
+[Tailwind CSS](https://tailwindcss.com/) 是一个以 Utility Class 为基础的 CSS 框架和设计系统，可以快速地为组件添加常用样式，同时支持主题样式的灵活扩展。
+
+Tailwind CSS 官网提供了集成 Rspack 的指南，请参考：
+
+- [Install Tailwind CSS v4 with Rspack](https://tailwindcss.com/docs/installation/framework-guides/rspack/react)
+- [Install Tailwind CSS v3 with Rspack](https://v3.tailwindcss.com/docs/guides/rspack)

@@ -1,0 +1,28 @@
+[package]
+description = "rspack hmr plugin"
+edition     = "2021"
+license     = "MIT"
+name        = "rspack_plugin_hmr"
+repository  = "https://github.com/web-infra-dev/rspack"
+version     = "0.2.0"
+
+[dependencies]
+rspack_cacheable         = { workspace = true }
+rspack_collections       = { workspace = true }
+rspack_core              = { workspace = true }
+rspack_error             = { workspace = true }
+rspack_hash              = { workspace = true }
+rspack_hook              = { workspace = true }
+rspack_plugin_css        = { workspace = true }
+rspack_plugin_javascript = { workspace = true }
+rspack_util              = { workspace = true }
+
+async-trait = { workspace = true }
+cow-utils   = { workspace = true }
+rustc-hash  = { workspace = true }
+serde_json  = { workspace = true }
+tokio       = { workspace = true }
+tracing     = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["tracing", "rspack_cacheable", "rspack_hash", "tokio"]

@@ -1,0 +1,6 @@
+ERROR in × HTML parsing error: Stray end tag "something"
+   ╭─[2:2]
+ 1 │ <!DOCTYPE html><head>
+ 2 │   </something>
+   ·   ────────────
+   ╰────

@@ -1,0 +1,41 @@
+[package]
+description             = "rspack library plugin"
+documentation.workspace = true
+edition                 = "2021"
+homepage.workspace      = true
+license                 = "MIT"
+name                    = "rspack_plugin_library"
+repository.workspace    = true
+version                 = "0.2.0"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait              = { workspace = true }
+futures                  = { workspace = true }
+regex                    = { workspace = true }
+rspack_cacheable         = { workspace = true }
+rspack_collections       = { workspace = true }
+rspack_core              = { workspace = true }
+rspack_error             = { workspace = true }
+rspack_hash              = { workspace = true }
+rspack_hook              = { workspace = true }
+rspack_plugin_javascript = { workspace = true }
+rustc-hash               = { workspace = true }
+serde_json               = { workspace = true }
+tracing                  = { workspace = true }
+
+swc_core = { workspace = true, features = [
+  "__parser",
+  "__utils",
+  "common_sourcemap",
+  "ecma_preset_env",
+  "ecma_transforms_optimization",
+  "ecma_transforms_module",
+  "ecma_transforms_compat",
+  "ecma_transforms_typescript",
+  "base",
+  "ecma_quote",
+] }
+
+[package.metadata.cargo-shear]
+ignored = ["tracing"]

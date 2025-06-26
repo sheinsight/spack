@@ -1,0 +1,49 @@
+#![feature(if_let_guard)]
+#![feature(let_chains)]
+#![feature(box_patterns)]
+#![feature(trait_upcasting)]
+#![recursion_limit = "256"]
+
+pub mod ast;
+pub mod dependency;
+pub mod parser_and_generator;
+mod parser_plugin;
+mod plugin;
+pub mod runtime;
+pub mod utils;
+pub mod visitors;
+mod webpack_comment;
+pub use parser_plugin::*;
+use rspack_core::rspack_sources::SourceMap;
+
+pub use crate::plugin::{infer_async_modules_plugin::InferAsyncModulesPlugin, *};
+
+#[derive(Debug)]
+pub struct TransformOutput {
+  pub code: String,
+  pub map: Option<SourceMap>,
+}
+
+#[derive(Debug)]
+pub enum SourceMapsConfig {
+  Bool(bool),
+  Str(String),
+}
+
+impl SourceMapsConfig {
+  pub fn enabled(&self) -> bool {
+    match *self {
+      SourceMapsConfig::Bool(b) => b,
+      SourceMapsConfig::Str(ref s) => {
+        assert_eq!(s, "inline", "Source map must be true, false or inline");
+        true
+      }
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum IsModule {
+  Bool(bool),
+  Unknown,
+}

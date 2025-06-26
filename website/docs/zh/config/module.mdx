@@ -1,0 +1,2062 @@
+import { ApiMeta } from '../../../components/ApiMeta';
+import PropertyType from '@components/PropertyType';
+import WebpackLicense from '@components/WebpackLicense';
+
+<WebpackLicense from="https://webpack.docschina.org/configuration/module/" />
+
+# Module
+
+模块：该选项用于决定如何处理一个项目中不同类型的模块。
+
+- **类型：** `Object`
+- **默认值：** `{}`
+
+## module.defaultRules
+
+- **类型：** `(Rule | Falsy)[]`
+
+应用于模块的默认规则。
+
+详见[源代码](https://github.com/web-infra-dev/rspack/blob/main/packages/rspack/src/config/defaults.ts#L381)。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    defaultRules: [
+      '...', // 使用 "..." 来引用 Rspack 默认规则
+    ],
+  },
+};
+```
+
+## module.noParse
+
+- **类型：** `string | string[] | RegExp | RegExp[] | ((request: string) => boolean)`
+- **默认值：** `undefined`
+
+匹配的文件代码不会被 Rspack 转换，包括 `module.exports`, `require`, `import` 这些模块系统相关的语法。
+
+用来忽略那些没有外部依赖的第三方库的时候很有用，有时还能提升性能。
+
+请注意：这些文件依然还会被已配置的 loaders 处理。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    noParse: /typescript|watermark-dom/,
+  },
+};
+```
+
+```js title="rspack.config.mjs"
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default {
+  module: {
+    noParse: [require.resolve('typescript'), /watermark-dom/],
+  },
+};
+```
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    noParse: request => /typescript|watermark-dom/.test(request),
+  },
+};
+```
+
+## module.parser
+
+- **类型：** `Object`
+- **默认值：** `{}`
+
+使用 `module.parser` 在一个地方配置所有解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      // asset 模块的解析器选项
+      asset: {
+        dataUrlCondition: {
+          maxSize: 16192,
+        },
+      },
+      // javascript 模块的解析器选项
+      javascript: {
+        dynamicImportMode: 'lazy',
+        dynamicImportPrefetch: false,
+        dynamicImportPreload: false,
+        url: true,
+        importMeta: true,
+      },
+      // CSS 模块的解析器选项
+      css: {
+        namedExports: true,
+      },
+      // css/auto 模块的解析器选项
+      'css/auto': {
+        namedExports: true,
+      },
+      // css/module 模块的解析器选项
+      'css/module': {
+        namedExports: true,
+      },
+    },
+  },
+};
+```
+
+### module.parser.asset
+
+`asset` 模块的解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      asset: {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.parser.asset.dataUrlCondition
+
+- **类型：** `{ maxSize: number }`
+- **默认值：** `{ maxSize: 8096 }`
+
+如果当前模块的小于等于 `maxSize`，那么模块将被 Base64 编码，否则模块将会以文件形式被输出。该选项仅能作用于 [Asset modules](/guide/features/asset-module)。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      asset: {
+        dataUrlCondition: {
+          // 小于等于 4KB 的模块将被 Base64 编码
+          maxSize: 4 * 1024,
+        },
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript
+
+`javascript` 模块的解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.dynamicImportMode
+
+<PropertyType
+  type="'lazy' | 'eager' | 'weak' | 'lazy-once'"
+  defaultValueList={[{ defaultValue: "'lazy'" }]}
+/>
+
+指定动态导入的全局模式，详见[`webpackMode`](/api/runtime-api/module-methods#webpackmode)。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        dynamicImportMode: 'eager',
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.dynamicImportPrefetch
+
+<PropertyType
+  type="boolean | number"
+  defaultValueList={[{ defaultValue: 'false' }]}
+/>
+
+指定动态导入的全局 prefetch，详见[`webpackPrefetch`](/api/runtime-api/module-methods#webpackprefetch)。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        dynamicImportPrefetch: true,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.dynamicImportPreload
+
+<PropertyType
+  type="boolean | number"
+  defaultValueList={[{ defaultValue: 'false' }]}
+/>
+
+指定动态导入的全局 preload，详见[`webpackPreload`](/api/runtime-api/module-methods#webpackpreload)。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        dynamicImportPreload: true,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.dynamicImportFetchPriority
+
+<ApiMeta addedVersion="1.0.0" />
+
+<PropertyType
+  type="'low' | 'high' | 'auto'"
+  defaultValueList={[{ defaultValue: "'auto'" }]}
+/>
+
+指定动态导入的全局 `fetchPriority`，详见[`webpackFetchPriority`](/api/runtime-api/module-methods#webpackfetchpriority)。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        dynamicImportFetchPriority: 'high',
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.url
+
+<PropertyType
+  type="true | false | 'relative'"
+  defaultValueList={[{ defaultValue: 'true' }]}
+/>
+
+启用 `new URL()` 语法解析。
+
+当使用 'relative' 时，webpack 将为 `new URL()` 语法生成相对的 URL，即结果 URL 中不包含根 URL
+
+```html
+<!-- 使用 'relative' -->
+<img src="icon.svg" />
+
+<!-- 不使用 'relative' -->
+<img src="file:///path/to/project/dist/icon.svg" />
+```
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        url: 'relative',
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.exprContextCritical
+
+<PropertyType
+  type="boolean | undefined"
+  defaultValueList={[{ defaultValue: 'true' }]}
+/>
+
+启用完全动态依赖（`import(variable)`）的警告。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        exprContextCritical: false,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.wrappedContextCritical
+
+<PropertyType
+  type="boolean | undefined"
+  defaultValueList={[{ defaultValue: 'false' }]}
+/>
+
+启用部分动态依赖（`import("./path/to/" + variable)`）的警告。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        wrappedContextCritical: false,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.wrappedContextRegExp
+
+<PropertyType
+  type="RegExp | undefined"
+  defaultValueList={[{ defaultValue: '/.*/' }]}
+/>
+
+设置正则表达式，用于匹配包裹的动态依赖。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        wrappedContextRegExp: /\.js$/,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.importMeta
+
+<ApiMeta addedVersion="1.0.0-alpha.6" />
+
+<PropertyType type="boolean" defaultValueList={[{ defaultValue: 'true' }]} />
+
+是否要解析替换 `import.meta`。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        importMeta: false,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.exportsPresence
+
+<PropertyType
+  type="'error' | 'warn' | 'auto' | false"
+  defaultValueList={[{ defaultValue: "'auto'" }]}
+/>
+
+当使用了不存在的导出或存在冲突的重导出时，是否进行警告或报错。
+
+- `"error"`：进行报错。
+- `"warn"`：进行警告。
+- `"auto"`：根据模块是否为严格 ESM，如果是严格 ESM 则报错，否则警告。
+- `false`：关闭该功能。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        exportsPresence: 'error',
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.importExportsPresence
+
+<PropertyType type="'error' | 'warn' | 'auto' | false" />
+
+当使用了不存在的导出时，是否进行警告或报错。默认会遵循 [module.parser.javascript.exportsPresence](#moduleparserjavascriptexportspresence) 的配置。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        importExportsPresence: 'error',
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.reexportExportsPresence
+
+<PropertyType type="'error' | 'warn' | 'auto' | false" />
+
+当使用了存在冲突的重导出时，是否进行警告或报错。默认会遵循 [module.parser.javascript.exportsPresence](#moduleparserjavascriptexportspresence) 的配置。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        reexportExportsPresence: 'error',
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.strictExportPresence
+
+- **类型：** `boolean`
+
+当导入的名称在导入模块中不存在时，发出错误而不是警告。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        strictExportPresence: true,
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.worker
+
+<ApiMeta addedVersion="1.0.0-alpha.0" />
+
+<PropertyType type="string[] | boolean" />
+
+为 Worker 解析提供自定义的语法，常用于支持 Worklet：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        worker: [
+          // 支持 CSS paintWorklet
+          'CSS.paintWorklet.addModule()',
+          // 支持 AudioWorklet，最前面的 '*' 表示识别名为 'context' 的变量，比如：
+          // let context = new AudioContext();
+          // await context.audioWorklet.addModule(new URL("noise-processor.js", import.meta.url));
+          '*context.audioWorklet.addModule()',
+          // 继承默认语法：["Worker", "SharedWorker", "navigator.serviceWorker.register()", "Worker from worker_threads"]
+          '...',
+        ],
+      },
+    },
+  },
+};
+```
+
+### module.parser.javascript.overrideStrict
+
+<ApiMeta addedVersion="1.0.0-alpha.4" />
+
+<PropertyType type="'strict' | 'non-strict'" />
+
+将模块覆盖为严格模式或非严格模式。
+
+这可能会影响模块的行为（某些行为在严格模式和非严格模式之间有所不同），因此请谨慎配置此选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      javascript: {
+        overrideStrict: 'strict',
+      },
+    },
+  },
+};
+```
+
+### module.parser["javascript/auto"]
+
+`javascript/auto` 模块的解析器选项，和 [`javascript` 的模块的解析器选项](#moduleparserjavascript)相同。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'javascript/auto': {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.parser["javascript/dynamic"]
+
+`javascript/dynamic` 模块的解析器选项，和 [`javascript` 的模块的解析器选项](#moduleparserjavascript)相同。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'javascript/dynamic': {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.parser["javascript/esm"]
+
+`javascript/esm` 模块的解析器选项，和 [`javascript` 的模块的解析器选项](#moduleparserjavascript)相同。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'javascript/esm': {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.parser.json
+
+<ApiMeta addedVersion="1.2.0" />
+
+`json` 模块的解析器选项
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      json: {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.parser.json.exportsDepth
+
+<ApiMeta addedVersion="1.2.0" />
+
+- **Type:** `number`
+- **Default:** production 模式为 `Number.MAX_SAFE_INTEGER`, development 模式为 `1`
+
+设置 Rspack 对于 `json` 模块导出的分析程度。development 模式下此项默认值为 `1`，可大幅提升构建效率。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      json: {
+        // 例如，对于以下 json
+        // {
+        //   "depth_1": {
+        //     "depth_2": {
+        //       "depth_3": "foo"
+        //     }
+        //   },
+        //   "_depth_1": "bar"
+        // }
+        // 当设置 exportsDepth: 1 时, `depth_2` and `depth_3` 将不会被分析。
+        exportsDepth: 1,
+      },
+    },
+  },
+};
+```
+
+### module.parser["css/auto"]
+
+`css/auto` 模块的解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'css/auto': {
+        // options
+      },
+    },
+  },
+};
+```
+
+:::warning
+只有开启 [experiments.css](/config/experiments#experimentscss) 时该配置才会生效。
+:::
+
+### module.parser["css/auto"].namedExports
+
+- **类型：** `boolean`
+- **默认值：** `true`
+
+使用 ES 模块命名导出来导出 CSS。
+
+当使用 `namedExports: true` 时，你可以使用命名空间导出或命名导出：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'css/auto': {
+        namedExports: true,
+      },
+    },
+  },
+};
+```
+
+```js
+// 命名空间导出
+import * as classes from './index.module.css';
+// 命名导出
+import { class1, class2 } from './index.module.css';
+```
+
+当使用 `namedExports: false` 时，除了命名空间导出和命名导出之外，还可以用默认导出：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'css/auto': {
+        namedExports: false,
+      },
+    },
+  },
+};
+```
+
+```js
+// 命名空间导出
+import * as classes from './index.module.css';
+// 命名导出
+import { class1, class2 } from './index.module.css';
+// 默认导出
+import classes from './index.module.css';
+// 默认导出和命名导出
+import classes, { class1, class2 } from './index.module.css';
+```
+
+### module.parser.css
+
+`css` 模块的解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      css: {
+        // options
+      },
+    },
+  },
+};
+```
+
+:::warning
+只有开启 [experiments.css](/config/experiments#experimentscss) 时该配置才会生效。
+:::
+
+### module.parser.css.namedExports
+
+和 [`module.parser["css/auto"].namedExports`](#moduleparsercssautonamedexports) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      css: {
+        namedExports: true,
+      },
+    },
+  },
+};
+```
+
+### module.parser["css/module"]
+
+`css/module` 模块的解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'css/module': {
+        // options
+      },
+    },
+  },
+};
+```
+
+:::warning
+只有开启 [experiments.css](/config/experiments#experimentscss) 时该配置才会生效。
+:::
+
+### module.parser["css/module"].namedExports
+
+和 [`module.parser["css/auto"].namedExports`](#moduleparsercssautonamedexports) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    parser: {
+      'css/module': {
+        namedExports: true,
+      },
+    },
+  },
+};
+```
+
+## module.generator
+
+- **类型：** `Object`
+- **默认值：** `{}`
+
+使用 `module.generator` 在一个地方配置所有生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      // asset 模块的生成器选项
+      asset: {
+        dataUrl: {
+          encoding: false,
+          mimetype: 'base64',
+        },
+        filename: '[name]-[contenthash][ext]',
+        publicPath: 'https://cdn.example.com/',
+      },
+      // asset/inline 模块的生成器选项
+      'asset/inline': {
+        dataUrl: {
+          encoding: false,
+          mimetype: 'base64',
+        },
+      },
+      // asset/resource 模块的生成器选项
+      'asset/resource': {
+        filename: '[name]-[contenthash][ext]',
+        publicPath: 'https://cdn.example.com/',
+      },
+      // css/auto 模块的生成器选项
+      'css/auto': {
+        exportsConvention: 'as-is',
+        exportsOnly: false,
+        localIdentName: '[uniqueName]-[id]-[local]',
+        esModule: true,
+      },
+      // `css` 模块的生成器选项
+      css: {
+        exportsOnly: false,
+        esModule: true,
+      },
+      // css/module 模块的生成器选项
+      'css/module': {
+        exportsConvention: 'as-is',
+        exportsOnly: false,
+        localIdentName: '[uniqueName]-[id]-[local]',
+        esModule: true,
+      },
+      // `json` 模块的生成器选项
+      json: {
+        JSONParse: true,
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset
+
+`asset` 模块的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.dataUrl
+
+- **类型：** `Object | (source: Buffer, context: { filename: string, module: Module }) => string`
+- **默认值：** `{}`
+
+仅对模块类型为 `asset` 或 `'asset/inline'` 的模块生效。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        dataUrl: {
+          encoding: 'base64',
+          mimetype: 'mimetype/png',
+        },
+      },
+    },
+  },
+};
+```
+
+当被作为一个函数使用，它必须为每个模块执行且并须返回一个 data URI 字符串。
+
+```js title="rspack.config.mjs"
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+export default {
+  //...
+  module: {
+    generator: {
+      asset: {
+        dataUrl: ({ content }) => {
+          const svgToMiniDataURI = require('mini-svg-data-uri');
+          return svgToMiniDataURI(content);
+        },
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.dataUrl.encoding
+
+- **类型：** `false | 'base64'`
+- **默认值：** `'base64'`
+
+设置为 base64 时，模块将使用 base64 算法进行编码。将编码设置为 false 将禁用编码。仅对模块类型为 `'asset/inline'` 的模块生效。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        dataUrl: {
+          encoding: false,
+        },
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.dataUrl.mimetype
+
+- **类型：** `string`
+- **默认值：** `require('mime-types').lookup(ext)`
+
+dataUrl 的 MIME 类型，默认从模块资源扩展名解析。仅对模块类型为 `'asset/inline'` 的模块生效。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        dataUrl: {
+          mimetype: 'image/png',
+        },
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.importMode
+
+- **类型：** `'url' | 'preserve'`
+- **默认值：** `'url'`
+
+如果为 `"url"`，将基于 [publicPath](#modulegeneratorassetpublicpath) 生成指向 asset 的 URL。
+如果为 `"preserve"`，将保留指向 asset 的 import 或 require 语句。
+
+仅对模块类型为 `'asset'` 和 `'asset/resource'` 的模块生效。
+
+- `'asset'`:
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        importMode: 'preserve',
+      },
+    },
+  },
+};
+```
+
+- `'asset/resource'`:
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        importMode: 'preserve',
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.filename
+
+- **类型：** `string | ((pathData: PathData, assetInfo?: AssetInfo) => string)`
+- **默认值：** `undefined`
+- **支持的 Template string：** 参考 [`output.assetModuleFilename`](/config/output#outputassetmodulefilename)
+
+覆盖 [`output.assetModuleFilename`](/config/output#outputassetmodulefilename)，仅对模块类型为 `'asset'` 和 `'asset/resource'` 的模块生效。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        filename: 'static/[hash][ext]',
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.outputPath
+
+- **类型：** `string | ((pathData: PathData, assetInfo?: AssetInfo) => string)`
+- **默认值：** `undefined`
+
+将 asset 输出到指定文件夹，该文件夹相对于 [`output.path`](/config/output#outputpath)。
+
+仅对模块类型为 `'asset'` 和 `'asset/resource'` 的模块生效。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        outputPath: 'foo/',
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.publicPath
+
+- **类型：** `string | ((pathData: PathData, assetInfo?: AssetInfo) => string)`
+- **默认值：** `undefined`
+
+覆盖 [`output.publicPath`](/config/output#outputpublicpath)，仅对模块类型为 `'asset'` 和 `'asset/resource'` 的模块生效。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        publicPath: 'https://cdn.example.com/',
+      },
+    },
+  },
+};
+```
+
+### module.generator.asset.emit
+
+- **类型：** `boolean`
+- **默认值：** `true`
+
+是否将 asset 输出到磁盘。对于 SSR 等场景，你可以将该选项设置为 `false` 来避免输出无用的文件。
+
+仅对模块类型为 `'asset'` 或 `'asset/resource'` 的模块生效。
+
+- `'asset'`：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      asset: {
+        emit: false,
+      },
+    },
+  },
+};
+```
+
+- `'asset/resource'`：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        emit: false,
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/inline"]
+
+`asset/inline` 模块的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/inline': {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/inline"].dataUrl
+
+和 [`module.generator["asset"].dataUrl`](#modulegeneratorassetdataurl) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/inline': {
+        dataUrl: {
+          // options
+        },
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/inline"].dataUrl.encoding
+
+和 [`module.generator["asset"].dataUrl.encoding`](#modulegeneratorassetdataurlencoding) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/inline': {
+        dataUrl: {
+          encoding: false,
+        },
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/inline"].dataUrl.mimetype
+
+和 [`module.generator["asset"].dataUrl.mimetype`](#modulegeneratorassetdataurlmimetype) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/inline': {
+        dataUrl: {
+          mimetype: 'image/png',
+        },
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/resource"]
+
+`asset/resource` 模块的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        // options
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/resource"].importMode
+
+和 [`module.generator["asset"].importMode`](#modulegeneratorassetimportmode) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        importMode: 'preserve',
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/resource"].filename
+
+和 [`module.generator["asset"].filename`](#modulegeneratorassetfilename) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        filename: 'static/[hash][ext]',
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/resource"].outputPath
+
+和 [`module.generator["asset"].outputPath`](#modulegeneratorassetoutputpath) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        outputPath: 'foo/',
+      },
+    },
+  },
+};
+```
+
+### module.generator["asset/resource"].publicPath
+
+和 [`module.generator["asset"].publicPath`](#modulegeneratorassetpublicpath) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'asset/resource': {
+        publicPath: 'https://cdn.example.com/',
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/auto"]
+
+`css/auto` 模块的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/auto': {
+        // options
+      },
+    },
+  },
+};
+```
+
+:::warning
+只有开启 [experiments.css](/config/experiments#experimentscss) 时该配置才会生效。
+:::
+
+### module.generator["css/auto"].exportsConvention
+
+- **类型：** `'as-is' | 'camel-case' | 'camel-case-only' | 'dashes' | 'dashes-only'`
+- **默认值：** `'as-is'`
+
+自定义 CSS 导出名称如何导出到 JavaScript 模块，例如保留原样、转换为驼峰命名等等。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/auto': {
+        exportsConvention: 'camel-case',
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/auto"].exportsOnly
+
+- **类型：** `boolean`
+- **默认值：** `true` for node environments, `false` for web environments.
+
+如果为 `true`，仅从 CSS 中导出标识符映射表到 JavaScript 文件中，而不在 template 中注入任何 stylesheets。适用于使用 CSS Modules 进行预渲染的场景（例如 SSR）。
+
+如果为 `false`，生成 stylesheets 并将其注入到 template 中。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/auto': {
+        exportsOnly: false,
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/auto"].localIdentName
+
+- **类型：** `string`
+- **默认值：** `[uniqueName]-[id]-[local]`
+
+自定义生成的 CSS Modules 的局部类名格式，除了在[文件级别](/config/output#file-context)和[模块级别](/config/output#module-context)的替换之外，还包括 `[uniqueName]` 和 `[local]`。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/auto': {
+        localIdentName: '[local]-[hash:base64:6]',
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/auto"].esModule
+
+- **类型：** `boolean`
+- **默认值：** `true`
+
+是否为 CSS 的导出添加 `__esModule`，如果添加则会在 ESM-CJS interop 时当作 ES modules，否则当作 CommonJS modules。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/auto': {
+        esModule: true,
+      },
+    },
+  },
+};
+```
+
+比如在使用第三方组件库的 CommonJS 产物时，有时需要添加该配置确保 ESM-CJS interop 正确，以拿到正确的导出（可配合 [Rule.test](#ruletest) 等匹配条件只为该组件库添加）。
+
+组件库源码：
+
+```js
+import style from './style.css';
+
+export function Button() {
+  return <button className={style.btn}></button>;
+}
+```
+
+组件库发布的 CommonJS 产物：
+
+```js
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true,
+});
+exports.Button = Button;
+var _style = _interopRequireDefault(require('./style.css'));
+var _jsxRuntime = require('react/jsx-runtime');
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : { default: obj };
+}
+function Button() {
+  return /*#__PURE__*/ (0, _jsxRuntime.jsx)('button', {
+    className: _style['default'].btn, // <-- 注意：这里经过 _interopRequireDefault 后需要访问 default
+  });
+}
+```
+
+### module.generator.css
+
+`css` 模块的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      css: {
+        // options
+      },
+    },
+  },
+};
+```
+
+:::warning
+只有开启 [experiments.css](/config/experiments#experimentscss) 时该配置才会生效。
+:::
+
+### module.generator.css.exportsOnly
+
+和 [`module.generator["css/auto"].exportsOnly`](#modulegeneratorcssautoexportsonly) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      css: {
+        exportsOnly: false,
+      },
+    },
+  },
+};
+```
+
+### module.generator.css.esModule
+
+和 [`module.generator["css/auto"].esModule`](#modulegeneratorcssautoesmodule) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      css: {
+        esModule: true,
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/module"]
+
+`css/module` 模块的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/module': {
+        // options
+      },
+    },
+  },
+};
+```
+
+:::warning
+只有开启 [experiments.css](/config/experiments#experimentscss) 时该配置才会生效。
+:::
+
+### module.generator["css/module"].exportsConvention
+
+和 [`module.generator["css/auto"].exportsConvention`](#modulegeneratorcssautoexportsconvention) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/module': {
+        exportsConvention: 'camel-case',
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/module"].exportsOnly
+
+和 [`module.generator["css/auto"].exportsOnly`](#modulegeneratorcssautoexportsonly) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/module': {
+        exportsOnly: false,
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/module"].localIdentName
+
+和 [`module.generator["css/auto"].localIdentName`](#modulegeneratorcssautolocalidentname) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/module': {
+        localIdentName: '[local]-[hash:base64:6]',
+      },
+    },
+  },
+};
+```
+
+### module.generator["css/module"].esModule
+
+和 [`module.generator["css/auto"].esModule`](#modulegeneratorcssautoesmodule) 一样。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      'css/module': {
+        esModule: true,
+      },
+    },
+  },
+};
+```
+
+### module.generator.json.JSONParse
+
+- **类型：** `boolean`
+- **默认值：** `true`
+
+当 JSON 字符串长度大于 20 时，使用 `JSON.parse`。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    generator: {
+      json: {
+        JSONParse: false,
+      },
+    },
+  },
+};
+```
+
+## module.rules
+
+- **类型：** `Rule[]`
+- **默认值：** `[]`
+
+一个规则数组，当模块被创建时与该模块的请求相匹配。这些规则可以修改模块的创建行为。它们可以对模块应用 Loader 等。
+
+### Rule
+
+- **类型：** `Rule`
+- **默认值：** `{}`
+
+Rule 定义了一个模块的匹配条件以及处理这些模块的行为。
+
+**Rule 处理行为**
+
+定义了对应匹配的模块的处理行为，例如:
+
+- 将 Loader 的列表应用到这些模块上（`Rule.use`）
+- 定义模块的类型（`Rule.type`）
+- 定义模块的 resolve 配置（`Rule.resolve`）
+
+### Condition
+
+- **类型：** `string | RegExp | Condition[] | LogicalConditions`
+
+定义了一个模块的匹配条件，常见的匹配有和 `resource` 与 `resourceQuery` 的匹配，以及 `include` 与 `exclude` 的匹配等。
+
+例如: 当 app.js 导入 `./image.png?inline#foo`
+
+- `resource` 为 `/path/to/image.png`，会与 `Rule.resource` 这个 Condition 进行匹配
+- `resourceQuery` 为 `?inline`，会与 `Rule.resourceQuery` 这个 Condition 进行匹配
+- `resourceFragment` 为 `#foo`，会与 `Rule.resourceFragment` 这个 Condition 进行匹配
+
+Condition 代表了匹配一个给定输入的形式，它支持的类型为：
+
+- `String`：给定一个输入，当输入的字符串满足 `startsWith` 时，则匹配成功。注：你可以认为是 `input.startsWith(condition)`。
+- `RegExp`：给定一个输入，当输入的字符串满足正则表达式时，则匹配成功。注：你可以认为是 `condition.test(input)`。
+- `Condition[]`：一系列条件，当有一个条件匹配上时，则匹配成功。
+- `LogicalConditions`：所有属性都匹配上时，则匹配成功。
+  - `{ and: Condition[] }`：所有条件都匹配，则匹配成功。
+  - `{ or: Condition[] }`：其中一个条件匹配，则匹配成功。
+  - `{ not: Condition }`：所有条件都不匹配时，则匹配成功。
+- `(value: string) => boolean`：当输入的字符串经函数调用后返回 true 是，则匹配成功。
+
+### Nested rule
+
+嵌套 Rule 可以通过 [`Rule.rules`](#rulerules) 和 [`Rule.oneOf`](#ruleoneof) 定义，这些嵌套 Rule 只有在其上层 Rule 匹配成功时才会进行匹配，它们可以包含自己的 Rule 条件
+
+嵌套 Rule 的匹配顺序：
+
+1. 其上层 Rule
+2. [`Rule.rules`](#rulerules)
+3. [`Rule.oneOf`](#ruleoneof)
+
+### Rule.exclude
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+排除所有符合这个条件的模块，会和资源的绝对路径（不包含 query 和 fragment）进行匹配。该选项不能和 `Rule.resource` 同时存在。
+
+### Rule.include
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个条件的模块，会和资源的绝对路径（不包含 query 和 fragment）进行匹配。该选项不能和 `Rule.resource` 同时存在。
+
+### Rule.resource
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和 Resource（不包含 query 和 fragment 的绝对路径）进行匹配。该选项不能和 `Rule.test` 同时存在。
+
+### Rule.resourceQuery
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和 Resource 的 query 进行匹配。注：包含 `?`，当 `Rule.resourceQuery` 为 `?raw` 时，会和 `foo?raw` 的资源请求进行匹配。
+
+### Rule.resourceFragment
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和 Resource 的 fragment 进行匹配。注：包含 `#`，当 `Rule.resourceFragment` 为 `#abc` 时，会和 `foo#abc` 的资源请求进行匹配。
+
+### Rule.test
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和 Resource（不包含 query 和 fragment 的绝对路径）进行匹配。该选项不能和 `Rule.resource` 同时存在。
+
+### Rule.issuer
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和引入当前模块的模块的 Resource（不包含 query 和 fragment 的绝对路径）进行匹配。
+
+### Rule.issuerLayer
+
+<ApiMeta addedVersion="1.0.0-beta.1" />
+
+- **Type:** `string`
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会与"引入当前模块"的模块的 layer 进行匹配。
+
+:::warning
+只有在 [experiments.layers = true](/config/experiments#experimentslayers) 时该配置才会生效。
+:::
+
+一个基础示例：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        issuerLayer: 'other-layer',
+      },
+    ],
+  },
+};
+```
+
+一个更复杂的示例是结合 [entry options](/config/entry#entrydescriptionlayer) 来同时构建 modern 和 legacy 产物：
+
+```js title="rspack.config.mjs"
+export default {
+  entry: {
+    index: {
+      import: './src/index.js',
+      layer: 'modern',
+    },
+    'index-legacy': {
+      import: './src/index.js',
+      layer: 'legacy',
+    },
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        issuerLayer: 'modern',
+        options: {
+          env: { targets: ['chrome >= 100'] },
+        },
+      },
+      {
+        test: /\.js$/,
+        issuerLayer: 'legacy',
+        options: {
+          env: { targets: ['ie >= 11'] },
+        },
+      },
+    ],
+  },
+  experiments: {
+    layers: true,
+  },
+};
+```
+
+### Rule.dependency
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和引入当前模块的依赖的类别（category）进行匹配，比如对于 `import`、`import()` 来说是 `esm`，对于 `require()` 来说是 `cjs`，对于 `new URL()`、`url()` 来说是 `url`。
+
+### Rule.scheme
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和 Resource 的 scheme 进行匹配。
+
+比如，你可以通过以下配置将内联的 data uri 资源当作单独的资源处理：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        scheme: 'data',
+        type: 'asset/resource',
+      },
+    ],
+  },
+};
+```
+
+### Rule.mimetype
+
+- **类型：** [`Condition`](/config/module#condition)
+- **默认值：** `undefined`
+
+匹配所有符合这个资源的模块，会和 Resource 的 mimetype 进行匹配。
+
+### Rule.descriptionData
+
+- **类型：** `{ [key: string]: Condition }`
+- **默认值：** `undefined`
+
+`descriptionData` 选项允许你通过匹配描述文件（通常是 `package.json`）中的属性值，来决定某个 rule 应该应用于哪些模块。这是一个基于 `package.json` 来应用 rule 的实用方法。
+
+`descriptionData` 对象中的 key 对应模块的 `package.json` 中的键，例如 `name`、`version` 等。每个 key 与一个用于匹配 `package.json` 数据的 [`Condition`](/config/module#condition) 进行关联。
+
+例如，下面的配置会将 rule 应用于 `package.json` 的 `name` 中包含 `'rspack'` 字符串的 JavaScript 资源。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        include: /node_modules/,
+        descriptionData: {
+          name: packageJsonName => packageJsonName.includes('rspack'),
+        },
+        // 其他 rule options...
+      },
+    ],
+  },
+};
+```
+
+### Rule.with
+
+<ApiMeta addedVersion="1.0.0-beta.1" />
+
+- **类型：** `{ [key: string]: Condition }`
+- **默认值：** `undefined`
+
+`with` 能够与 [import attributes](https://github.com/tc39/proposal-import-attributes) 进行匹配。
+
+例如，以下配置会与 `{ type: "url" }` 匹配，会将匹配到的模块的 [`type`](/config/module#ruletype) 修改为 `"asset/resource"`：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        with: { type: 'url' },
+        type: 'asset/resource',
+      },
+    ],
+  },
+};
+```
+
+以下引入会命中匹配：
+
+```ts
+import url from './data' with { type: 'url' };
+import('./data', { with: { type: 'url' } });
+```
+
+需要注意的是，为了让 Rspack 能够正常匹配 `with` 语法，当你在使用 [builtin:swc-loader](/guide/features/builtin-swc-loader) 时，需要手动开启 `keepImportAttributes` 配置以保留 `import attributes`：
+
+```diff title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        with: { type: 'url' },
+        type: 'asset/resource',
+      },
+      {
+        test: /\.ts$/,
+        exclude: [/node_modules/],
+        loader: 'builtin:swc-loader',
+        options: {
+          jsc: {
+            experimental: {
++             keepImportAttributes: true,
+            },
+            parser: {
+              syntax: 'typescript',
+            },
+          },
+        },
+        type: 'javascript/auto',
+      },
+    ],
+  },
+};
+```
+
+### Rule.loaders
+
+:::warning
+
+这个选项已经被废弃，请使用 `Rule.use` 代替。
+
+:::
+
+### Rule.loader
+
+`Rule.loader` 是 `Rule.use: [ { loader } ]` 的简略写法。 详情见 [Rule.use](/config/module#ruleuse).
+
+### Rule.options
+
+`Rule.options` 是 `Rule.use: [ { options } ]` 的简略写法。 详情见 [Rule.use](/config/module#ruleuse).
+
+### Rule.parser
+
+- **类型：** `Object`
+- **默认值：** `{}`
+
+对于通过规则条件匹配的特定模块的解析器选项，这将覆盖 `module.parser` 中的解析器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.css/,
+        parser: {
+          namedExports: false,
+        },
+        type: 'css/module',
+      },
+    ],
+  },
+};
+```
+
+对于特定的解析器选项及其对应的模块类型，你可以参考 [`module.parser`](#moduleparser)。
+
+### Rule.generator
+
+- **类型：** `Object`
+- **默认值：** `{}`
+
+对于通过规则条件匹配的特定模块的生成器选项，这将覆盖 `module.generator` 中的生成器选项。
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.png/,
+        generator: {
+          filename: '[contenthash][ext]',
+        },
+        type: 'asset',
+      },
+    ],
+  },
+};
+```
+
+对于特定的生成器选项及其对应的模块类型，你可以参考 [`module.generator`](#modulegenerator)。
+
+### Rule.sideEffects
+
+- **类型：** `boolean`
+
+标记模块是否存在副作用，这会影响 [Tree Shaking](/guide/optimization/tree-shaking) 的结果。
+
+```js title="rspack.config.mjs"
+export default {
+  // ...
+  module: {
+    rules: [
+      {
+        test: /foo\.js$/,
+        sideEffects: false,
+      },
+    ],
+  },
+};
+```
+
+### Rule.enforce
+
+<PropertyType type="'pre' | 'post'" />
+
+指定 loader 的类型，未指定时默认为 normal loader。
+
+当指定为 `'pre'` 时，该 loader 会在其他所有 loader 之前执行。
+
+```js title="rspack.config.mjs"
+export default {
+  // ...
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        loader: 'my-pre-loader',
+      },
+    ],
+  },
+};
+```
+
+当指定为 `'post'` 时，该 loader 会在其他所有 loader 之后执行。
+
+```js title="rspack.config.mjs"
+export default {
+  // ...
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        enforce: 'post',
+        loader: 'my-post-loader',
+      },
+    ],
+  },
+};
+```
+
+所有 loader 都会进入以下两个阶段：
+
+- **Pitching 阶段:** loader 导出的 `pitch` 方法在 `post, inline, normal, pre` 顺序下被调用。详见 [Pitching Loader](/api/loader-api/examples#pitching-loader)。
+- **Normal 阶段:** loader 导出的默认方法在 `pre, normal, inline, post` 顺序下被执行。模块的源码转换发生在该阶段。
+
+### Rule.type
+
+- **类型：** `'javascript/auto' | 'css' | 'css/module' | 'css/auto' | 'json' | 'asset' | 'asset/source' | 'asset/resource' | 'asset/inline'`
+
+用于标记匹配的模块的类型，这会影响 Rspack 内置对于该模块的处理方式。
+
+默认情况下，Rspack 会根据文件扩展名来决定模块的类型。例如，`.js` 和 `.mjs` 文件会被当作 `javascript/auto` 模块处理，`.json` 文件会被当作 `json` 模块处理。
+
+例如，如果你想通过一个自定义 Loader 加载 `.json` 文件，你需要将类型设置为 `javascript/auto` 以绕过 Rspack 内置的 JSON 导入。
+
+```js title="rspack.config.mjs"
+export default {
+  // ...
+  module: {
+    rules: [
+      {
+        test: /\.json$/,
+        type: 'javascript/auto',
+        loader: 'custom-json-loader',
+      },
+    ],
+  },
+};
+```
+
+所有 `type` 如下：
+
+- `'javascript/auto'`：JavaScript 模块，支持的模块系统：CommonJS、ES modules。
+- `'javascript/esm'`：JavaScript 模块，当作严格 ES modules 处理。
+- `'javascript/dynamic'`：JavaScript 模块，当作 Script 处理。
+- `'json'`：JSON data 模块，参考 [JSON](/guide/tech/json)。
+- `'css' | 'css/module' | 'css/auto'`：CSS 模块，参考 [原生 CSS 支持](/guide/tech/css#原生-css-支持)。
+- `'asset' | 'asset/source' | 'asset/resource' | 'asset/inline'`：资源模块，参考 [资源模块](/guide/features/asset-module)。
+
+### Rule.layer
+
+<ApiMeta addedVersion="1.0.0-beta.1" />
+
+- **类型：** `string`
+- **默认值：** `undefined`
+
+用于标识匹配的模块的 layer。可以将一组模块聚合到一个 layer 中，该 layer 随后可以在 split chunks, stats 或 [entry options](/config/entry#entrydescriptionlayer) 中使用。
+
+:::warning
+只有在 [experiments.layers = true](/config/experiments#experimentslayers) 时该配置才会生效。
+:::
+
+```js title="rspack.config.mjs"
+export default {
+  // ...
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        layer: 'layer-name',
+      },
+    ],
+  },
+};
+```
+
+### Rule.use
+
+- **类型：**
+
+```ts
+type RuleSetUse =
+  | RuleSetUseItem[]
+  | RuleSetUseItem
+  | ((ctx: RawFuncUseCtx) => RuleSetUseItem[]);
+type RuleSetUseItem = { loader: string; options: Record<string, any> } | string;
+interface RawFuncUseCtx {
+  resource?: string;
+  realResource?: string;
+  resourceQuery?: string;
+  issuer?: string;
+}
+```
+
+用于传递 Loader 包名与其选项的数组。`string[]` 如: `use: ['svgr-loader']` 是 `use: [ { loader: 'svgr-loader' } ]` 的简写。Loader 会按照从右到左的顺序执行。
+
+```js title="rspack.config.mjs"
+export default {
+  //...
+  module: {
+    rules: [
+      {
+        //...
+        use: [
+          'svgr-loader',
+          {
+            loader: 'svgo-loader',
+            options: {
+              configFile: false,
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+也可以使用一个函数：
+
+```js title="rspack.config.mjs"
+export default {
+  //...
+  module: {
+    rules: [
+      {
+        test: /\.svg$/,
+        type: 'asset',
+        use: info => ({
+          loader: 'svgo-loader',
+          options: {
+            plugins: [
+              {
+                cleanupIDs: { prefix: basename(info.resource) },
+              },
+            ],
+          },
+        }),
+      },
+    ],
+  },
+};
+```
+
+### Rule.resolve
+
+根据匹配的模块设置具体的模块 resolve 选项
+{
+//TODO: 添加 link 到 resolve
+}
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        resolve: {
+          preferRelative: true,
+        },
+      },
+    ],
+  },
+};
+```
+
+### Rule.rules
+
+- **类型：** <code>[Rule](#rule)[]</code>
+- **默认值：** `undefined`
+
+[嵌套 Rule](#nested-rule) 的一种，当其上层 [Rule](#rule) 匹配成功后会使用这些 Rule 进行匹配
+
+### Rule.oneOf
+
+- **类型：** <code>([Rule](#rule) | Falsy)[]</code>
+- **默认值：** `undefined`
+
+[嵌套 Rule](#nested-rule) 的一种，当其上层 Rule 匹配成功后会使用这些 Rule 进行匹配，并且只使用匹配成功的第一个 Rule
