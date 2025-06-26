@@ -80,7 +80,7 @@ buildCommand
 			if (b === undefined && j === undefined) {
 				b = j = true;
 			}
-			b && (await $`pnpm --filter @rspack/binding build:${mode}`);
+			b && (await $`pnpm --filter @shined/spack-binding build:${mode}`);
 			j && (await $`pnpm --filter "@rspack/*" build ${f ? "--force" : ""}`);
 		} catch (e) {
 			process.exit(e.exitCode);
@@ -95,7 +95,7 @@ watchCommand
 	.action(async ({ a, b = a, j = a, r }) => {
 		const mode = r ? "release" : "dev";
 		try {
-			b && (await $`pnpm --filter @rspack/binding watch:${mode}`);
+			b && (await $`pnpm --filter @shined/spack-binding watch:${mode}`);
 			j && (await $`pnpm --filter "@rspack/*" watch`);
 		} catch (e) {
 			process.exit(e.exitCode);
@@ -107,7 +107,7 @@ buildCommand
 	.command("binding")
 	.description("build rust binding")
 	.action(async () => {
-		await $`pnpm --filter @rspack/binding build:dev`;
+		await $`pnpm --filter @shined/spack-binding build:dev`;
 	});
 
 // x build js

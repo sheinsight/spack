@@ -192,7 +192,7 @@ for (const binding of bindings) {
 		path.resolve(__dirname, "../packages/rspack/package.json")
 	);
 	const pkgJson = {};
-	pkgJson.name = `@rspack/binding-${platformArchABI}`;
+	pkgJson.name = `@shined/spack-binding-${platformArchABI}`;
 	pkgJson.version = coreJson.version;
 	pkgJson.license = coreJson.license;
 	pkgJson.description = "Node binding for rspack";
