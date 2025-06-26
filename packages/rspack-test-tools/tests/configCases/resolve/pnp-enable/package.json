@@ -1,0 +1,13 @@
+{
+  "name": "rspack-pnp-enable",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "the-answer": "1.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "yarn@4.9.2"
+}

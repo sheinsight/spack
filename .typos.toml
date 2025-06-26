@@ -1,0 +1,31 @@
+# https://github.com/crate-ci/typos
+# cargo install typos-cli
+# typos
+
+[files]
+extend-exclude = [
+  "**/*.{css,map,json,txt,snap,bak,diff,html}",
+  "**/tests/**",
+  "**/mock/**",
+  "packages/rspack-test-tools",
+  "packages/rspack/src/util/hash",
+  "tests/**",
+  "**/CHANGELOG.md",
+  "GOVERNANCE.md",
+  "pnpm-lock.yaml",
+  "biome.jsonc",
+  "scripts/test/diff.cjs",
+  "scripts/test/binary-path.cjs",
+]
+
+[default.extend-identifiers]
+JSerFeng = "JSerFeng"
+
+[default.extend-words]
+Colum    = "Colum"
+Nd       = "Nd"
+fo       = "fo"
+splitted = "splitted"
+ws       = "ws"
+Pn       = "Pn"
+styl     = "styl"

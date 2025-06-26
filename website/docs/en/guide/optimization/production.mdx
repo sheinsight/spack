@@ -1,0 +1,38 @@
+# Production optimization
+
+## Code splitting
+
+Rspack supports code splitting, which allows splitting the code into other chunks. You have the full control about size and number of generated assets, which allow you to gain performance improvements in loading time.
+
+See [Code splitting](/guide/optimization/code-splitting) for more details.
+
+## Tree shaking
+
+Rspack supports tree shaking, a terminology widely used within the JavaScript ecosystem defined as the removal of unused code, commonly referred to as "dead code".
+
+See [Tree shaking](/guide/optimization/tree-shaking) for more details.
+
+## Minification
+
+During the production build, Rspack uses the built-in minimizer to minify JavaScript and CSS code by default.
+
+If you need to customize the minification options, you can use [SwcJsMinimizerRspackPlugin](/plugins/rspack/swc-js-minimizer-rspack-plugin) and [LightningCssMinimizerRspackPlugin](/plugins/rspack/lightning-css-minimizer-rspack-plugin) for configuration.
+
+```js title="rspack.config.mjs"
+import { rspack } from '@rspack/core';
+
+export default {
+  optimization: {
+    minimizer: [
+      new rspack.SwcJsMinimizerRspackPlugin({
+        // JS minimizer configuration
+      }),
+      new rspack.LightningCssMinimizerRspackPlugin({
+        // CSS minimizer configuration
+      }),
+    ],
+  },
+};
+```
+
+If the built-in minimizer cannot meet your needs, you can also use [optimization.minimizer](/config/optimization#optimizationminimizer) to set custom minimizers.
