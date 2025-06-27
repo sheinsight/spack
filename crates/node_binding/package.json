@@ -1,6 +1,6 @@
 {
-  "name": "@rspack/binding",
-  "version": "1.4.0",
+  "name": "@shined/spack-binding",
+  "version": "0.0.7",
   "license": "MIT",
   "description": "Node binding for rspack",
   "main": "binding.js",
@@ -25,8 +25,8 @@
     "test": "tsc -p tsconfig.type-test.json"
   },
   "homepage": "https://rspack.rs",
-  "bugs": "https://github.com/web-infra-dev/rspack/issues",
-  "repository": "web-infra-dev/rspack",
+  "bugs": "https://github.com/sheinsight/spack/issues",
+  "repository": "sheinsight/spack",
   "devDependencies": {
     "@napi-rs/cli": "3.0.0-alpha.88",
     "@napi-rs/wasm-runtime": "^0.2.11",
@@ -36,7 +36,7 @@
   },
   "napi": {
     "binaryName": "rspack",
-    "packageName": "@rspack/binding",
+    "packageName": "@shined/spack-binding",
     "targets": [
       "x86_64-apple-darwin",
       "x86_64-pc-windows-msvc",
@@ -58,10 +58,10 @@
     }
   },
   "optionalDependencies": {
-    "@rspack/binding-darwin-arm64": "workspace:*",
-    "@rspack/binding-darwin-x64": "workspace:*",
-    "@rspack/binding-linux-x64-gnu": "workspace:*",
-    "@rspack/binding-wasm32-wasi": "workspace:*",
-    "@rspack/binding-win32-x64-msvc": "workspace:*"
+    "@shined/spack-binding-darwin-arm64": "workspace:*",
+    "@shined/spack-binding-darwin-x64": "workspace:*",
+    "@shined/spack-binding-linux-x64-gnu": "workspace:*",
+    "@shined/spack-binding-wasm32-wasi": "workspace:*",
+    "@shined/spack-binding-win32-x64-msvc": "workspace:*"
   }
 }

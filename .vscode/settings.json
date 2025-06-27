@@ -38,6 +38,7 @@
     "Rslib",
     "rspack",
     "rstack",
+    "spack",
     "threejs",
     "tokio",
     "ukey",

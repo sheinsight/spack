@@ -1,14 +1,14 @@
 {
-  "name": "@rspack/binding-darwin-arm64",
-  "version": "1.4.0",
+  "name": "@shined/spack-binding-darwin-arm64",
+  "version": "0.0.1",
   "license": "MIT",
   "description": "Node binding for rspack",
   "main": "rspack.darwin-arm64.node",
   "homepage": "https://rspack.rs",
-  "bugs": "https://github.com/web-infra-dev/rspack/issues",
+  "bugs": "https://github.com/sheinsight/spack/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/web-infra-dev/rspack"
+    "url": "https://github.com/sheinsight/spack"
   },
   "publishConfig": {
     "access": "public",
