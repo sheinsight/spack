@@ -1,0 +1,17 @@
+packages:
+  - "packages/*"
+  - "scripts"
+  - "website"
+  - "tests/e2e/fixtures/**"
+  - "packages/create-rspack/**"
+  - "npm/*"
+  - "crates/node_binding"
+  - "examples/**"
+  - "!examples/three"
+  - "tests/e2e"
+  - "tests/webpack-examples"
+  - "tests/webpack-test"
+  - "tests/webpack-cli-test"
+  - "tests/bench"
+  # this following is used to test resolve in monorepo
+  - "packages/rspack-test-tools/tests/normalCases/resolve/pnpm-workspace/packages/*"

@@ -1,0 +1,20 @@
+name: team-label
+
+on:
+  pull_request:
+    types: [opened]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  team-labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: JulienKode/team-labeler-action@2ae7f231625e352b030b6fd25386221454cec899 # v2.0.1
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
