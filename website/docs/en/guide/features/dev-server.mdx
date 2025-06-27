@@ -1,0 +1,48 @@
+# Dev server
+
+Rspack CLI comes with a built-in `@rspack/dev-server` for development and debugging. Its capabilities are similar to `webpack-dev-server`, including features like hot module replacement (HMR), proxy server and more.
+
+:::tip
+
+`webpack-dev-server@5` is used in `@rspack/dev-server`, which has some differences from `webpack-dev-server@4`.
+
+- The minimum supported Node.js version for webpack-dev-server v5 is 18.12.0.
+- Several configuration options have changed. Please refer to the [webpack-dev-server v5 migration guide](https://github.com/webpack/webpack-dev-server/blob/master/migration-v5.md).
+
+:::
+
+### HMR
+
+By default, Rspack enables HMR in dev mode. You can disable HMR by configuring the `devServer.hot` option in Rspack configuration.
+
+```js title="rspack.config.mjs"
+export default {
+  devServer: {
+    hot: false,
+  },
+};
+```
+
+:::warning
+Do not include `[hash]` or `[contenthash]` in [output.cssFilename](/config/output#outputcssfilename), otherwise CSS HMR may not work.
+:::
+
+### Proxy
+
+Rspack has a built-in simple proxy server. You can enable the proxy server by configuring the `devServer.proxy` option in Rspack configuration. The devServer internally uses [http-proxy-middleware](https://github.com/chimurai/http-proxy-middleware) to implement the proxy function. For example, you can proxy `/api` to `http://localhost:3000` as follows:
+
+```js title="rspack.config.mjs"
+export default {
+  devServer: {
+    proxy: [
+      {
+        context: ['/api'],
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    ],
+  },
+};
+```
+
+For more devServer configuration options, please refer to [devServer](/config/dev-server.html).

@@ -1,0 +1,71 @@
+# This action installs the minimal Rust profile and configures Swatinem/rust-cache.
+#
+# It is needed to install as few Rust components as possbile because
+# it takes a few minutes to install some of components on Windows and Mac, especially rust-doc.
+
+name: Rustup
+
+description: Install Rust with cache
+
+inputs:
+  key:
+    required: true
+    type: string
+  save-if:
+    default: false
+    required: false
+    type: boolean
+
+runs:
+  using: composite
+  steps:
+    - name: Install rustup, if needed
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        if ! command -v rustup &> /dev/null ; then
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
+          echo "${CARGO_HOME:-$HOME/.cargo}/bin" >> $GITHUB_PATH
+        fi
+
+    - name: Get toolchain
+      id: get-toolchain
+      shell: bash
+      run: |
+        toolchain=$(grep -E "^channel\s*=" rust-toolchain.toml | sed -n -E 's/^[ \t]*channel[ \t]*=[ \t]*"([^"]*)"[^#]*.*$/\1/p' | tr -d '[:space:]')
+        echo "toolchain=${toolchain}" >> $GITHUB_OUTPUT
+
+    - name: Restore rustup cache
+      id: restore
+      if: ${{ inputs.save-if == 'true' }}
+      uses: ./.github/actions/cache/restore
+      with:
+        path: ~/.rustup/toolchains
+        key: rustup-cache-v2-${{ runner.os }}-${{ steps.get-toolchain.outputs.toolchain }}
+
+    # install components for nightly toolchain
+    - name: Install
+      shell: bash
+      run: |
+        toolchain='${{ steps.get-toolchain.outputs.toolchain }}'
+        rustup toolchain install $toolchain \
+          -c rustc \
+          -c cargo \
+          -c rust-std \
+          -c clippy \
+          -c rustfmt \
+          -c miri
+
+    - name: Save rustup cache
+      uses: ./.github/actions/cache/save
+      if: ${{ inputs.save-if == 'true' && steps.restore.outputs.cache-hit != 'true' }}
+      with:
+        path: ~/.rustup/toolchains
+        key: rustup-cache-v2-${{ runner.os }}-${{ steps.get-toolchain.outputs.toolchain }}
+
+    - name: Cargo cache
+      if: ${{ runner.environment != 'self-hosted' || runner.os != 'Windows' }}
+      uses: ./.github/actions/rustup/cargo
+      with:
+        key: ${{ inputs.key }}
+        save-if: ${{ inputs.save-if == 'true' }}

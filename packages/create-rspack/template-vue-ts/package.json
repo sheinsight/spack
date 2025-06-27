@@ -1,0 +1,20 @@
+{
+  "name": "rspack-vue-ts-starter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspack dev",
+    "build": "rspack build",
+    "preview": "rspack preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.16"
+  },
+  "devDependencies": {
+    "@rspack/cli": "workspace:*",
+    "@rspack/core": "workspace:*",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vue-loader": "^17.4.2"
+  }
+}

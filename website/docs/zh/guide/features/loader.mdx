@@ -1,0 +1,153 @@
+import { Stability } from '@components/ApiMeta';
+
+# Loader
+
+Rspack 内置了对 JavaScript、CSS、JSON、静态资源等模块类型的支持。
+
+Loader 是一种模块转换器，它将各种类型的模块转换为 Rspack 支持的类型。通过使用不同类型的 loader，你可以扩展 Rspack 来处理额外的模块类型，例如 JSX、Markdown、Sass、Less 等。
+
+当 Rspack 打包一个模块时，先通过 loader 对模块进行预处理，将它们转换为 Rspack 支持的模块类型，然后再根据 [Rule.type](/config/module#ruletype) 对模块进行后置处理。
+
+## webpack loader 兼容
+
+Rspack 允许你使用社区中绝大多数的 webpack loaders。查看 [awesome-rspack - Rspack loaders](https://github.com/web-infra-dev/awesome-rspack?tab=readme-ov-file#rspack-loaders) 发现社区提供的 loaders。
+
+如果你发现有 Rspack 不支持的 loader，欢迎通过 [GitHub Issues](https://github.com/web-infra-dev/rspack/issues) 与我们交流。
+
+## 开发 Loader
+
+参考 [Loader API - Loader 类型](/api/loader-api/types) 了解如何开发一个 Loader。
+
+## 示例
+
+### 使用 Less
+
+你可以使用 [less-loader](https://github.com/webpack-contrib/less-loader) 对 `.less` 文件的内容做相应的转换：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        use: [
+          {
+            loader: 'less-loader',
+          },
+        ],
+        type: 'css',
+      },
+    ],
+  },
+};
+```
+
+[less-loader](https://github.com/webpack-contrib/less-loader) 可以将 Less 文件转换为 Rspack 支持的 CSS 模块类型，因此你可以设置 type 为 `'css'` 以指示 Rspack 使用原生支持的 CSS 策略进行后处理。
+
+### 使用多个 Loader
+
+你可以对特定的 [Rule](/config/module#rule) 匹配项使用多个 loader 进行链式处理，loader 的执行顺序为**从右往左**。
+
+例如，你可以使用 [less-loader](https://github.com/webpack-contrib/less-loader) 完成 Less 到 CSS 类型之间的转换，并对转换后的源码使用 [postcss-loader](https://github.com/webpack-contrib/postcss-loader) 进行二次转换，并最终交给 Rspack 的 CSS 后处理器，完成进一步处理：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        use: [
+          {
+            loader: 'postcss-loader',
+          },
+          {
+            loader: 'less-loader',
+          },
+        ],
+        type: 'css',
+      },
+    ],
+  },
+};
+```
+
+### 传递配置项
+
+你可以使用 [Rule.use](/config/module#ruleuse) 给 loader 传递相关配置，例如：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                // ...
+              },
+            },
+          },
+        ],
+        type: 'css',
+      },
+    ],
+  },
+};
+```
+
+### 使用自定义 Loader
+
+你可以在 Rspack 中使用自定义 loader，下面我们会编写一个简单的 banner-loader 作为示例。
+
+banner-loader 的作用是在每个模块的头部添加一个 banner 注释，例如添加一段 License 信息：
+
+```js
+/**
+ * MIT Licensed
+ * Copyright (c) 2022-present ByteDance, Inc. and its affiliates.
+ * https://github.com/web-infra-dev/rspack/blob/main/LICENSE
+ */
+```
+
+在项目的根目录新建一个 `banner-loader.js` 的文件，内容如下：
+
+```js title="banner-loader.js"
+const BANNER = `/**
+ * MIT Licensed
+ * Copyright (c) 2022-present ByteDance, Inc. and its affiliates.
+ * https://github.com/web-infra-dev/rspack/blob/main/LICENSE
+ */`;
+
+module.exports = function (content) {
+  return `${BANNER}\n${content}`;
+};
+```
+
+Loader 的第一个入参为文件的内容，我们可以在这里对文件内容进行处理，然后返回处理后的内容。编写完后，我们需要将这个 loader 使用 CommonJS 风格进行导出。
+
+上述示例中，我们会在所有匹配的文件的头部添加一个 banner 注释，如果我们希望将这个行为匹配所有以 `js` 结尾的文件，我们可以这样配置：
+
+```js title="rspack.config.mjs"
+export default {
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: './banner-loader.js',
+      },
+    ],
+  },
+};
+```
+
+更多关于 Loader API 的信息，请参考 [loader-api](/api/loader-api/index)
+
+### 使用内置 Loader
+
+内置 Loader 在不损失 JS Loader 的可组合性的同时，提供了比 JS Loader 更优的性能。一些内置的 Loader 包括：
+
+- [builtin:swc-loader](/guide/features/builtin-swc-loader)
+- [builtin:lightningcss-loader](/guide/features/builtin-lightningcss-loader)

@@ -1,0 +1,14 @@
+[package]
+description       = "rspack hash"
+edition.workspace = true
+license           = "MIT"
+name              = "rspack_hash"
+repository        = "https://github.com/web-infra-dev/rspack"
+version           = "0.2.0"
+
+[dependencies]
+md4              = "0.10.2"
+rspack_cacheable = { workspace = true }
+sha2             = { workspace = true }
+smol_str         = { workspace = true }
+xxhash-rust      = { workspace = true, features = ["xxh64"] }
