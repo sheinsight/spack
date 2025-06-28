@@ -5,6 +5,7 @@ mod raw_circular_dependency;
 mod raw_copy;
 mod raw_css_extract;
 mod raw_dll;
+mod raw_duplicate_dependencies;
 mod raw_html;
 mod raw_http_uri;
 mod raw_ids;
@@ -98,6 +99,7 @@ use rspack_plugin_wasm::{
 use rspack_plugin_web_worker_template::web_worker_template_plugin;
 use rspack_plugin_worker::WorkerPlugin;
 use rustc_hash::FxHashMap as HashMap;
+use spack_plugin_duplicate_dependencies::DuplicateDependenciesPlugin;
 
 pub use self::{
   css_chunking::CssChunkingPluginOptions,
@@ -121,8 +123,9 @@ use self::{
   raw_size_limits::RawSizeLimitsPluginOptions,
 };
 use crate::{
-  entry::JsEntryPluginOptions, plugins::JsLoaderRspackPlugin, JsLoaderRunnerGetter,
-  RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
+  entry::JsEntryPluginOptions, plugins::JsLoaderRspackPlugin,
+  raw_options::raw_builtins::raw_duplicate_dependencies::RawDuplicateDependenciesPluginOptions,
+  JsLoaderRunnerGetter, RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
   RawEvalDevToolModulePluginOptions, RawExternalItemWrapper, RawExternalsPluginOptions,
   RawHttpExternalsRspackPluginOptions, RawRsdoctorPluginOptions, RawRslibPluginOptions,
   RawRstestPluginOptions, RawSplitChunksOptions, SourceMapDevToolPluginOptions,
@@ -131,6 +134,8 @@ use crate::{
 #[napi(string_enum)]
 #[derive(Debug)]
 pub enum BuiltinPluginName {
+  // spack plugins
+  DuplicateDependenciesPlugin,
   // webpack also have these plugins
   DefinePlugin,
   ProvidePlugin,
@@ -263,7 +268,6 @@ impl<'a> BuiltinPlugin<'a> {
     plugins: &mut Vec<BoxPlugin>,
   ) -> napi::Result<()> {
     match self.name {
-      // webpack also have these plugins
       BuiltinPluginName::DefinePlugin => {
         let plugin = DefinePlugin::new(
           downcast_into(self.options)
@@ -592,8 +596,6 @@ impl<'a> BuiltinPlugin<'a> {
         .boxed();
         plugins.push(plugin)
       }
-
-      // rspack specific plugins
       BuiltinPluginName::HttpExternalsRspackPlugin => {
         let plugin_options = downcast_into::<RawHttpExternalsRspackPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
@@ -762,15 +764,13 @@ impl<'a> BuiltinPlugin<'a> {
         let options = downcast_into::<CssChunkingPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
         plugins.push(CssChunkingPlugin::new(options.into()).boxed());
-      } // BuiltinPluginName::Custom(ref name) => {
-        //   CUSTOMED_PLUGINS_CTOR.with_borrow(|ctors| {
-        //     let ctor = ctors.get(name).ok_or_else(|| {
-        //       napi::Error::from_reason(format!("Expected plugin installed '{name}'"))
-        //     })?;
-        //     plugins.push(ctor(env, self.options)?);
-        //     Ok::<_, napi::Error>(())
-        //   })?;
-        // }
+      }
+      BuiltinPluginName::DuplicateDependenciesPlugin => {
+        let raw_options = downcast_into::<RawDuplicateDependenciesPluginOptions>(self.options)
+          .map_err(|report| napi::Error::from_reason(report.to_string()))?;
+        let options = raw_options.into();
+        plugins.push(DuplicateDependenciesPlugin::new(options).boxed());
+      }
     }
     Ok(())
   }

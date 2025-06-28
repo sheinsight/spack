@@ -1,6 +1,6 @@
 [workspace]
-members  = ["crates/*", "tasks/*"]
-resolver = "2"                     # See https://doc.rust-lang.org/cargo/reference/resolver.html#feature-resolver-version-2
+members  = ["crates/*", "customized/*", "tasks/*"]
+resolver = "2"                                     # See https://doc.rust-lang.org/cargo/reference/resolver.html#feature-resolver-version-2
 
 [workspace.package]
 authors       = ["Rspack Teams"]
@@ -205,6 +205,11 @@ rspack_testing                         = { version = "0.2.0", path = "crates/rsp
 rspack_tracing                         = { version = "0.2.0", path = "crates/rspack_tracing" }
 rspack_tracing_perfetto                = { version = "0.2.0", path = "crates/rspack_tracing_perfetto" }
 rspack_util                            = { version = "0.2.0", path = "crates/rspack_util" }
+
+package_json_parser                 = { version = "0.0.7" }
+spack_plugin_duplicate_dependencies = { path = "customized/spack_plugin_duplicate_dependencies" }
+up_finder                           = { version = "0.0.4" }
+
 
 [workspace.metadata.release]
 rate-limit = { existing-packages = 70, new-packages = 70 }

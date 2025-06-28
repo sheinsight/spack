@@ -445,6 +445,7 @@ export interface BuiltinPlugin {
 }
 
 export declare enum BuiltinPluginName {
+  DuplicateDependenciesPlugin = 'DuplicateDependenciesPlugin',
   DefinePlugin = 'DefinePlugin',
   ProvidePlugin = 'ProvidePlugin',
   BannerPlugin = 'BannerPlugin',
@@ -846,6 +847,12 @@ export interface JsHttpResponseRaw {
 
 export interface JsLibIdentOptions {
   context: string
+}
+
+export interface JsLibrary {
+  dir: string
+  name: string
+  version: string
 }
 
 export interface JsLibraryAuxiliaryComment {
@@ -1841,6 +1848,10 @@ export interface RawDllReferenceAgencyPluginOptions {
 
 export interface RawDraft {
   customMedia: boolean
+}
+
+export interface RawDuplicateDependenciesPluginOptions {
+  onDetected?: (libraries: Library[]) => void
 }
 
 export interface RawDynamicEntryPluginOptions {

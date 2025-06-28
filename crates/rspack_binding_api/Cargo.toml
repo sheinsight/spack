@@ -8,8 +8,8 @@ repository        = "https://github.com/web-infra-dev/rspack"
 version           = "0.2.0"
 
 [features]
-plugin = ["rspack_loader_swc/plugin"]
-sftrace-setup = [ "dep:sftrace-setup", "rspack_allocator/sftrace-setup" ]
+plugin        = ["rspack_loader_swc/plugin"]
+sftrace-setup = ["dep:sftrace-setup", "rspack_allocator/sftrace-setup"]
 
 [dependencies]
 anyhow                   = { workspace = true }
@@ -108,6 +108,8 @@ serde_json                             = { workspace = true }
 swc_core                               = { workspace = true, default-features = false, features = ["ecma_transforms_react"] }
 tokio                                  = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "test-util", "tracing"] }
 ustr                                   = { workspace = true }
+
+spack_plugin_duplicate_dependencies = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 rspack_tracing = { workspace = true }

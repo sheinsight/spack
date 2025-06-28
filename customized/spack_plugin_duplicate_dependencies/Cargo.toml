@@ -1,0 +1,23 @@
+[package]
+name = "spack_plugin_duplicate_dependencies"
+version = "0.1.0"
+authors.workspace = true
+categories.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+rspack_core  = { workspace = true }
+rspack_hook  = { workspace = true }
+rspack_error = { workspace = true }
+tracing      = { workspace = true } 
+up_finder      = { workspace = true }
+package_json_parser = { workspace = true }
+futures = { workspace = true }
+derive_more = { workspace = true }
+
+[lints]
+workspace = true
