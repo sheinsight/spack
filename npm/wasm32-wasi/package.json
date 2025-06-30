@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-wasm32-wasi",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "license": "MIT",
   "description": "Node binding for rspack",
   "main": "rspack.wasi.cjs",

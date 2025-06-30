@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-win32-x64-msvc",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "license": "MIT",
   "description": "Node binding for rspack",
   "main": "rspack.win32-x64-msvc.node",
