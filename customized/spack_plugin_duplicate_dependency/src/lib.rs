@@ -1,5 +1,5 @@
 #![feature(let_chains)]
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, time::Instant};
 
 use derive_more::Debug;
 use futures::future::BoxFuture;
@@ -12,7 +12,7 @@ use rspack_hook::{plugin, plugin_hook};
 use up_finder::UpFinder;
 
 pub type CompilationHookFn =
-  Box<dyn Fn(Vec<Library>) -> BoxFuture<'static, Result<()>> + Sync + Send>;
+  Box<dyn Fn(DuplicateDependencyPluginResponse) -> BoxFuture<'static, Result<()>> + Sync + Send>;
 
 #[derive(Debug)]
 pub struct DuplicateDependencyPluginOptions {
@@ -70,6 +70,8 @@ impl Plugin for DuplicateDependencyPlugin {
 
 #[plugin_hook(CompilerFinishMake for DuplicateDependencyPlugin)]
 async fn finish_make(&self, compilation: &mut Compilation) -> Result<()> {
+  let start_time = Instant::now();
+
   let module_graph = compilation.get_module_graph();
 
   let mut cache = HashMap::new();
@@ -106,9 +108,16 @@ async fn finish_make(&self, compilation: &mut Compilation) -> Result<()> {
     }
   }
 
+  let end_time = Instant::now();
+  let duration = end_time.duration_since(start_time);
+
+  let duration_millis = duration.as_millis() as f64;
+
+  let response =
+    DuplicateDependencyPluginResponse::new(cache.values().cloned().collect(), duration_millis);
+
   if let Some(on_detected) = &self.options.on_detected {
-    let libraries = cache.values().cloned().collect::<Vec<_>>();
-    on_detected(libraries).await?;
+    on_detected(response).await?;
   }
 
   Ok(())
@@ -124,5 +133,20 @@ pub struct Library {
 impl Library {
   pub fn new(dir: String, name: String, version: String) -> Self {
     Self { dir, name, version }
+  }
+}
+
+#[derive(Debug)]
+pub struct DuplicateDependencyPluginResponse {
+  pub libraries: Vec<Library>,
+  pub duration_millis: f64,
+}
+
+impl DuplicateDependencyPluginResponse {
+  pub fn new(libraries: Vec<Library>, duration_millis: f64) -> Self {
+    Self {
+      libraries,
+      duration_millis,
+    }
   }
 }
