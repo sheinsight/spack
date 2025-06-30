@@ -34,7 +34,7 @@ async function build() {
 			"--platform",
 			"--dts",
 			"binding.d.ts",
-			"--no-js",
+			// "--no-js",
 			// "--no-const-enum",
 			"--no-dts-header",
 			"--pipe",
