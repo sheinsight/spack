@@ -1856,7 +1856,7 @@ export interface RawDraft {
 }
 
 export interface RawDuplicateDependencyPluginOptions {
-  onDetected?: (libraries: Library[]) => void
+  onDetected?: (response: DuplicateDependencyPluginResponse) => void
 }
 
 export interface RawDynamicEntryPluginOptions {
