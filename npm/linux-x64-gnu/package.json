@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-linux-x64-gnu",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "license": "MIT",
   "description": "Node binding for rspack",
   "main": "rspack.linux-x64-gnu.node",
