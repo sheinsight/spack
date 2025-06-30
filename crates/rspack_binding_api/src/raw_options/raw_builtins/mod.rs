@@ -135,7 +135,7 @@ use crate::{
 #[derive(Debug)]
 pub enum BuiltinPluginName {
   // spack plugins
-  DuplicateDependenciesPlugin,
+  DuplicateDependencyPlugin,
   // webpack also have these plugins
   DefinePlugin,
   ProvidePlugin,
@@ -765,7 +765,7 @@ impl<'a> BuiltinPlugin<'a> {
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
         plugins.push(CssChunkingPlugin::new(options.into()).boxed());
       }
-      BuiltinPluginName::DuplicateDependenciesPlugin => {
+      BuiltinPluginName::DuplicateDependencyPlugin => {
         let raw_options = downcast_into::<RawDuplicateDependencyPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
         let options = raw_options.into();

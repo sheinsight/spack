@@ -445,7 +445,7 @@ export interface BuiltinPlugin {
 }
 
 export declare enum BuiltinPluginName {
-  DuplicateDependenciesPlugin = 'DuplicateDependenciesPlugin',
+  DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
   DefinePlugin = 'DefinePlugin',
   ProvidePlugin = 'ProvidePlugin',
   BannerPlugin = 'BannerPlugin',
