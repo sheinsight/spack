@@ -1850,7 +1850,7 @@ export interface RawDraft {
   customMedia: boolean
 }
 
-export interface RawDuplicateDependenciesPluginOptions {
+export interface RawDuplicateDependencyPluginOptions {
   onDetected?: (libraries: Library[]) => void
 }
 
