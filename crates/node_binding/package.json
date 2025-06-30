@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "license": "MIT",
   "description": "Node binding for rspack",
   "main": "binding.js",
