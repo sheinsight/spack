@@ -763,6 +763,11 @@ export interface JsDiagnosticLocation {
   length: number
 }
 
+export interface JsDuplicateDependencyPluginResponse {
+  libraries: Array<JsLibrary>
+  durationMillis: number
+}
+
 export interface JsEntryData {
   dependencies: Array<Dependency>
   includeDependencies: Array<Dependency>
