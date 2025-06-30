@@ -1,18 +1,18 @@
 use napi_derive::napi;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
-use spack_plugin_duplicate_dependencies::{
-  CompilationHookFn, DuplicateDependenciesPluginOptions, Library,
+use spack_plugin_duplicate_dependency::{
+  CompilationHookFn, DuplicateDependencyPluginOptions, Library,
 };
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
-pub struct RawDuplicateDependenciesPluginOptions {
+pub struct RawDuplicateDependencyPluginOptions {
   #[napi(ts_type = "(libraries: Library[]) => void")]
   pub on_detected: Option<ThreadsafeFunction<Vec<JsLibrary>, ()>>,
 }
 
-impl From<RawDuplicateDependenciesPluginOptions> for DuplicateDependenciesPluginOptions {
-  fn from(value: RawDuplicateDependenciesPluginOptions) -> Self {
+impl From<RawDuplicateDependencyPluginOptions> for DuplicateDependencyPluginOptions {
+  fn from(value: RawDuplicateDependencyPluginOptions) -> Self {
     let on_detected: Option<CompilationHookFn> = match value.on_detected {
       Some(callback) => Some(Box::new(move |libraries| {
         let callback = callback.clone();

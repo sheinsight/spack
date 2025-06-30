@@ -4270,7 +4270,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sftrace-setup",
- "spack_plugin_duplicate_dependencies",
+ "spack_plugin_duplicate_dependency",
  "swc_core",
  "tokio",
  "tracing",
@@ -6261,7 +6261,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "spack_plugin_duplicate_dependencies"
+name = "spack_plugin_duplicate_dependency"
 version = "0.1.0"
 dependencies = [
  "derive_more 1.0.0",

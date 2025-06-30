@@ -15,26 +15,26 @@ pub type CompilationHookFn =
   Box<dyn Fn(Vec<Library>) -> BoxFuture<'static, Result<()>> + Sync + Send>;
 
 #[derive(Debug)]
-pub struct DuplicateDependenciesPluginOptions {
+pub struct DuplicateDependencyPluginOptions {
   #[debug(skip)]
   pub on_detected: Option<CompilationHookFn>,
 }
 
 #[plugin]
 #[derive(Debug)]
-pub struct DuplicateDependenciesPlugin {
-  options: DuplicateDependenciesPluginOptions,
+pub struct DuplicateDependencyPlugin {
+  options: DuplicateDependencyPluginOptions,
 }
 
-impl DuplicateDependenciesPlugin {
-  pub fn new(options: DuplicateDependenciesPluginOptions) -> Self {
+impl DuplicateDependencyPlugin {
+  pub fn new(options: DuplicateDependencyPluginOptions) -> Self {
     Self::new_inner(options)
   }
 }
 
-impl Plugin for DuplicateDependenciesPlugin {
+impl Plugin for DuplicateDependencyPlugin {
   fn name(&self) -> &'static str {
-    "spack.DuplicateDependenciesPlugin"
+    "spack.DuplicateDependencyPlugin"
   }
 
   fn apply(&self, ctx: PluginContext<&mut ApplyContext>, _options: &CompilerOptions) -> Result<()> {
@@ -68,7 +68,7 @@ impl Plugin for DuplicateDependenciesPlugin {
   // fn clear_cache(&self, _id: CompilationId) {}
 }
 
-#[plugin_hook(CompilerFinishMake for DuplicateDependenciesPlugin)]
+#[plugin_hook(CompilerFinishMake for DuplicateDependencyPlugin)]
 async fn finish_make(&self, compilation: &mut Compilation) -> Result<()> {
   let module_graph = compilation.get_module_graph();
 

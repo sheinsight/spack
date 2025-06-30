@@ -5,7 +5,7 @@ mod raw_circular_dependency;
 mod raw_copy;
 mod raw_css_extract;
 mod raw_dll;
-mod raw_duplicate_dependencies;
+mod raw_duplicate_dependency;
 mod raw_html;
 mod raw_http_uri;
 mod raw_ids;
@@ -99,7 +99,7 @@ use rspack_plugin_wasm::{
 use rspack_plugin_web_worker_template::web_worker_template_plugin;
 use rspack_plugin_worker::WorkerPlugin;
 use rustc_hash::FxHashMap as HashMap;
-use spack_plugin_duplicate_dependencies::DuplicateDependenciesPlugin;
+use spack_plugin_duplicate_dependency::DuplicateDependencyPlugin;
 
 pub use self::{
   css_chunking::CssChunkingPluginOptions,
@@ -124,7 +124,7 @@ use self::{
 };
 use crate::{
   entry::JsEntryPluginOptions, plugins::JsLoaderRspackPlugin,
-  raw_options::raw_builtins::raw_duplicate_dependencies::RawDuplicateDependenciesPluginOptions,
+  raw_options::raw_builtins::raw_duplicate_dependency::RawDuplicateDependencyPluginOptions,
   JsLoaderRunnerGetter, RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
   RawEvalDevToolModulePluginOptions, RawExternalItemWrapper, RawExternalsPluginOptions,
   RawHttpExternalsRspackPluginOptions, RawRsdoctorPluginOptions, RawRslibPluginOptions,
@@ -766,10 +766,10 @@ impl<'a> BuiltinPlugin<'a> {
         plugins.push(CssChunkingPlugin::new(options.into()).boxed());
       }
       BuiltinPluginName::DuplicateDependenciesPlugin => {
-        let raw_options = downcast_into::<RawDuplicateDependenciesPluginOptions>(self.options)
+        let raw_options = downcast_into::<RawDuplicateDependencyPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
         let options = raw_options.into();
-        plugins.push(DuplicateDependenciesPlugin::new(options).boxed());
+        plugins.push(DuplicateDependencyPlugin::new(options).boxed());
       }
     }
     Ok(())

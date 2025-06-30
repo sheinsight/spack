@@ -207,7 +207,7 @@ rspack_tracing_perfetto                = { version = "0.2.0", path = "crates/rsp
 rspack_util                            = { version = "0.2.0", path = "crates/rspack_util" }
 
 package_json_parser                 = { version = "0.0.7" }
-spack_plugin_duplicate_dependencies = { path = "customized/spack_plugin_duplicate_dependencies" }
+spack_plugin_duplicate_dependency = { path = "customized/spack_plugin_duplicate_dependency" }
 up_finder                           = { version = "0.0.4" }
 
 

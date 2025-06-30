@@ -1,5 +1,5 @@
 [package]
-name = "spack_plugin_duplicate_dependencies"
+name = "spack_plugin_duplicate_dependency"
 version = "0.1.0"
 authors.workspace = true
 categories.workspace = true

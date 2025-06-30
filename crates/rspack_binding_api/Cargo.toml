@@ -109,7 +109,7 @@ swc_core                               = { workspace = true, default-features = 
 tokio                                  = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "test-util", "tracing"] }
 ustr                                   = { workspace = true }
 
-spack_plugin_duplicate_dependencies = { workspace = true }
+spack_plugin_duplicate_dependency = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 rspack_tracing = { workspace = true }
