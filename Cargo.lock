@@ -6261,6 +6261,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "spack_plugin_case_sensitive_paths"
+version = "0.1.0"
+dependencies = [
+ "derive_more 1.0.0",
+ "futures",
+ "package_json_parser",
+ "rspack_core",
+ "rspack_error",
+ "rspack_hook",
+ "tracing",
+ "up_finder",
+]
+
+[[package]]
 name = "spack_plugin_duplicate_dependency"
 version = "0.1.0"
 dependencies = [
