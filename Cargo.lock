@@ -4270,6 +4270,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sftrace-setup",
+ "spack_plugin_case_sensitive_paths",
  "spack_plugin_duplicate_dependency",
  "swc_core",
  "tokio",

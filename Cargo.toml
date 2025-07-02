@@ -206,9 +206,10 @@ rspack_tracing                         = { version = "0.2.0", path = "crates/rsp
 rspack_tracing_perfetto                = { version = "0.2.0", path = "crates/rspack_tracing_perfetto" }
 rspack_util                            = { version = "0.2.0", path = "crates/rspack_util" }
 
-package_json_parser                 = { version = "0.0.7" }
+package_json_parser               = { version = "0.0.7" }
+spack_plugin_case_sensitive_paths = { path = "customized/spack_plugin_case_sensitive_paths" }
 spack_plugin_duplicate_dependency = { path = "customized/spack_plugin_duplicate_dependency" }
-up_finder                           = { version = "0.0.4" }
+up_finder                         = { version = "0.0.4" }
 
 
 [workspace.metadata.release]

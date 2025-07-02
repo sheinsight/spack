@@ -446,6 +446,7 @@ export interface BuiltinPlugin {
 
 export declare enum BuiltinPluginName {
   DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
+  CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   DefinePlugin = 'DefinePlugin',
   ProvidePlugin = 'ProvidePlugin',
   BannerPlugin = 'BannerPlugin',
@@ -1612,6 +1613,11 @@ export interface RawCacheGroupOptions {
 export interface RawCacheOptions {
   type: string
   maxGenerations?: number
+}
+
+export interface RawCaseSensitivePathsPluginOptions {
+  debug: boolean
+  useCache: boolean
 }
 
 export interface RawCircularDependencyRspackPluginOptions {
