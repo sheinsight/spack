@@ -13,11 +13,9 @@ repository.workspace = true
 rspack_core  = { workspace = true }
 rspack_hook  = { workspace = true }
 rspack_error = { workspace = true }
-tracing      = { workspace = true } 
-up_finder      = { workspace = true }
-package_json_parser = { workspace = true }
-futures = { workspace = true }
+tracing      = { workspace = true }
 derive_more = { workspace = true }
+swc_core = { workspace = true }
 
 [lints]
 workspace = true
