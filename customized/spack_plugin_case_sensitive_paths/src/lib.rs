@@ -7,7 +7,7 @@ use rspack_core::{
 };
 use rspack_error::{
   miette::{LabeledSpan, MietteDiagnostic, Severity},
-  Diagnostic, Result,
+  Diagnostic, DiagnosticExt, Result, TraceableError,
 };
 use rspack_hook::{plugin, plugin_hook};
 use rspack_javascript_compiler::JavaScriptCompiler;
@@ -102,6 +102,47 @@ impl CaseSensitivePathsPlugin {
       Err(_) => None,
     }
   }
+
+  // 优化后的版本，参考 rspack 内部插件的做法：
+  fn create_diagnostic_with_rspack(
+    &self,
+    error_message: &str,
+    source_content: Option<&str>,
+    current_file: &str,
+    import_position: Option<(usize, usize)>,
+  ) -> Diagnostic {
+    match (source_content, import_position) {
+      (Some(source), Some((start, length))) => {
+        // 使用 rspack 内部的标准模式
+        Diagnostic::from(
+          TraceableError::from_file(
+            source.to_string(),
+            start,
+            start + length,
+            "case-sensitive-paths".to_string(),
+            error_message.to_string(),
+          )
+          .with_severity(rspack_error::miette::Severity::Error)
+          .with_help(Some(
+            "Fix the case of file paths to ensure consistency in cross-platform builds.\n\
+             It may work fine on macOS/Windows, but will fail on Linux.",
+          ))
+          .boxed(), // 使用 .boxed() 而不是手动转换
+        )
+        .with_hide_stack(Some(true)) // 隐藏栈信息，让输出更清晰
+      }
+      _ => {
+        // 回退到简单的诊断
+        Diagnostic::error(
+          "case-sensitive-paths".to_string(),
+          format!(
+            "{}\n\nFix the case of file paths to ensure consistency in cross-platform builds.",
+            error_message
+          ),
+        )
+      }
+    }
+  }
 }
 
 impl Plugin for CaseSensitivePathsPlugin {
@@ -163,45 +204,33 @@ It may work fine on macOS/Windows, but will fail on Linux."#,
           original_request
         };
 
-        if let Some((start, length)) = self.find_import_position(&source_content, search_request) {
-          diagnostic = diagnostic.with_label(LabeledSpan::new(
-            Some("The path here has a case sensitivity issue.".to_string()),
-            start,
-            length,
-          ));
-        } else if search_request != original_request {
-          // 如果 user_request 没找到，再试 original_request
-          if let Some((start, length)) =
-            self.find_import_position(&source_content, original_request)
-          {
-            diagnostic = diagnostic.with_label(LabeledSpan::new(
-              Some("The path here has a case sensitivity issue.".to_string()),
-              start,
-              length,
-            ));
-          }
-        }
-
-        // 创建 miette::Error 并添加源代码
-        let mut error = rspack_error::miette::Error::new(diagnostic);
-        error = error.with_source_code(source_content.clone());
-
-        // 转换为 rspack Diagnostic
-        let diagnostic = Diagnostic::from(error);
-
-        data.diagnostics.push(diagnostic);
-      } else {
-        let diagnostic = MietteDiagnostic::new(&error_message)
-          .with_code("case-sensitive-paths")
-          .with_severity(Severity::Error)
-          .with_help(
-            r#"Fix the case of file paths to ensure consistency in cross-platform builds. 
-
-It may work fine on macOS/Windows, but will fail on Linux."#,
+        if let Some(import_position) = self.find_import_position(&source_content, search_request) {
+          let diagnostic = self.create_diagnostic_with_rspack(
+            &error_message,
+            Some(&source_content),
+            current_file,
+            Some(import_position),
           );
 
-        let error = rspack_error::miette::Error::new(diagnostic);
-        let diagnostic = Diagnostic::from(error).with_file(Some(current_file.to_string().into()));
+          data.diagnostics.push(diagnostic);
+        } else if search_request != original_request {
+          // 如果 user_request 没找到，再试 original_request
+          if let Some(import_position) =
+            self.find_import_position(&source_content, original_request)
+          {
+            let diagnostic = self.create_diagnostic_with_rspack(
+              &error_message,
+              Some(&source_content),
+              current_file,
+              Some(import_position),
+            );
+
+            data.diagnostics.push(diagnostic);
+          }
+        }
+      } else {
+        let diagnostic =
+          self.create_diagnostic_with_rspack(&error_message, None, current_file, None);
 
         data.diagnostics.push(diagnostic);
       }
