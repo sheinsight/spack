@@ -2,12 +2,12 @@ use std::path::Path;
 
 use derive_more::Debug;
 use rspack_core::{
-  ApplyContext, CompilationId, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData,
-  Plugin, PluginContext,
+  ApplyContext, CompilationId, CompilerOptions, ModuleFactoryCreateData, ModuleIdentifier,
+  NormalModuleCreateData, Plugin, PluginContext,
 };
 use rspack_error::{
-  miette::{LabeledSpan, MietteDiagnostic, Severity},
-  Diagnostic, DiagnosticExt, MietteExt, Result, TraceableError,
+  miette::{MietteDiagnostic, Severity},
+  Diagnostic, DiagnosticExt, Result, TraceableError,
 };
 use rspack_hook::{plugin, plugin_hook};
 use rspack_javascript_compiler::JavaScriptCompiler;
@@ -108,42 +108,56 @@ impl CaseSensitivePathsPlugin {
     &self,
     error_message: &str,
     source_content: Option<&str>,
-    current_file: &str,
     import_position: Option<(usize, usize)>,
   ) -> Diagnostic {
     match (source_content, import_position) {
       (Some(source), Some((start, length))) => {
         // 使用 rspack 内部的标准模式
-        Diagnostic::from(
+
+        let diagnostic = Diagnostic::from(
           TraceableError::from_file(
             source.to_string(),
             start,
             start + length,
             "case-sensitive-paths".to_string(),
-            error_message.to_string(),
+            format!(
+              r#"
+{}
+"#,
+              error_message.to_string()
+            ),
           )
-          .with_severity(rspack_error::miette::Severity::Error)
           .with_help(Some(
             r#"Fix the case of file paths to ensure consistency in cross-platform builds.
 It may work fine on macOS/Windows, but will fail on Linux."#,
           ))
-          .boxed(), // 使用 .boxed() 而不是手动转换
+          .boxed(),
         )
-        .with_hide_stack(Some(true)) // 隐藏栈信息，让输出更清晰
+        .with_hide_stack(Some(true));
+
+        // diagnostic.with_module_identifier(Some(parent_module_identifier))
+        diagnostic
       }
-      _ => {
-        // 回退到简单的诊断
-        Diagnostic::from(
-          MietteDiagnostic::new(error_message)
-            .with_code("case-sensitive-paths")
-            .with_severity(rspack_error::miette::Severity::Error)
-            .boxed()
-            .with_help(
-              r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-It may work fine on macOS/Windows, but will fail on Linux."#,
-            ),
+      _ => Diagnostic::from(
+        TraceableError::from_lazy_file(
+          0,
+          0,
+          "case-sensitive-paths".to_string(),
+          format!(
+            r#"
+{}
+"#,
+            error_message.to_string()
+          ),
         )
-      }
+        .with_help(Some(
+          r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+
+            It may work fine on macOS/Windows, but will fail on Linux."#,
+        ))
+        .with_hide_stack(Some(true))
+        .boxed(),
+      ),
     }
   }
 }
@@ -189,15 +203,6 @@ async fn after_resolve(
     if let Some(error_message) = self.check_case_sensitive_path_optimized(path) {
       // 使用 miette 创建友好的错误展示
       if let Ok(source_content) = std::fs::read_to_string(current_file) {
-        let mut diagnostic = MietteDiagnostic::new(&error_message)
-          .with_code("case-sensitive-paths")
-          .with_severity(Severity::Error)
-          .with_help(
-            r#"Fix the case of file paths to ensure consistency in cross-platform builds. 
-
-It may work fine on macOS/Windows, but will fail on Linux."#,
-          );
-
         // 尝试找到 import 语句的位置并添加标签
         // 优先使用 original_request，如果找不到再尝试 user_request
         let search_request = if original_request != user_request {
@@ -211,7 +216,6 @@ It may work fine on macOS/Windows, but will fail on Linux."#,
           let diagnostic = self.create_diagnostic_with_rspack(
             &error_message,
             Some(&source_content),
-            current_file,
             Some(import_position),
           );
 
@@ -224,7 +228,6 @@ It may work fine on macOS/Windows, but will fail on Linux."#,
             let diagnostic = self.create_diagnostic_with_rspack(
               &error_message,
               Some(&source_content),
-              current_file,
               Some(import_position),
             );
 
@@ -232,8 +235,7 @@ It may work fine on macOS/Windows, but will fail on Linux."#,
           }
         }
       } else {
-        let diagnostic =
-          self.create_diagnostic_with_rspack(&error_message, None, current_file, None);
+        let diagnostic = self.create_diagnostic_with_rspack(&error_message, None, None);
 
         data.diagnostics.push(diagnostic);
       }
