@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use derive_more::Debug;
 use rspack_core::{
@@ -10,11 +10,13 @@ use rspack_error::{
   Diagnostic, Result,
 };
 use rspack_hook::{plugin, plugin_hook};
+use rspack_javascript_compiler::JavaScriptCompiler;
 use swc_core::{
-  common::{FileName, SourceMap},
+  base::config::IsModule,
+  common::FileName,
   ecma::{
-    parser::{Lexer, Parser, StringInput, Syntax, TsSyntax},
-    visit::VisitWith,
+    ast::EsVersion,
+    parser::{Syntax, TsSyntax},
   },
 };
 
@@ -68,55 +70,37 @@ impl CaseSensitivePathsPlugin {
     source_code: &str,
     original_request: &str,
   ) -> Option<(usize, usize)> {
-    // 创建 SourceMap
-    let source_map = std::sync::Arc::new(SourceMap::default());
-    let file = source_map.new_source_file(
-      std::sync::Arc::new(FileName::Custom("temp.ts".to_string())),
-      source_code.to_string(),
-    );
-
-    // 配置解析器语法
+    // 使用 rspack 的 JavaScriptCompiler 解析
     let syntax = Syntax::Typescript(TsSyntax {
       tsx: true,
       decorators: true,
       dts: false,
       no_early_errors: false,
       disallow_ambiguous_jsx_like: false,
+      ..Default::default()
     });
 
-    // 创建词法分析器和解析器
-    let lexer = Lexer::new(syntax, Default::default(), StringInput::from(&*file), None);
-    let mut parser = Parser::new_from(lexer);
+    let filename = FileName::Custom("temp.ts".to_string());
 
-    // 解析为模块
-    match parser.parse_module() {
-      Ok(module) => {
+    let compiler = JavaScriptCompiler::new();
+
+    match compiler.parse(
+      filename,
+      source_code,
+      EsVersion::EsNext,
+      syntax,
+      IsModule::Bool(true),
+      None,
+    ) {
+      Ok(ast) => {
         let mut finder = ImportFinder::new(original_request.to_string(), self.options.debug);
-
-        // 访问 AST
-        module.visit_with(&mut finder);
-
-        if let Some((start, length)) = finder.found_import {
-          if self.options.debug {
-            eprintln!(
-              "✅ AST found import at byte offset {}, length {}",
-              start, length
-            );
-          }
-          return Some((start, length));
-        }
+        ast.visit(|program, _context| {
+          program.visit_with(&mut finder);
+        });
+        finder.found_import
       }
-      Err(error) => {
-        if self.options.debug {
-          eprintln!("❌ Failed to parse file: {:?}", error);
-        }
-        // AST 解析失败时，回退到字符串匹配
-        // return self.fallback_string_search(source_code, original_request);
-        return None;
-      }
+      Err(_) => None,
     }
-
-    None
   }
 }
 

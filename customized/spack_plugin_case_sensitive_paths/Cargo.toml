@@ -13,6 +13,7 @@ repository.workspace = true
 rspack_core  = { workspace = true }
 rspack_hook  = { workspace = true }
 rspack_error = { workspace = true }
+rspack_javascript_compiler = { workspace = true }
 tracing      = { workspace = true }
 derive_more = { workspace = true }
 swc_core = { workspace = true }
