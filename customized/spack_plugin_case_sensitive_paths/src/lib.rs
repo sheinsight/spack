@@ -7,7 +7,7 @@ use rspack_core::{
 };
 use rspack_error::{
   miette::{LabeledSpan, MietteDiagnostic, Severity},
-  Diagnostic, DiagnosticExt, Result, TraceableError,
+  Diagnostic, DiagnosticExt, MietteExt, Result, TraceableError,
 };
 use rspack_hook::{plugin, plugin_hook};
 use rspack_javascript_compiler::JavaScriptCompiler;
@@ -124,8 +124,8 @@ impl CaseSensitivePathsPlugin {
           )
           .with_severity(rspack_error::miette::Severity::Error)
           .with_help(Some(
-            "Fix the case of file paths to ensure consistency in cross-platform builds.\n\
-             It may work fine on macOS/Windows, but will fail on Linux.",
+            r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+It may work fine on macOS/Windows, but will fail on Linux."#,
           ))
           .boxed(), // 使用 .boxed() 而不是手动转换
         )
@@ -133,12 +133,15 @@ impl CaseSensitivePathsPlugin {
       }
       _ => {
         // 回退到简单的诊断
-        Diagnostic::error(
-          "case-sensitive-paths".to_string(),
-          format!(
-            "{}\n\nFix the case of file paths to ensure consistency in cross-platform builds.",
-            error_message
-          ),
+        Diagnostic::from(
+          MietteDiagnostic::new(error_message)
+            .with_code("case-sensitive-paths")
+            .with_severity(rspack_error::miette::Severity::Error)
+            .boxed()
+            .with_help(
+              r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+It may work fine on macOS/Windows, but will fail on Linux."#,
+            ),
         )
       }
     }
