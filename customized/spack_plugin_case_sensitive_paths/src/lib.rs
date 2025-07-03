@@ -2,13 +2,10 @@ use std::path::Path;
 
 use derive_more::Debug;
 use rspack_core::{
-  ApplyContext, CompilationId, CompilerOptions, ModuleFactoryCreateData, ModuleIdentifier,
-  NormalModuleCreateData, Plugin, PluginContext,
+  ApplyContext, CompilationId, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData,
+  Plugin, PluginContext,
 };
-use rspack_error::{
-  miette::{MietteDiagnostic, Severity},
-  Diagnostic, DiagnosticExt, Result, TraceableError,
-};
+use rspack_error::{Diagnostic, DiagnosticExt, Result, TraceableError};
 use rspack_hook::{plugin, plugin_hook};
 use rspack_javascript_compiler::JavaScriptCompiler;
 use swc_core::{
