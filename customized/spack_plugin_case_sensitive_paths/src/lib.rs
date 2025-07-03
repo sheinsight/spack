@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 use std::path::Path;
 
 use derive_more::Debug;
@@ -107,55 +108,31 @@ impl CaseSensitivePathsPlugin {
     source_content: Option<&str>,
     import_position: Option<(usize, usize)>,
   ) -> Diagnostic {
-    match (source_content, import_position) {
-      (Some(source), Some((start, length))) => {
-        // 使用 rspack 内部的标准模式
+    let title = "case-sensitive-paths".to_string();
 
-        let diagnostic = Diagnostic::from(
-          TraceableError::from_file(
-            source.to_string(),
-            start,
-            start + length,
-            "case-sensitive-paths".to_string(),
-            format!(
-              r#"
-{}
-"#,
-              error_message.to_string()
-            ),
-          )
-          .with_help(Some(
-            r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-It may work fine on macOS/Windows, but will fail on Linux."#,
-          ))
-          .boxed(),
-        )
-        .with_hide_stack(Some(true));
+    let error_message = format!("\n{error_message}\n");
 
-        // diagnostic.with_module_identifier(Some(parent_module_identifier))
-        diagnostic
-      }
-      _ => Diagnostic::from(
-        TraceableError::from_lazy_file(
-          0,
-          0,
-          "case-sensitive-paths".to_string(),
-          format!(
-            r#"
-{}
-"#,
-            error_message.to_string()
-          ),
-        )
-        .with_help(Some(
-          r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+    let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+It may work fine on macOS/Windows, but will fail on Linux."#;
 
-            It may work fine on macOS/Windows, but will fail on Linux."#,
-        ))
+    let error = match (source_content, import_position) {
+      (Some(source), Some((start, length))) => TraceableError::from_file(
+        source.to_string(),
+        start,
+        start + length,
+        title,
+        error_message,
+      )
+      .with_help(Some(help))
+      .with_hide_stack(Some(true))
+      .boxed(),
+      _ => TraceableError::from_lazy_file(0, 0, title, error_message)
+        .with_help(Some(help))
         .with_hide_stack(Some(true))
         .boxed(),
-      ),
-    }
+    };
+
+    Diagnostic::from(error)
   }
 }
 
@@ -190,56 +167,24 @@ async fn after_resolve(
   let dependency = data.dependencies[0]
     .as_module_dependency()
     .expect("should be module dependency");
-  let original_request = dependency.request();
+
   let user_request = dependency.user_request();
 
   // 核心逻辑：检查路径大小写
   let path = Path::new(resource_path);
 
   if path.is_absolute() {
-    if let Some(error_message) = self.check_case_sensitive_path_optimized(path) {
-      // 使用 miette 创建友好的错误展示
-      if let Ok(source_content) = std::fs::read_to_string(current_file) {
-        // 尝试找到 import 语句的位置并添加标签
-        // 优先使用 original_request，如果找不到再尝试 user_request
-        let search_request = if original_request != user_request {
-          // 先试 user_request，因为它通常更接近源代码中的写法
-          user_request
-        } else {
-          original_request
-        };
+    if let Some(error_message) = self.check_case_sensitive_path_optimized(path)
+      && let Ok(source_content) = std::fs::read_to_string(current_file)
+    {
+      let diagnostic = self
+        .find_import_position(&source_content, user_request)
+        .map(|pos| {
+          self.create_diagnostic_with_rspack(&error_message, Some(&source_content), Some(pos))
+        })
+        .unwrap_or_else(|| self.create_diagnostic_with_rspack(&error_message, None, None));
 
-        if let Some(import_position) = self.find_import_position(&source_content, search_request) {
-          let diagnostic = self.create_diagnostic_with_rspack(
-            &error_message,
-            Some(&source_content),
-            Some(import_position),
-          );
-
-          data.diagnostics.push(diagnostic);
-        } else if search_request != original_request {
-          // 如果 user_request 没找到，再试 original_request
-          if let Some(import_position) =
-            self.find_import_position(&source_content, original_request)
-          {
-            let diagnostic = self.create_diagnostic_with_rspack(
-              &error_message,
-              Some(&source_content),
-              Some(import_position),
-            );
-
-            data.diagnostics.push(diagnostic);
-          }
-        }
-      } else {
-        let diagnostic = self.create_diagnostic_with_rspack(&error_message, None, None);
-
-        data.diagnostics.push(diagnostic);
-      }
-
-      if self.options.debug {
-        eprintln!("🔍 Case sensitivity warning: {}", &error_message);
-      }
+      data.diagnostics.push(diagnostic);
     }
   }
 
