@@ -1,12 +1,10 @@
 mod css_chunking;
 mod raw_banner;
 mod raw_bundle_info;
-mod raw_case_sensitive_paths;
 mod raw_circular_dependency;
 mod raw_copy;
 mod raw_css_extract;
 mod raw_dll;
-mod raw_duplicate_dependency;
 mod raw_html;
 mod raw_http_uri;
 mod raw_ids;
@@ -25,7 +23,7 @@ use std::cell::RefCell;
 
 use napi::{
   bindgen_prelude::{FromNapiValue, JsObjectValue, Object},
-  Env, Unknown,
+  Either, Env, Unknown,
 };
 use napi_derive::napi;
 use raw_dll::{RawDllReferenceAgencyPluginOptions, RawFlagAllModulesAsUsedPluginOptions};
@@ -100,8 +98,6 @@ use rspack_plugin_wasm::{
 use rspack_plugin_web_worker_template::web_worker_template_plugin;
 use rspack_plugin_worker::WorkerPlugin;
 use rustc_hash::FxHashMap as HashMap;
-use spack_plugin_case_sensitive_paths::CaseSensitivePathsPlugin;
-use spack_plugin_duplicate_dependency::DuplicateDependencyPlugin;
 
 pub use self::{
   css_chunking::CssChunkingPluginOptions,
@@ -125,13 +121,8 @@ use self::{
   raw_size_limits::RawSizeLimitsPluginOptions,
 };
 use crate::{
-  entry::JsEntryPluginOptions,
-  plugins::JsLoaderRspackPlugin,
-  raw_options::raw_builtins::{
-    raw_case_sensitive_paths::RawCaseSensitivePathsPluginOptions,
-    raw_duplicate_dependency::RawDuplicateDependencyPluginOptions,
-  },
-  JsLoaderRunnerGetter, RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
+  entry::JsEntryPluginOptions, plugins::JsLoaderRspackPlugin, JsLoaderRunnerGetter,
+  RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
   RawEvalDevToolModulePluginOptions, RawExternalItemWrapper, RawExternalsPluginOptions,
   RawHttpExternalsRspackPluginOptions, RawRsdoctorPluginOptions, RawRslibPluginOptions,
   RawRstestPluginOptions, RawSplitChunksOptions, SourceMapDevToolPluginOptions,
@@ -140,9 +131,6 @@ use crate::{
 #[napi(string_enum)]
 #[derive(Debug)]
 pub enum BuiltinPluginName {
-  // spack plugins
-  DuplicateDependencyPlugin,
-  CaseSensitivePathsPlugin,
   // webpack also have these plugins
   DefinePlugin,
   ProvidePlugin,
@@ -235,23 +223,22 @@ pub enum BuiltinPluginName {
   ModuleInfoHeaderPlugin,
   HttpUriPlugin,
   CssChunkingPlugin,
-  // Custom(String),
 }
 
 pub type CustomPluginBuilder =
   for<'a> fn(env: Env, options: Unknown<'a>) -> napi::Result<BoxPlugin>;
 
 thread_local! {
-  static CUSTOMED_PLUGINS_CTOR: RefCell<HashMap<String, CustomPluginBuilder>> = RefCell::new(HashMap::default());
+  static CUSTOMED_PLUGINS_CTOR: RefCell<HashMap<CustomPluginName, CustomPluginBuilder>> = RefCell::new(HashMap::default());
 }
 
 #[doc(hidden)]
 #[allow(clippy::result_unit_err)]
 pub fn register_custom_plugin(
-  name: &'static str,
+  name: String,
   plugin_builder: CustomPluginBuilder,
 ) -> std::result::Result<(), ()> {
-  CUSTOMED_PLUGINS_CTOR.with_borrow_mut(|ctors| match ctors.entry(name.to_string()) {
+  CUSTOMED_PLUGINS_CTOR.with_borrow_mut(|ctors| match ctors.entry(name) {
     std::collections::hash_map::Entry::Occupied(_) => Err(()),
     std::collections::hash_map::Entry::Vacant(vacant_entry) => {
       vacant_entry.insert(plugin_builder);
@@ -260,9 +247,11 @@ pub fn register_custom_plugin(
   })
 }
 
+type CustomPluginName = String;
+
 #[napi(object)]
 pub struct BuiltinPlugin<'a> {
-  pub name: BuiltinPluginName,
+  pub name: Either<BuiltinPluginName, CustomPluginName>,
   pub options: Unknown<'a>,
   pub can_inherent_from_parent: Option<bool>,
 }
@@ -274,7 +263,21 @@ impl<'a> BuiltinPlugin<'a> {
     compiler_object: &mut Object,
     plugins: &mut Vec<BoxPlugin>,
   ) -> napi::Result<()> {
-    match self.name {
+    let name = match self.name {
+      Either::A(name) => name,
+      Either::B(name) => {
+        CUSTOMED_PLUGINS_CTOR.with_borrow(|ctors| {
+          let ctor = ctors.get(&name).ok_or_else(|| {
+            napi::Error::from_reason(format!("Expected plugin installed '{name}'"))
+          })?;
+          plugins.push(ctor(env, self.options)?);
+          Ok::<_, napi::Error>(())
+        })?;
+        return Ok(());
+      }
+    };
+    match name {
+      // webpack also have these plugins
       BuiltinPluginName::DefinePlugin => {
         let plugin = DefinePlugin::new(
           downcast_into(self.options)
@@ -603,6 +606,8 @@ impl<'a> BuiltinPlugin<'a> {
         .boxed();
         plugins.push(plugin)
       }
+
+      // rspack specific plugins
       BuiltinPluginName::HttpExternalsRspackPlugin => {
         let plugin_options = downcast_into::<RawHttpExternalsRspackPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
@@ -771,18 +776,6 @@ impl<'a> BuiltinPlugin<'a> {
         let options = downcast_into::<CssChunkingPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
         plugins.push(CssChunkingPlugin::new(options.into()).boxed());
-      }
-      BuiltinPluginName::DuplicateDependencyPlugin => {
-        let raw_options = downcast_into::<RawDuplicateDependencyPluginOptions>(self.options)
-          .map_err(|report| napi::Error::from_reason(report.to_string()))?;
-        let options = raw_options.into();
-        plugins.push(DuplicateDependencyPlugin::new(options).boxed());
-      }
-      BuiltinPluginName::CaseSensitivePathsPlugin => {
-        let raw_options = downcast_into::<RawCaseSensitivePathsPluginOptions>(self.options)
-          .map_err(|report| napi::Error::from_reason(report.to_string()))?;
-        let options = raw_options.into();
-        plugins.push(CaseSensitivePathsPlugin::new(options).boxed());
       }
     }
     Ok(())

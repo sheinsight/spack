@@ -20,7 +20,7 @@ import { RspackOptionsApply } from "./rspackOptionsApply";
 export { RspackOptionsApply, RspackOptionsApply as WebpackOptionsApply };
 
 export type { Chunk } from "./Chunk";
-export type { ChunkGroup } from "./ChunkGroup";
+export type { ChunkGroup } from "@rspack/binding";
 export type { ResolveData, ResourceDataWithData } from "./Module";
 export { MultiStats } from "./MultiStats";
 export { Module } from "./Module";
@@ -337,6 +337,7 @@ import {
 	registerGlobalTrace,
 	syncTraceEvent
 } from "@rspack/binding";
+import { createNativePlugin } from "./builtin-plugin";
 import { JavaScriptTracer } from "./trace";
 
 ///// Experiments SWC /////
@@ -364,6 +365,7 @@ interface Experiments {
 		minifySync: typeof minifySync;
 	};
 	CssChunkingPlugin: typeof CssChunkingPlugin;
+	createNativePlugin: typeof createNativePlugin;
 }
 
 export const experiments: Experiments = {
@@ -407,5 +409,6 @@ export const experiments: Experiments = {
 		minifySync,
 		transformSync
 	},
-	CssChunkingPlugin
+	CssChunkingPlugin,
+	createNativePlugin
 };

@@ -22,9 +22,10 @@
   },
   "scripts": {
     "prepare": "prebundle && node ./move-tinypool.js",
-    "build": "rslib build && npm run prepare-container-runtime",
+    "build": "rslib build && npm run prepare-container-runtime && npm run codmod",
     "dev": "rslib build --watch",
     "prepare-container-runtime": "node ./scripts/prepare-container-runtime.js",
+    "codmod": "node ./scripts/codmod/index.js",
     "doc-coverage": "tsx ./scripts/check-documentation-coverage.ts",
     "api-extractor": "api-extractor run --verbose",
     "api-extractor:ci": "api-extractor run --verbose || diff temp/core.api.md etc/core.api.md"
