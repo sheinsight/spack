@@ -35,9 +35,9 @@ async function build() {
 			"--dts",
 			"binding.d.ts",
 			// "--no-js",
+			// "--no-const-enum",
 			"--js",
 			"binding.js",
-			// "--no-const-enum",
 			"--no-dts-header",
 			"--pipe",
 			`"node ${path.resolve(__dirname, "dts-header.js")}"`
