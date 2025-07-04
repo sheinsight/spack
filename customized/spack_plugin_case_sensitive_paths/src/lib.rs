@@ -14,7 +14,7 @@ use swc_core::{
   common::FileName,
   ecma::{
     ast::EsVersion,
-    parser::{Syntax, TsSyntax},
+    parser::{EsSyntax, Syntax, TsSyntax},
   },
 };
 
@@ -62,23 +62,55 @@ impl CaseSensitivePathsPlugin {
     None
   }
 
+  fn get_syntax_from_file_path(&self, file_path: impl Into<String>) -> Syntax {
+    let file_path = file_path.into();
+    let path = Path::new(&file_path);
+    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
+
+    match extension {
+      "ts" | "tsx" => Syntax::Typescript(TsSyntax {
+        tsx: extension == "tsx",
+        decorators: true,
+        dts: false,
+        no_early_errors: false,
+        disallow_ambiguous_jsx_like: false,
+        ..Default::default()
+      }),
+      "js" | "jsx" | "mjs" | "cjs" => Syntax::Es(EsSyntax {
+        jsx: extension == "jsx",
+        fn_bind: true,
+        decorators: true,
+        decorators_before_export: true,
+        export_default_from: true,
+        import_attributes: true,
+        allow_super_outside_method: true,
+        allow_return_outside_function: true,
+        ..Default::default()
+      }),
+      _ => {
+        // 默认使用 TypeScript 语法（兼容性最好）
+        Syntax::Typescript(TsSyntax {
+          tsx: true,
+          decorators: true,
+          dts: false,
+          no_early_errors: false,
+          disallow_ambiguous_jsx_like: false,
+          ..Default::default()
+        })
+      }
+    }
+  }
+
   // 简化的 AST 匹配方法
   fn find_import_position(
     &self,
     source_code: &str,
     original_request: &str,
+    file_path: impl Into<String>,
   ) -> Option<(usize, usize)> {
-    // 使用 rspack 的 JavaScriptCompiler 解析
-    let syntax = Syntax::Typescript(TsSyntax {
-      tsx: true,
-      decorators: true,
-      dts: false,
-      no_early_errors: false,
-      disallow_ambiguous_jsx_like: false,
-      ..Default::default()
-    });
-
-    let filename = FileName::Custom("temp.ts".to_string());
+    let file_path = file_path.into();
+    let syntax = self.get_syntax_from_file_path(&file_path);
+    let filename = FileName::Custom(file_path);
 
     let compiler = JavaScriptCompiler::new();
 
@@ -161,31 +193,30 @@ async fn after_resolve(
   create_data: &mut NormalModuleCreateData,
 ) -> Result<Option<bool>> {
   let resource_path = &create_data.resource_resolve_data.resource;
+  let resource_path = Path::new(resource_path);
+
   let current_file = data.issuer.as_deref().unwrap_or("");
 
-  // 获取原始请求信息
-  let dependency = data.dependencies[0]
-    .as_module_dependency()
-    .expect("should be module dependency");
+  let first_dependency = data
+    .dependencies
+    .first()
+    .and_then(|dep| dep.as_module_dependency());
 
-  let user_request = dependency.user_request();
+  if let Some(dependency) = first_dependency
+    && resource_path.is_absolute()
+    && let Some(error_message) = self.check_case_sensitive_path_optimized(resource_path)
+    && let Ok(source_content) = std::fs::read_to_string(current_file)
+  {
+    println!("data.issuer {:?}", data.issuer);
+    let user_request = dependency.user_request();
+    let diagnostic = self
+      .find_import_position(&source_content, user_request, current_file)
+      .map(|pos| {
+        self.create_diagnostic_with_rspack(&error_message, Some(&source_content), Some(pos))
+      })
+      .unwrap_or_else(|| self.create_diagnostic_with_rspack(&error_message, None, None));
 
-  // 核心逻辑：检查路径大小写
-  let path = Path::new(resource_path);
-
-  if path.is_absolute() {
-    if let Some(error_message) = self.check_case_sensitive_path_optimized(path)
-      && let Ok(source_content) = std::fs::read_to_string(current_file)
-    {
-      let diagnostic = self
-        .find_import_position(&source_content, user_request)
-        .map(|pos| {
-          self.create_diagnostic_with_rspack(&error_message, Some(&source_content), Some(pos))
-        })
-        .unwrap_or_else(|| self.create_diagnostic_with_rspack(&error_message, None, None));
-
-      data.diagnostics.push(diagnostic);
-    }
+    data.diagnostics.push(diagnostic);
   }
 
   Ok(None)
@@ -212,7 +243,7 @@ import styles from './styles.css';
 "#;
 
     // 测试相对路径
-    let result = plugin.find_import_position(source_code, "./MyComponent");
+    let result = plugin.find_import_position(source_code, "./MyComponent", "test.ts");
     assert!(result.is_some());
     if let Some((start, length)) = result {
       let found_text = &source_code[start..start + length];
@@ -220,7 +251,7 @@ import styles from './styles.css';
     }
 
     // 测试另一个相对路径
-    let result = plugin.find_import_position(source_code, "./Button");
+    let result = plugin.find_import_position(source_code, "./Button", "test.ts");
     assert!(result.is_some());
     if let Some((start, length)) = result {
       let found_text = &source_code[start..start + length];
@@ -228,7 +259,7 @@ import styles from './styles.css';
     }
 
     // 测试不存在的路径
-    let result = plugin.find_import_position(source_code, "./NonExistent");
+    let result = plugin.find_import_position(source_code, "./NonExistent", "test.ts");
     assert!(result.is_none());
   }
 
@@ -247,7 +278,7 @@ import utils from '../utils/helper';
 "#;
 
     // 测试双引号
-    let result = plugin.find_import_position(source_code, "react");
+    let result = plugin.find_import_position(source_code, "react", "test.ts");
 
     println!("result: {:?}", result);
 
@@ -258,7 +289,7 @@ import utils from '../utils/helper';
     }
 
     // 测试单引号
-    let result = plugin.find_import_position(source_code, "./MyComponent");
+    let result = plugin.find_import_position(source_code, "./MyComponent", "test.ts");
     assert!(result.is_some());
     if let Some((start, length)) = result {
       let found_text = &source_code[start..start + length];
@@ -266,7 +297,7 @@ import utils from '../utils/helper';
     }
 
     // 测试模板字符串
-    let result = plugin.find_import_position(source_code, "../utils/helper");
+    let result = plugin.find_import_position(source_code, "../utils/helper", "test.ts");
     assert!(result.is_some());
     if let Some((start, length)) = result {
       let found_text = &source_code[start..start + length];
