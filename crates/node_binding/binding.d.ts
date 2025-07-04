@@ -462,6 +462,8 @@ export interface BuiltinPlugin {
 }
 
 export declare enum BuiltinPluginName {
+  DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
+  CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   DefinePlugin = 'DefinePlugin',
   ProvidePlugin = 'ProvidePlugin',
   BannerPlugin = 'BannerPlugin',
@@ -779,6 +781,11 @@ export interface JsDiagnosticLocation {
   length: number
 }
 
+export interface JsDuplicateDependencyPluginResponse {
+  libraries: Array<JsLibrary>
+  durationMillis: number
+}
+
 export interface JsEntryData {
   dependencies: Array<Dependency>
   includeDependencies: Array<Dependency>
@@ -863,6 +870,12 @@ export interface JsHttpResponseRaw {
 
 export interface JsLibIdentOptions {
   context: string
+}
+
+export interface JsLibrary {
+  dir: string
+  name: string
+  version: string
 }
 
 export interface JsLibraryAuxiliaryComment {
@@ -1595,6 +1608,11 @@ export interface RawCacheOptions {
   maxGenerations?: number
 }
 
+export interface RawCaseSensitivePathsPluginOptions {
+  debug: boolean
+  useCache: boolean
+}
+
 export interface RawCircularDependencyRspackPluginOptions {
   failOnError?: boolean
   allowAsyncCycles?: boolean
@@ -1834,6 +1852,10 @@ export interface RawDllReferenceAgencyPluginOptions {
 
 export interface RawDraft {
   customMedia: boolean
+}
+
+export interface RawDuplicateDependencyPluginOptions {
+  onDetected?: (response: DuplicateDependencyPluginResponse) => void
 }
 
 export interface RawDynamicEntryPluginOptions {

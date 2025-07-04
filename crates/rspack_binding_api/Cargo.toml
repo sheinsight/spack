@@ -114,6 +114,9 @@ swc_core                               = { workspace = true, default-features = 
 tokio                                  = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "test-util", "tracing", "parking_lot"] }
 ustr                                   = { workspace = true }
 
+spack_plugin_case_sensitive_paths = { workspace = true }
+spack_plugin_duplicate_dependency = { workspace = true }
+
 [package.metadata.cargo-shear]
 ignored = ["parking_lot"]
 

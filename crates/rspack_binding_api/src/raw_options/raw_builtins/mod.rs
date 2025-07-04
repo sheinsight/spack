@@ -1,10 +1,12 @@
 mod css_chunking;
 mod raw_banner;
 mod raw_bundle_info;
+mod raw_case_sensitive_paths;
 mod raw_circular_dependency;
 mod raw_copy;
 mod raw_css_extract;
 mod raw_dll;
+mod raw_duplicate_dependency;
 mod raw_html;
 mod raw_http_uri;
 mod raw_ids;
@@ -98,6 +100,8 @@ use rspack_plugin_wasm::{
 use rspack_plugin_web_worker_template::web_worker_template_plugin;
 use rspack_plugin_worker::WorkerPlugin;
 use rustc_hash::FxHashMap as HashMap;
+use spack_plugin_case_sensitive_paths::CaseSensitivePathsPlugin;
+use spack_plugin_duplicate_dependency::DuplicateDependencyPlugin;
 
 pub use self::{
   css_chunking::CssChunkingPluginOptions,
@@ -121,8 +125,13 @@ use self::{
   raw_size_limits::RawSizeLimitsPluginOptions,
 };
 use crate::{
-  entry::JsEntryPluginOptions, plugins::JsLoaderRspackPlugin, JsLoaderRunnerGetter,
-  RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
+  entry::JsEntryPluginOptions,
+  plugins::JsLoaderRspackPlugin,
+  raw_options::raw_builtins::{
+    raw_case_sensitive_paths::RawCaseSensitivePathsPluginOptions,
+    raw_duplicate_dependency::RawDuplicateDependencyPluginOptions,
+  },
+  JsLoaderRunnerGetter, RawContextReplacementPluginOptions, RawDynamicEntryPluginOptions,
   RawEvalDevToolModulePluginOptions, RawExternalItemWrapper, RawExternalsPluginOptions,
   RawHttpExternalsRspackPluginOptions, RawRsdoctorPluginOptions, RawRslibPluginOptions,
   RawRstestPluginOptions, RawSplitChunksOptions, SourceMapDevToolPluginOptions,
@@ -131,6 +140,8 @@ use crate::{
 #[napi(string_enum)]
 #[derive(Debug)]
 pub enum BuiltinPluginName {
+  DuplicateDependencyPlugin,
+  CaseSensitivePathsPlugin,
   // webpack also have these plugins
   DefinePlugin,
   ProvidePlugin,
@@ -776,6 +787,18 @@ impl<'a> BuiltinPlugin<'a> {
         let options = downcast_into::<CssChunkingPluginOptions>(self.options)
           .map_err(|report| napi::Error::from_reason(report.to_string()))?;
         plugins.push(CssChunkingPlugin::new(options.into()).boxed());
+      }
+      BuiltinPluginName::DuplicateDependencyPlugin => {
+        let raw_options = downcast_into::<RawDuplicateDependencyPluginOptions>(self.options)
+          .map_err(|report| napi::Error::from_reason(report.to_string()))?;
+        let options = raw_options.into();
+        plugins.push(DuplicateDependencyPlugin::new(options).boxed());
+      }
+      BuiltinPluginName::CaseSensitivePathsPlugin => {
+        let raw_options = downcast_into::<RawCaseSensitivePathsPluginOptions>(self.options)
+          .map_err(|report| napi::Error::from_reason(report.to_string()))?;
+        let options = raw_options.into();
+        plugins.push(CaseSensitivePathsPlugin::new(options).boxed());
       }
     }
     Ok(())
