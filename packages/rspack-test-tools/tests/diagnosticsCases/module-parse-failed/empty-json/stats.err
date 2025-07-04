@@ -1,0 +1,8 @@
+ERROR in ./empty.json
+  × Module parse failed:
+  ╰─▶   × JSON parse error: Unexpected end of JSON
+         ╭────
+         ╰────
+      
+  help: 
+        You may need an appropriate loader to handle this file type.

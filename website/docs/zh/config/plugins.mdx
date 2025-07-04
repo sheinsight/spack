@@ -1,0 +1,71 @@
+# Plugins
+
+- **类型：**
+
+```ts
+type Falsy = false | '' | 0 | null | undefined;
+
+type Plugin =
+  | RspackPluginInstance
+  | RspackPluginFunction
+  | WebpackPluginInstance
+  | WebpackPluginFunction
+  | Falsy;
+
+type Plugins = Plugin[];
+```
+
+- **默认值：** `[]`
+
+`plugins` 选项用于注册一组 Rspack 或 webpack 插件来自定义构建过程。
+
+请查看 [插件页面](/guide/features/plugin) 来了解在 Rspack 中使用插件的更多信息。
+
+## 内置插件
+
+Rspack 附带了许多内置插件，你可以通过 `rspack.PluginName` 访问这些插件。
+
+例如，[`DefinePlugin`](/plugins/webpack/define-plugin) 允许你在编译时将代码中的变量替换为其他值或表达式。你可以通过 `rspack.DefinePlugin` 来访问它，并使用 `new` 来创建插件实例：
+
+```js title="rspack.config.mjs"
+import { rspack } from '@rspack/core';
+
+export default {
+  //...
+  plugins: [
+    new rspack.DefinePlugin({
+      // 传入插件选项
+    }),
+  ],
+};
+```
+
+## webpack 插件
+
+Rspack 致力于兼容 webpack 生态中的插件，让用户能够使用社区中经过验证的优秀功能。你可以查看 [插件兼容列表](/guide/compatibility/plugin) 来获取已通过兼容性测试的 webpack 插件清单：
+
+```js title="rspack.config.mjs"
+import { rspack } from '@rspack/core';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+
+export default {
+  //...
+  plugins: [new HtmlWebpackPlugin()],
+};
+```
+
+## 禁用插件
+
+Rspack 会忽略 `plugins` 数组中的 `false`、`''`、`0`、`null` 和 `undefined` 这些值，这允许你更容易地禁用某个插件。
+
+比如，仅在开发环境中启用 [HotModuleReplacementPlugin](/plugins/webpack/hot-module-replacement-plugin)：
+
+```js title="rspack.config.mjs"
+import { rspack } from '@rspack/core';
+
+const isDev = process.env.NODE_ENV === 'development';
+
+export default {
+  plugins: [isDev && new rspack.HotModuleReplacementPlugin()],
+};
+```

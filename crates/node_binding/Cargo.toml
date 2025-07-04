@@ -1,0 +1,28 @@
+[package]
+description       = "node binding"
+edition.workspace = true
+license           = "MIT"
+name              = "rspack_node"
+publish           = false
+repository        = "https://github.com/web-infra-dev/rspack"
+version           = "0.2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+debug_tool    = ["rspack_binding_api/debug_tool"]
+plugin        = ["rspack_binding_api/plugin"]
+sftrace-setup = ["rspack_binding_api/sftrace-setup"]
+
+[package.metadata.cargo-shear]
+# Adding napi-derive as a dependency to workaround an issue where `dts` will no longer work without it.
+ignored = ["napi-derive"]
+
+[dependencies]
+rspack_binding_api = { workspace = true }
+
+napi-derive = { workspace = true, features = ["compat-mode"] }
+
+[build-dependencies]
+rspack_binding_build = { workspace = true }

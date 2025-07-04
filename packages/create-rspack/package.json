@@ -1,0 +1,37 @@
+{
+  "name": "create-rspack",
+  "version": "1.4.3",
+  "homepage": "https://rspack.rs",
+  "bugs": "https://github.com/web-infra-dev/rspack/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/web-infra-dev/rspack",
+    "directory": "packages/create-rspack"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "bin.js",
+  "bin": {
+    "create-rspack": "bin.js"
+  },
+  "files": [
+    "template-*",
+    "dist",
+    "bin.js"
+  ],
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build -w"
+  },
+  "dependencies": {
+    "create-rstack": "1.5.1"
+  },
+  "devDependencies": {
+    "@rslib/core": "0.10.0",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

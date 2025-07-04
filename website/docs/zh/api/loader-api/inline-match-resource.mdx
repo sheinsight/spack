@@ -1,0 +1,56 @@
+import WebpackLicense from '@components/WebpackLicense';
+
+<WebpackLicense from="https://webpack.docschina.org/api/loaders/#inline-matchresource" />
+
+# 内联 matchResource
+
+Inline matchResource 允许你在加载资源时动态改变匹配规则。你可以通过在模块标识符前添加 `<match-resource>!=!` 前缀来为该模块标识符设置 `matchResource`。
+
+当 `matchResource` 被设置时，它将被用来与 `module.rules` 而不是原始资源进行匹配。当如果有更多的 loader 应该应用到资源上，或者需要改变模块的类型，这可能很有用。
+
+:::tip
+不建议在源代码中使用这种语法。内联请求语法应该仅用于 loader 生成的代码。如果不遵循此建议，你的代码将与 Rspack 耦合，且不符合标准规范。
+:::
+
+## 示例
+
+```js title="file.js"
+/*STYLE: body { background: red; } */
+console.log('yep');
+```
+
+Loader 可以将该文件转化为以下文件，并使用 `matchResource` 来应用用户指定的 CSS 处理规则：
+
+```js title="file.js (transformed by loader)"
+import './file.js.css!=!extract-style-loader/getStyles!./file.js';
+console.log('yep');
+```
+
+这会将 `extract-style-loader/getStyles!./file.js` 作为一个依赖添加到编译流程中，并将结果作为 `file.js.css`。
+当 `module.rules` 有一个匹配 `/\.css$/` 的规则时，将会被这个资源命中。
+
+Loader 可以是这样的：
+
+```js title="extract-style-loader/index.js"
+const getStylesLoader = require.resolve('./getStyles');
+
+module.exports = function (source) {
+  if (STYLES_REGEXP.test(source)) {
+    source = source.replace(STYLES_REGEXP, '');
+    return `import ${JSON.stringify(
+      this.utils.contextify(
+        this.context || this.rootContext,
+        `${this.resource}.css!=!${getStylesLoader}!${this.remainingRequest}`,
+      ),
+    )};${source}`;
+  }
+  return source;
+};
+```
+
+```js title="extract-style-loader/getStyles.js"
+module.exports = function (source) {
+  const match = source.match(STYLES_REGEXP);
+  return match[0];
+};
+```

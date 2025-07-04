@@ -1,0 +1,14 @@
+{
+  "name": "rspack-vanilla-starter",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "rspack dev",
+    "build": "rspack build",
+    "preview": "rspack preview"
+  },
+  "devDependencies": {
+    "@rspack/cli": "workspace:*",
+    "@rspack/core": "workspace:*"
+  }
+}
