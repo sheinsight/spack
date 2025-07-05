@@ -1,0 +1,6 @@
+[toolchain]
+profile = "default"
+# Use nightly for better access to the latest Rust features.
+channel = "nightly-2025-05-30"
+# channel = "nightly-2024-06-15"
+# channel = "nightly"
