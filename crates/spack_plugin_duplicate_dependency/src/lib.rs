@@ -3,20 +3,17 @@
 use std::{collections::HashMap, path::PathBuf, time::Instant};
 
 use derive_more::Debug;
-use napi::{Env, JsValue, Result, Unknown};
 use package_json_parser::PackageJsonParser;
 use rspack_core::{
-  ApplyContext, BoxPlugin, Compilation, CompilerFinishMake, CompilerOptions, Plugin, PluginContext,
+  ApplyContext, Compilation, CompilerFinishMake, CompilerOptions, Plugin, PluginContext,
 };
 use rspack_hook::{plugin, plugin_hook};
 use up_finder::UpFinder;
 mod options;
 mod response;
 
-use crate::{
-  options::DuplicateDependencyPluginOptions,
-  response::{DuplicateDependencyPluginResponse, Library},
-};
+pub use options::{CompilationHookFn, DuplicateDependencyPluginOptions};
+pub use response::{DuplicateDependencyPluginResponse, Library};
 
 #[plugin]
 #[derive(Debug)]
@@ -104,15 +101,15 @@ async fn finish_make(&self, compilation: &mut Compilation) -> rspack_error::Resu
   Ok(())
 }
 
-#[allow(unused)]
-pub fn get_binding_plugin(_env: Env, options: Unknown<'_>) -> Result<BoxPlugin> {
-  let options = options.coerce_to_object()?;
-  // #[allow(clippy::disallowed_names, clippy::unwrap_used)]
-  // let foo = options.get::<CompilationHookFn>("on_detected")?.unwrap();
-  // assert_eq!(foo, "bar".to_string());
-  Ok(Box::new(DuplicateDependencyPlugin::new(
-    DuplicateDependencyPluginOptions { on_detected: None },
-  )) as BoxPlugin)
-}
+// #[allow(unused)]
+// pub fn get_binding_plugin(_env: Env, options: Unknown<'_>) -> Result<BoxPlugin> {
+//   let options = options.coerce_to_object()?;
+//   // #[allow(clippy::disallowed_names, clippy::unwrap_used)]
+//   let on_detected = options.get::<CompilationHookFn>("on_detected")?.unwrap();
+//   // assert_eq!(foo, "bar".to_string());
+//   Ok(Box::new(DuplicateDependencyPlugin::new(
+//     DuplicateDependencyPluginOptions { on_detected: None },
+//   )) as BoxPlugin)
+// }
 
 // register_plugin!("BindingBuilderTestingPlugin", get_binding_plugin);

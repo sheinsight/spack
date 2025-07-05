@@ -3,10 +3,9 @@
 use std::path::Path;
 
 use derive_more::Debug;
-use napi::{Env, JsValue, Result, Unknown};
 use rspack_core::{
-  ApplyContext, BoxPlugin, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData,
-  Plugin, PluginContext,
+  ApplyContext, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData, Plugin,
+  PluginContext,
 };
 use rspack_error::{Diagnostic, DiagnosticExt, TraceableError};
 use rspack_hook::{plugin, plugin_hook};
@@ -23,7 +22,9 @@ use swc_core::{
 mod import_finder;
 mod options;
 
-use crate::{import_finder::ImportFinder, options::CaseSensitivePathsPluginOptions};
+pub use options::CaseSensitivePathsPluginOptions;
+
+use crate::import_finder::ImportFinder;
 
 #[plugin]
 #[derive(Debug)]
@@ -219,17 +220,4 @@ async fn after_resolve(
   }
 
   Ok(None)
-}
-
-pub fn get_binding_plugin(_env: Env, options: Unknown<'_>) -> Result<BoxPlugin> {
-  let options = options.coerce_to_object()?;
-  // #[allow(clippy::disallowed_names, clippy::unwrap_used)]
-  // let foo = options.get::<CompilationHookFn>("on_detected")?.unwrap();
-  // assert_eq!(foo, "bar".to_string());
-  Ok(Box::new(CaseSensitivePathsPlugin::new(
-    CaseSensitivePathsPluginOptions {
-      debug: true,
-      use_cache: true,
-    },
-  )) as BoxPlugin)
 }

@@ -2,7 +2,8 @@
   "cSpell.words": [
     "cdylib",
     "napi",
-    "spack"
+    "spack",
+    "Threadsafe"
   ],
   "rust-analyzer.cargo.extraEnv": {
     "CARGO_WORKSPACE_DIR": "${workspaceFolder}"

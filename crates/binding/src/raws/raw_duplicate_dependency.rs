@@ -1,0 +1,73 @@
+use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
+use napi_derive::napi;
+use rspack_core::BoxPlugin;
+use rspack_napi::threadsafe_function::ThreadsafeFunction;
+use spack_plugin_duplicate_dependency::{
+  CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOptions,
+  DuplicateDependencyPluginResponse, Library,
+};
+
+#[derive(Debug)]
+#[napi(object, object_to_js = false)]
+pub struct RawDuplicateDependencyPluginOptions {
+  #[napi(ts_type = "(response: DuplicateDependencyPluginResponse) => void")]
+  pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResponse, ()>>,
+}
+
+impl From<RawDuplicateDependencyPluginOptions> for DuplicateDependencyPluginOptions {
+  fn from(value: RawDuplicateDependencyPluginOptions) -> Self {
+    let on_detected: Option<CompilationHookFn> = match value.on_detected {
+      Some(callback) => Some(Box::new(move |libraries| {
+        let callback = callback.clone();
+        let response = JsDuplicateDependencyPluginResponse::from(libraries);
+        Box::pin({
+          async move {
+            callback.call_with_sync(response).await?;
+            Ok(())
+          }
+        })
+      })),
+      _ => None,
+    };
+    Self { on_detected }
+  }
+}
+
+#[derive(Debug)]
+#[napi(object)]
+pub struct JsLibrary {
+  pub dir: String,
+  pub name: String,
+  pub version: String,
+}
+
+impl From<Library> for JsLibrary {
+  fn from(value: Library) -> Self {
+    Self {
+      dir: value.dir.clone(),
+      name: value.name.clone(),
+      version: value.version.clone(),
+    }
+  }
+}
+
+#[derive(Debug)]
+#[napi(object)]
+pub struct JsDuplicateDependencyPluginResponse {
+  pub libraries: Vec<JsLibrary>,
+  pub duration: f64,
+}
+
+impl From<DuplicateDependencyPluginResponse> for JsDuplicateDependencyPluginResponse {
+  fn from(value: DuplicateDependencyPluginResponse) -> Self {
+    Self {
+      libraries: value.libraries.into_iter().map(|l| l.into()).collect(),
+      duration: value.duration,
+    }
+  }
+}
+
+pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
+  let options = RawDuplicateDependencyPluginOptions::from_unknown(options)?;
+  Ok(Box::new(DuplicateDependencyPlugin::new(options.into())) as BoxPlugin)
+}
