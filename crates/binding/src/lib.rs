@@ -8,3 +8,8 @@ register_plugin!(
   "DuplicateDependencyPlugin",
   spack_plugin_duplicate_dependency::get_binding_plugin
 );
+
+register_plugin!(
+  "CaseSensitivePathsPlugin",
+  spack_plugin_case_sensitive_paths::get_binding_plugin
+);

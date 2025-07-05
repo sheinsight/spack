@@ -1,0 +1,21 @@
+[package]
+authors.workspace    = true
+categories.workspace = true
+edition.workspace    = true
+license.workspace    = true
+name                 = "spack_plugin_case_sensitive_paths"
+repository.workspace = true
+version              = "0.1.0"
+
+[dependencies]
+derive_more                = { workspace = true }
+napi                       = { workspace = true }
+rspack_core                = { workspace = true }
+rspack_error               = { workspace = true }
+rspack_hook                = { workspace = true }
+rspack_javascript_compiler = { workspace = true }
+swc_core                   = { workspace = true }
+tracing                    = { workspace = true }
+
+package_json_parser = { workspace = true }
+up_finder           = { workspace = true }

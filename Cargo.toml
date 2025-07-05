@@ -36,8 +36,8 @@ napi-derive-backend = { version = "=2.0.0-beta.9" }
 
 binding                           = { path = "crates/binding" }
 package_json_parser               = { version = "0.0.7" }
+spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
 spack_plugin_duplicate_dependency = { path = "crates/spack_plugin_duplicate_dependency" }
-# spack_plugin_case_sensitive_paths = { path = "customized/spack_plugin_case_sensitive_paths" }
 # spack_plugin_duplicate_dependency = { path = "customized/spack_plugin_duplicate_dependency" }
 up_finder = { version = "0.0.4" }
 
