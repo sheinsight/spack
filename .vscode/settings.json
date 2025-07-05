@@ -6,5 +6,9 @@
   ],
   "rust-analyzer.cargo.extraEnv": {
     "CARGO_WORKSPACE_DIR": "${workspaceFolder}"
-  }
+  },
+  "[toml]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
 }

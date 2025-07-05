@@ -1,11 +1,11 @@
 [package]
-name = "binding"
-version = "0.1.0"
-authors.workspace = true
+authors.workspace    = true
 categories.workspace = true
-edition.workspace = true
-license.workspace = true
+edition.workspace    = true
+license.workspace    = true
+name                 = "binding"
 repository.workspace = true
+version              = "0.1.0"
 
 [lib]
 crate-type = ["cdylib"]
@@ -14,8 +14,20 @@ crate-type = ["cdylib"]
 plugin = ["rspack_binding_builder/plugin"]
 
 [dependencies]
-rspack_binding_builder        = {workspace = true}
-rspack_binding_builder_macros = {workspace = true}
-
 spack_plugin_duplicate_dependency = { workspace = true }
 
+rspack_binding_builder        = { workspace = true }
+rspack_binding_builder_macros = { workspace = true }
+rspack_core                   = { workspace = true }
+rspack_error                  = { workspace = true }
+rspack_javascript_compiler    = { workspace = true }
+rspack_napi                   = { workspace = true }
+
+napi                = { workspace = true }
+napi-derive         = { workspace = true }
+napi-derive-backend = { workspace = true }
+
+swc_core = { workspace = true }
+
+[build-dependencies]
+rspack_binding_build = { workspace = true }
