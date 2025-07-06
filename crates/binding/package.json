@@ -1,5 +1,5 @@
 {
-  "name": "@spack/binding",
+  "name": "@shined/spack-binding",
   "version": "1.4.1",
   "license": "MIT",
   "description": "Node binding testing for rspack",
@@ -10,8 +10,32 @@
     "binding.js",
     "binding.d.ts"
   ],
+  "napi": {
+    "binaryName": "spack",
+    "packageName": "@shined/spack-binding",
+    "targets": [
+      "x86_64-apple-darwin",
+			"aarch64-apple-darwin",
+			"x86_64-pc-windows-msvc",
+			"aarch64-pc-windows-msvc",
+			"x86_64-unknown-linux-gnu",
+			"x86_64-unknown-linux-musl",
+			"aarch64-unknown-linux-gnu",
+			"aarch64-unknown-linux-musl"
+    ],
+    "wasm": {
+      "initialMemory": 16384,
+      "browser": {
+        "fs": true
+      }
+    }
+  },
   "scripts": {
-    "build:dev": "CARGO_WORKSPACE_DIR=/Users/10015448/Git/spack node scripts/build.js",
+    "create-npm-dirs": "napi create-npm-dirs",
+		"artifacts": "napi artifacts ",
+    "prepublishOnly": "napi prepublish -t npm --gh-release-id $RELEASE_ID",
+    "prepack": "clean-pkg-json",
+    "build:dev": "CARGO_WORKSPACE_DIR=/Users/ityuany/GitRepository/spack node scripts/build.js",
     "build:debug": "node scripts/build.js --profile release-debug",
     "build:ci": "node scripts/build.js --profile ci",
     "build:profiling": "node scripts/build.js --profile profiling",
@@ -24,30 +48,8 @@
     "@napi-rs/cli": "3.0.0-alpha.88",
     "@napi-rs/wasm-runtime": "^0.2.11",
     "emnapi": "^1.4.3",
+    "clean-pkg-json": "^1.2.1",
     "typescript": "^5.8.3",
     "@emnapi/core": "^1.4.3"
-  },
-  "napi": {
-    "binaryName": "rspack",
-    "packageName": "@spack/binding",
-    "targets": [
-      "x86_64-apple-darwin",
-      "x86_64-pc-windows-msvc",
-      "x86_64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
-      "x86_64-unknown-freebsd",
-      "i686-pc-windows-msvc",
-      "armv7-unknown-linux-gnueabihf",
-      "aarch64-unknown-linux-gnu",
-      "aarch64-apple-darwin",
-      "aarch64-unknown-linux-musl",
-      "aarch64-pc-windows-msvc"
-    ],
-    "wasm": {
-      "initialMemory": 16384,
-      "browser": {
-        "fs": true
-      }
-    }
   }
 }

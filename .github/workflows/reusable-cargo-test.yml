@@ -1,0 +1,54 @@
+name: NAPI Build 
+
+on:
+  workflow_call:
+    inputs:
+      host:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string 
+
+
+jobs:
+  build:
+    name: ${{ inputs.host }} - ${{ inputs.target }} - node@20
+    runs-on: ${{ inputs.host }}
+        
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            .cargo-cache
+            target/
+          key: ${{ inputs.target }}-cargo-${{ inputs.host }}
+          
+      - name: Install rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ inputs.target }}
+          override: true
+          
+      - name: Enable long paths on Windows
+        if: contains(inputs.host, 'windows')
+        shell: bash
+        run: |
+          git config --system core.longpaths true
+        
+      - name: Cargo test
+        shell: bash
+        run: |
+          cargo test --target ${{ inputs.target }}
+             
+ 
+ 

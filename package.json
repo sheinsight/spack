@@ -1,50 +1,32 @@
 {
-  "name": "@rspack/binding-testing",
-  "version": "1.4.1",
+  "name": "@shined/monorepo",
+  "version": "0.0.19",
   "license": "MIT",
-  "description": "Node binding testing for rspack",
+  "description": "Node binding for spack",
   "main": "binding.js",
   "types": "binding.d.ts",
   "private": true,
   "packageManager": "pnpm@10.5.2",
-  "files": [
-    "binding.js",
-    "binding.d.ts"
-  ],
   "scripts": {
-    "build:dev": "pnpm --filter @spack/binding run build:dev"
+    "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
+    "release": "node --experimental-strip-types --no-warnings build.mts "
   },
-  "homepage": "https://rspack.rs",
-  "bugs": "https://github.com/web-infra-dev/rspack/issues",
-  "repository": "web-infra-dev/rspack",
+  "homepage": "https://github.com/sheinsight/spack",
+  "bugs": "https://github.com/sheinsight/spack/issues",
+  "repository": "sheinsight/spack",
   "devDependencies": {
-    "@napi-rs/cli": "3.0.0-alpha.88",
-    "@napi-rs/wasm-runtime": "^0.2.11",
-    "emnapi": "^1.4.3",
-    "typescript": "^5.8.3",
-    "@emnapi/core": "^1.4.3"
-  },
-  "napi": {
-    "binaryName": "rspack",
-    "packageName": "@rspack/binding-testing",
-    "targets": [
-      "x86_64-apple-darwin",
-      "x86_64-pc-windows-msvc",
-      "x86_64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
-      "x86_64-unknown-freebsd",
-      "i686-pc-windows-msvc",
-      "armv7-unknown-linux-gnueabihf",
-      "aarch64-unknown-linux-gnu",
-      "aarch64-apple-darwin",
-      "aarch64-unknown-linux-musl",
-      "aarch64-pc-windows-msvc"
-    ],
-    "wasm": {
-      "initialMemory": 16384,
-      "browser": {
-        "fs": true
-      }
-    }
+  "@tsconfig/node-ts": "^23.6.1",
+		"@tsconfig/node22": "^22.0.2",
+		"@types/node": "^22.15.31",
+		"@types/semver": "^7.7.0",
+		"consola": "^3.4.2",
+		"enquirer": "^2.4.1",
+		"execa": "^9.6.0",
+		"find-packages": "^10.0.4",
+		"read-pkg": "^9.0.1",
+		"read-yaml-file": "^2.1.0",
+		"semver": "^7.7.2",
+		"typescript": "^5.8.3",
+		"write-package": "^7.1.0"
   }
 }

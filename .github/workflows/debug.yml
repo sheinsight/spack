@@ -1,0 +1,25 @@
+name: Debug
+env:
+  DEBUG: napi:*
+  APP_NAME: doctor
+  NAPI_DIR: napi/doctor
+  CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_DEBUG: true
+
+permissions:
+  contents: write
+  id-token: write
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-platforms:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Hello, world!"
+    

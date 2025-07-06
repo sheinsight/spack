@@ -73,24 +73,24 @@ function requireNative() {
   } else if (process.platform === 'android') {
     if (process.arch === 'arm64') {
       try {
-        return require('./rspack.android-arm64.node')
+        return require('./spack.android-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-android-arm64')
+        return require('@shined/spack-binding-android-arm64')
       } catch (e) {
         loadErrors.push(e)
       }
 
     } else if (process.arch === 'arm') {
       try {
-        return require('./rspack.android-arm-eabi.node')
+        return require('./spack.android-arm-eabi.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-android-arm-eabi')
+        return require('@shined/spack-binding-android-arm-eabi')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -101,36 +101,36 @@ function requireNative() {
   } else if (process.platform === 'win32') {
     if (process.arch === 'x64') {
       try {
-        return require('./rspack.win32-x64-msvc.node')
+        return require('./spack.win32-x64-msvc.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-win32-x64-msvc')
+        return require('@shined/spack-binding-win32-x64-msvc')
       } catch (e) {
         loadErrors.push(e)
       }
 
     } else if (process.arch === 'ia32') {
       try {
-        return require('./rspack.win32-ia32-msvc.node')
+        return require('./spack.win32-ia32-msvc.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-win32-ia32-msvc')
+        return require('@shined/spack-binding-win32-ia32-msvc')
       } catch (e) {
         loadErrors.push(e)
       }
 
     } else if (process.arch === 'arm64') {
       try {
-        return require('./rspack.win32-arm64-msvc.node')
+        return require('./spack.win32-arm64-msvc.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-win32-arm64-msvc')
+        return require('@shined/spack-binding-win32-arm64-msvc')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -140,36 +140,36 @@ function requireNative() {
     }
   } else if (process.platform === 'darwin') {
     try {
-        return require('./rspack.darwin-universal.node')
+        return require('./spack.darwin-universal.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-darwin-universal')
+        return require('@shined/spack-binding-darwin-universal')
       } catch (e) {
         loadErrors.push(e)
       }
 
     if (process.arch === 'x64') {
       try {
-        return require('./rspack.darwin-x64.node')
+        return require('./spack.darwin-x64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-darwin-x64')
+        return require('@shined/spack-binding-darwin-x64')
       } catch (e) {
         loadErrors.push(e)
       }
 
     } else if (process.arch === 'arm64') {
       try {
-        return require('./rspack.darwin-arm64.node')
+        return require('./spack.darwin-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-darwin-arm64')
+        return require('@shined/spack-binding-darwin-arm64')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -180,24 +180,24 @@ function requireNative() {
   } else if (process.platform === 'freebsd') {
     if (process.arch === 'x64') {
       try {
-        return require('./rspack.freebsd-x64.node')
+        return require('./spack.freebsd-x64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-freebsd-x64')
+        return require('@shined/spack-binding-freebsd-x64')
       } catch (e) {
         loadErrors.push(e)
       }
 
     } else if (process.arch === 'arm64') {
       try {
-        return require('./rspack.freebsd-arm64.node')
+        return require('./spack.freebsd-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-freebsd-arm64')
+        return require('@shined/spack-binding-freebsd-arm64')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -209,24 +209,24 @@ function requireNative() {
     if (process.arch === 'x64') {
       if (isMusl()) {
         try {
-        return require('./rspack.linux-x64-musl.node')
+        return require('./spack.linux-x64-musl.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-x64-musl')
+        return require('@shined/spack-binding-linux-x64-musl')
       } catch (e) {
         loadErrors.push(e)
       }
 
       } else {
         try {
-        return require('./rspack.linux-x64-gnu.node')
+        return require('./spack.linux-x64-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-x64-gnu')
+        return require('@shined/spack-binding-linux-x64-gnu')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -235,24 +235,24 @@ function requireNative() {
     } else if (process.arch === 'arm64') {
       if (isMusl()) {
         try {
-        return require('./rspack.linux-arm64-musl.node')
+        return require('./spack.linux-arm64-musl.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-arm64-musl')
+        return require('@shined/spack-binding-linux-arm64-musl')
       } catch (e) {
         loadErrors.push(e)
       }
 
       } else {
         try {
-        return require('./rspack.linux-arm64-gnu.node')
+        return require('./spack.linux-arm64-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-arm64-gnu')
+        return require('@shined/spack-binding-linux-arm64-gnu')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -261,24 +261,24 @@ function requireNative() {
     } else if (process.arch === 'arm') {
       if (isMusl()) {
         try {
-        return require('./rspack.linux-arm-musleabihf.node')
+        return require('./spack.linux-arm-musleabihf.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-arm-musleabihf')
+        return require('@shined/spack-binding-linux-arm-musleabihf')
       } catch (e) {
         loadErrors.push(e)
       }
 
       } else {
         try {
-        return require('./rspack.linux-arm-gnueabihf.node')
+        return require('./spack.linux-arm-gnueabihf.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-arm-gnueabihf')
+        return require('@shined/spack-binding-linux-arm-gnueabihf')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -287,24 +287,24 @@ function requireNative() {
     } else if (process.arch === 'riscv64') {
       if (isMusl()) {
         try {
-        return require('./rspack.linux-riscv64-musl.node')
+        return require('./spack.linux-riscv64-musl.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-riscv64-musl')
+        return require('@shined/spack-binding-linux-riscv64-musl')
       } catch (e) {
         loadErrors.push(e)
       }
 
       } else {
         try {
-        return require('./rspack.linux-riscv64-gnu.node')
+        return require('./spack.linux-riscv64-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-riscv64-gnu')
+        return require('@shined/spack-binding-linux-riscv64-gnu')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -312,24 +312,24 @@ function requireNative() {
       }
     } else if (process.arch === 'ppc64') {
       try {
-        return require('./rspack.linux-ppc64-gnu.node')
+        return require('./spack.linux-ppc64-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-ppc64-gnu')
+        return require('@shined/spack-binding-linux-ppc64-gnu')
       } catch (e) {
         loadErrors.push(e)
       }
 
     } else if (process.arch === 's390x') {
       try {
-        return require('./rspack.linux-s390x-gnu.node')
+        return require('./spack.linux-s390x-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
-        return require('@spack/binding-linux-s390x-gnu')
+        return require('@shined/spack-binding-linux-s390x-gnu')
       } catch (e) {
         loadErrors.push(e)
       }
@@ -346,7 +346,7 @@ nativeBinding = requireNative()
 
 if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
   try {
-    nativeBinding = require('./rspack.wasi.cjs')
+    nativeBinding = require('./spack.wasi.cjs')
   } catch (err) {
     if (process.env.NAPI_RS_FORCE_WASI) {
       loadErrors.push(err)
@@ -354,7 +354,7 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
   }
   if (!nativeBinding) {
     try {
-      nativeBinding = require('@spack/binding-wasm32-wasi')
+      nativeBinding = require('@shined/spack-binding-wasm32-wasi')
     } catch (err) {
       if (process.env.NAPI_RS_FORCE_WASI) {
         loadErrors.push(err)
@@ -377,3 +377,53 @@ if (!nativeBinding) {
 module.exports = nativeBinding
 module.exports.registerCaseSensitivePathsPlugin = nativeBinding.registerCaseSensitivePathsPlugin
 module.exports.registerDuplicateDependencyPlugin = nativeBinding.registerDuplicateDependencyPlugin
+module.exports.Assets = nativeBinding.Assets
+module.exports.AsyncDependenciesBlock = nativeBinding.AsyncDependenciesBlock
+module.exports.Chunk = nativeBinding.Chunk
+module.exports.ChunkGraph = nativeBinding.ChunkGraph
+module.exports.ChunkGroup = nativeBinding.ChunkGroup
+module.exports.Chunks = nativeBinding.Chunks
+module.exports.CodeGenerationResult = nativeBinding.CodeGenerationResult
+module.exports.CodeGenerationResults = nativeBinding.CodeGenerationResults
+module.exports.ConcatenatedModule = nativeBinding.ConcatenatedModule
+module.exports.ContextModule = nativeBinding.ContextModule
+module.exports.Dependency = nativeBinding.Dependency
+module.exports.Diagnostics = nativeBinding.Diagnostics
+module.exports.EntryDataDto = nativeBinding.EntryDataDto
+module.exports.EntryDataDTO = nativeBinding.EntryDataDTO
+module.exports.EntryDependency = nativeBinding.EntryDependency
+module.exports.EntryOptionsDto = nativeBinding.EntryOptionsDto
+module.exports.EntryOptionsDTO = nativeBinding.EntryOptionsDTO
+module.exports.ExternalModule = nativeBinding.ExternalModule
+module.exports.JsCompilation = nativeBinding.JsCompilation
+module.exports.JsCompiler = nativeBinding.JsCompiler
+module.exports.JsContextModuleFactoryAfterResolveData = nativeBinding.JsContextModuleFactoryAfterResolveData
+module.exports.JsContextModuleFactoryBeforeResolveData = nativeBinding.JsContextModuleFactoryBeforeResolveData
+module.exports.JsDependencies = nativeBinding.JsDependencies
+module.exports.JsEntries = nativeBinding.JsEntries
+module.exports.JsExportsInfo = nativeBinding.JsExportsInfo
+module.exports.JsModuleGraph = nativeBinding.JsModuleGraph
+module.exports.JsResolver = nativeBinding.JsResolver
+module.exports.JsResolverFactory = nativeBinding.JsResolverFactory
+module.exports.JsStats = nativeBinding.JsStats
+module.exports.KnownBuildInfo = nativeBinding.KnownBuildInfo
+module.exports.Module = nativeBinding.Module
+module.exports.ModuleGraphConnection = nativeBinding.ModuleGraphConnection
+module.exports.NormalModule = nativeBinding.NormalModule
+module.exports.RawExternalItemFnCtx = nativeBinding.RawExternalItemFnCtx
+module.exports.ReadonlyResourceData = nativeBinding.ReadonlyResourceData
+module.exports.Sources = nativeBinding.Sources
+module.exports.BuiltinPluginName = nativeBinding.BuiltinPluginName
+module.exports.cleanupGlobalTrace = nativeBinding.cleanupGlobalTrace
+module.exports.formatDiagnostic = nativeBinding.formatDiagnostic
+module.exports.JsLoaderState = nativeBinding.JsLoaderState
+module.exports.JsRspackSeverity = nativeBinding.JsRspackSeverity
+module.exports.loadBrowserslist = nativeBinding.loadBrowserslist
+module.exports.minify = nativeBinding.minify
+module.exports.minifySync = nativeBinding.minifySync
+module.exports.RawRuleSetConditionType = nativeBinding.RawRuleSetConditionType
+module.exports.registerGlobalTrace = nativeBinding.registerGlobalTrace
+module.exports.RegisterJsTapKind = nativeBinding.RegisterJsTapKind
+module.exports.syncTraceEvent = nativeBinding.syncTraceEvent
+module.exports.transform = nativeBinding.transform
+module.exports.transformSync = nativeBinding.transformSync

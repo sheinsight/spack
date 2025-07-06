@@ -1,49 +1,16 @@
-name: Release
+name: Cross Platform CI
 env:
   DEBUG: napi:*
-  # 如果没有的话 napi prepublish 会报错
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NAPI_DIR: crates/binding
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CARGO_INCREMENTAL: '1'
   CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_DEBUG: true
 permissions:
-  # To publish packages with provenance
+  contents: write
   id-token: write
-  contents: write 
-  # Allow commenting on issues for `reusable-build.yml`
-  issues: write
-
 on:
-  workflow_dispatch:
-    # inputs:
-      # version:
-      #   type: choice
-      #   description: "Release Version"
-      #   required: true
-      #   options:
-      #     - major
-      #     - minor
-      #     - patch
-      #     - premajor
-      #     - preminor
-      #     - prepatch
-      #     - prerelease
-      # npm_tag:
-      #   type: choice
-      #   description: "Release Npm Tag"
-      #   required: true
-      #   default: "latest"
-      #   options:
-      #     - canary
-      #     - nightly
-      #     - latest
-      #     - beta
-      #     - alpha
-      # push_tags:
-      #   type: boolean
-      #   description: "push tags to github"
-      #   required: true
-      #   default: true
-
+  push:
+    branches:
+      - main
 
 jobs:
   test-platforms:
@@ -69,10 +36,10 @@ jobs:
     with:
       host: ${{ matrix.platform.host }}
       target: ${{ matrix.platform.target }} 
-
+      
   build-platforms:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         platform:
           # Linux 平台
@@ -98,6 +65,8 @@ jobs:
             target: x86_64-pc-windows-msvc
           - host: windows-latest
             target: aarch64-pc-windows-msvc
+    
+   
     name: Build ${{ matrix.platform.target }}
     uses: ./.github/workflows/reusable-napi-build.yml
     with:
@@ -106,24 +75,6 @@ jobs:
       docker: ${{ matrix.platform.docker }}
       binding_dir: crates/binding
       binding_name: doctor-binding
-      npm_package_name: '@shined/spack-binding'
-
-  napi-publish:
-    needs: [build-platforms,test-platforms]
-    uses: ./.github/workflows/reusable-napi-publish.yml
-    with:
-      binding_dir: crates/binding
-      npm_package_name: '@shined/spack-binding'
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      npm_package_name: '@shined/doctor-binding'
 
 
-  # npm-publish:
-  #   needs: [napi-publish]
-  #   uses: ./.github/workflows/reusable-npm-publish.yml
-  #   with:
-  #     binding_dir: crates/binding
-  #     npm_package_name: '@shined/doctor'
-  #   secrets:
-  #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-     
