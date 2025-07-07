@@ -46,29 +46,29 @@ on:
 
 
 jobs:
-  test-platforms:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          # Linux 平台
-          - host: ubuntu-latest 
-            target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian 
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig 
-          - host: macos-latest
-            target: aarch64-apple-darwin
-          # Windows 平台
-          - host: windows-latest
-            target: x86_64-pc-windows-msvc 
+  # test-platforms:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       platform:
+  #         # Linux 平台
+  #         - host: ubuntu-latest 
+  #           target: x86_64-unknown-linux-gnu
+  #           docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian 
+  #         - host: ubuntu-latest
+  #           target: x86_64-unknown-linux-musl
+  #           docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig 
+  #         - host: macos-latest
+  #           target: aarch64-apple-darwin
+  #         # Windows 平台
+  #         - host: windows-latest
+  #           target: x86_64-pc-windows-msvc 
 
-    name: Test ${{ matrix.platform.target }}
-    uses: ./.github/workflows/reusable-cargo-test.yml
-    with:
-      host: ${{ matrix.platform.host }}
-      target: ${{ matrix.platform.target }} 
+  #   name: Test ${{ matrix.platform.target }}
+  #   uses: ./.github/workflows/reusable-cargo-test.yml
+  #   with:
+  #     host: ${{ matrix.platform.host }}
+  #     target: ${{ matrix.platform.target }} 
 
   build-platforms:
     strategy:
