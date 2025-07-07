@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding",
-  "version": "1.4.1",
+  "version": "0.0.21-canary.0",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
@@ -14,13 +14,13 @@
     "packageName": "@shined/spack-binding",
     "targets": [
       "x86_64-apple-darwin",
-			"aarch64-apple-darwin",
-			"x86_64-pc-windows-msvc",
-			"aarch64-pc-windows-msvc",
-			"x86_64-unknown-linux-gnu",
-			"x86_64-unknown-linux-musl",
-			"aarch64-unknown-linux-gnu",
-			"aarch64-unknown-linux-musl"
+      "aarch64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl"
     ],
     "wasm": {
       "initialMemory": 16384,
@@ -31,7 +31,7 @@
   },
   "scripts": {
     "create-npm-dirs": "napi create-npm-dirs",
-		"artifacts": "napi artifacts ",
+    "artifacts": "napi artifacts ",
     "prepublishOnly": "napi prepublish -t npm --gh-release-id $RELEASE_ID",
     "prepack": "clean-pkg-json",
     "build": "napi build --platform --release",
@@ -42,14 +42,25 @@
     "build:release": "node scripts/build.js --profile release"
   },
   "homepage": "https://github.com/sheinsight/spack",
-  "bugs": "https://github.com/sheinsight/spack/issues",
-  "repository": "sheinsight/spack",
+  "bugs": {
+    "url": "https://github.com/sheinsight/spack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sheinsight/spack.git"
+  },
   "devDependencies": {
+    "@emnapi/core": "^1.4.3",
     "@napi-rs/cli": "3.0.0-alpha.89",
     "@napi-rs/wasm-runtime": "^0.2.11",
-    "emnapi": "^1.4.3",
     "clean-pkg-json": "^1.2.1",
-    "typescript": "^5.8.3",
-    "@emnapi/core": "^1.4.3"
+    "emnapi": "^1.4.3",
+    "typescript": "^5.8.3"
+  },
+  "readme": "ERROR: No README data found!",
+  "_id": "0.0.21-canary.0",
+  "publishConfig": {
+    "access": "public",
+    "tag": "canary"
   }
 }

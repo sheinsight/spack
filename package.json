@@ -1,6 +1,6 @@
 {
   "name": "@shined/monorepo",
-  "version": "0.0.20",
+  "version": "0.0.21-canary.0",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
@@ -12,21 +12,28 @@
     "release": "node --experimental-strip-types --no-warnings build.mts "
   },
   "homepage": "https://github.com/sheinsight/spack",
-  "bugs": "https://github.com/sheinsight/spack/issues",
-  "repository": "sheinsight/spack",
+  "bugs": {
+    "url": "https://github.com/sheinsight/spack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sheinsight/spack.git"
+  },
   "devDependencies": {
-  "@tsconfig/node-ts": "^23.6.1",
-		"@tsconfig/node22": "^22.0.2",
-		"@types/node": "^22.15.31",
-		"@types/semver": "^7.7.0",
-		"consola": "^3.4.2",
-		"enquirer": "^2.4.1",
-		"execa": "^9.6.0",
-		"find-packages": "^10.0.4",
-		"read-pkg": "^9.0.1",
-		"read-yaml-file": "^2.1.0",
-		"semver": "^7.7.2",
-		"typescript": "^5.8.3",
-		"write-package": "^7.1.0"
-  }
+    "@tsconfig/node-ts": "^23.6.1",
+    "@tsconfig/node22": "^22.0.2",
+    "@types/node": "^22.15.31",
+    "@types/semver": "^7.7.0",
+    "consola": "^3.4.2",
+    "enquirer": "^2.4.1",
+    "execa": "^9.6.0",
+    "find-packages": "^10.0.4",
+    "read-pkg": "^9.0.1",
+    "read-yaml-file": "^2.1.0",
+    "semver": "^7.7.2",
+    "typescript": "^5.8.3",
+    "write-package": "^7.1.0"
+  },
+  "readme": "ERROR: No README data found!",
+  "_id": "0.0.21-canary.0"
 }
