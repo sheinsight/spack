@@ -6,7 +6,7 @@
   "main": "binding.js",
   "types": "binding.d.ts",
   "private": true,
-  "packageManager": "pnpm@10.5.2",
+  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
     "release": "node --experimental-strip-types --no-warnings build.mts "
