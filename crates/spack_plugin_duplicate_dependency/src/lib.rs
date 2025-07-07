@@ -100,16 +100,3 @@ async fn finish_make(&self, compilation: &mut Compilation) -> rspack_error::Resu
 
   Ok(())
 }
-
-// #[allow(unused)]
-// pub fn get_binding_plugin(_env: Env, options: Unknown<'_>) -> Result<BoxPlugin> {
-//   let options = options.coerce_to_object()?;
-//   // #[allow(clippy::disallowed_names, clippy::unwrap_used)]
-//   let on_detected = options.get::<CompilationHookFn>("on_detected")?.unwrap();
-//   // assert_eq!(foo, "bar".to_string());
-//   Ok(Box::new(DuplicateDependencyPlugin::new(
-//     DuplicateDependencyPluginOptions { on_detected: None },
-//   )) as BoxPlugin)
-// }
-
-// register_plugin!("BindingBuilderTestingPlugin", get_binding_plugin);

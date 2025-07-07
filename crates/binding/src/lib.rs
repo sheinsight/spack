@@ -2,9 +2,10 @@
 
 mod raws;
 
+use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use rspack_binding_builder_macros::register_plugin;
-use rspack_napi::napi::bindgen_prelude::*;
+// use rspack_napi::napi::bindgen_prelude::*;
 
 register_plugin!(
   "DuplicateDependencyPlugin",

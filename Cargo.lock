@@ -294,6 +294,7 @@ dependencies = [
 name = "binding"
 version = "0.1.0"
 dependencies = [
+ "derive_more 1.0.0",
  "napi",
  "napi-derive",
  "napi-derive-backend",
@@ -6292,7 +6293,6 @@ name = "spack_plugin_case_sensitive_paths"
 version = "0.1.0"
 dependencies = [
  "derive_more 1.0.0",
- "napi",
  "package_json_parser",
  "rspack_core",
  "rspack_error",
@@ -6319,7 +6319,6 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_javascript_compiler",
- "rspack_napi",
  "swc_core",
  "tracing",
  "tracing-subscriber",

@@ -28,7 +28,8 @@ napi                = { workspace = true }
 napi-derive         = { workspace = true }
 napi-derive-backend = { workspace = true }
 
-swc_core = { workspace = true }
+derive_more = { workspace = true }
+swc_core    = { workspace = true }
 
 [build-dependencies]
 rspack_binding_build = { workspace = true }

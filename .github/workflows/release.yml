@@ -63,7 +63,6 @@ jobs:
   #         # Windows 平台
   #         - host: windows-latest
   #           target: x86_64-pc-windows-msvc 
-
   #   name: Test ${{ matrix.platform.target }}
   #   uses: ./.github/workflows/reusable-cargo-test.yml
   #   with:
@@ -109,7 +108,10 @@ jobs:
       npm_package_name: '@shined/spack-binding'
 
   napi-publish:
-    needs: [build-platforms,test-platforms]
+    needs: [
+      build-platforms,
+      # test-platforms
+    ]
     uses: ./.github/workflows/reusable-napi-publish.yml
     with:
       binding_dir: crates/binding

@@ -1,7 +1,11 @@
+use std::sync::Arc;
+
+use derive_more::Debug;
+use napi::threadsafe_function::ThreadsafeFunction;
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
-use rspack_napi::threadsafe_function::ThreadsafeFunction;
+// use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_plugin_duplicate_dependency::{
   CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOptions,
   DuplicateDependencyPluginResponse, Library,
@@ -10,23 +14,31 @@ use spack_plugin_duplicate_dependency::{
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawDuplicateDependencyPluginOptions {
-  #[napi(ts_type = "(response: JsDuplicateDependencyPluginResponse) => void")]
+  #[napi(ts_type = "async (response: JsDuplicateDependencyPluginResponse) => void")]
+  #[debug(skip)]
   pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResponse, ()>>,
 }
 
 impl From<RawDuplicateDependencyPluginOptions> for DuplicateDependencyPluginOptions {
   fn from(value: RawDuplicateDependencyPluginOptions) -> Self {
     let on_detected: Option<CompilationHookFn> = match value.on_detected {
-      Some(callback) => Some(Box::new(move |libraries| {
-        let callback = callback.clone();
-        let response = JsDuplicateDependencyPluginResponse::from(libraries);
-        Box::pin({
-          async move {
-            callback.call_with_sync(response).await?;
-            Ok(())
-          }
-        })
-      })),
+      Some(callback) => {
+        let callback = Arc::new(callback);
+        Some(Box::new(move |libraries| {
+          let callback = callback.clone();
+          let response = JsDuplicateDependencyPluginResponse::from(libraries);
+          Box::pin({
+            async move {
+              // TODO: handle error
+              callback
+                .call_async(Ok(response))
+                .await
+                .expect("callback error");
+              Ok(())
+            }
+          })
+        }))
+      }
       _ => None,
     };
     Self { on_detected }

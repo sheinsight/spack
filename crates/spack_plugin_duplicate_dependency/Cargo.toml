@@ -14,7 +14,7 @@ rspack_core                   = { workspace = true }
 rspack_error                  = { workspace = true }
 rspack_hook                   = { workspace = true }
 rspack_javascript_compiler    = { workspace = true }
-rspack_napi                   = { workspace = true }
+
 
 napi                = { workspace = true }
 napi-derive         = { workspace = true }
