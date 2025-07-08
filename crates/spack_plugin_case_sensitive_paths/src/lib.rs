@@ -207,7 +207,6 @@ async fn after_resolve(
     && let Some(error_message) = self.check_case_sensitive_path_optimized(resource_path)
     && let Ok(source_content) = std::fs::read_to_string(current_file)
   {
-    println!("data.issuer {:?}", data.issuer);
     let user_request = dependency.user_request();
     let diagnostic = self
       .find_import_position(&source_content, user_request, current_file)

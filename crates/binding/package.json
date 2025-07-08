@@ -35,7 +35,7 @@
     "prepublishOnly": "napi prepublish -t npm --gh-release-id $RELEASE_ID",
     "prepack": "clean-pkg-json",
     "build": "napi build --platform --release",
-    "build:dev": "CARGO_WORKSPACE_DIR=/Users/ityuany/GitRepository/spack node scripts/build.js",
+    "build:dev": "CARGO_WORKSPACE_DIR=/Users/10015448/Git/spack/crates/binding node scripts/build.js",
     "build:debug": "node scripts/build.js --profile release-debug",
     "build:ci": "node scripts/build.js --profile ci",
     "build:profiling": "node scripts/build.js --profile profiling",
