@@ -5,7 +5,6 @@ use napi::threadsafe_function::ThreadsafeFunction;
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
-// use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_plugin_duplicate_dependency::{
   CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOpts,
   DuplicateDependencyPluginResp, Library,
