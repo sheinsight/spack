@@ -9,20 +9,20 @@ use rspack_core::{
 };
 use rspack_hook::{plugin, plugin_hook};
 use up_finder::UpFinder;
-mod options;
-mod response;
+mod opts;
+mod resp;
 
-pub use options::{CompilationHookFn, DuplicateDependencyPluginOptions};
-pub use response::{DuplicateDependencyPluginResponse, Library};
+pub use opts::{CompilationHookFn, DuplicateDependencyPluginOpts};
+pub use resp::{DuplicateDependencyPluginResp, Library};
 
 #[plugin]
 #[derive(Debug)]
 pub struct DuplicateDependencyPlugin {
-  options: DuplicateDependencyPluginOptions,
+  options: DuplicateDependencyPluginOpts,
 }
 
 impl DuplicateDependencyPlugin {
-  pub fn new(options: DuplicateDependencyPluginOptions) -> Self {
+  pub fn new(options: DuplicateDependencyPluginOpts) -> Self {
     Self::new_inner(options)
   }
 }
@@ -91,8 +91,7 @@ async fn finish_make(&self, compilation: &mut Compilation) -> rspack_error::Resu
 
   let duration = duration.as_millis() as f64;
 
-  let response =
-    DuplicateDependencyPluginResponse::new(cache.values().cloned().collect(), duration);
+  let response = DuplicateDependencyPluginResp::new(cache.values().cloned().collect(), duration);
 
   if let Some(on_detected) = &self.options.on_detected {
     on_detected(response).await?;

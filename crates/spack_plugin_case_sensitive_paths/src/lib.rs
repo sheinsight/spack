@@ -20,20 +20,20 @@ use swc_core::{
 };
 
 mod import_finder;
-mod options;
+mod opts;
 
-pub use options::CaseSensitivePathsPluginOptions;
+pub use opts::CaseSensitivePathsPluginOpts;
 
 use crate::import_finder::ImportFinder;
 
 #[plugin]
 #[derive(Debug)]
 pub struct CaseSensitivePathsPlugin {
-  options: CaseSensitivePathsPluginOptions,
+  options: CaseSensitivePathsPluginOpts,
 }
 
 impl CaseSensitivePathsPlugin {
-  pub fn new(options: CaseSensitivePathsPluginOptions) -> Self {
+  pub fn new(options: CaseSensitivePathsPluginOpts) -> Self {
     Self::new_inner(options)
   }
 

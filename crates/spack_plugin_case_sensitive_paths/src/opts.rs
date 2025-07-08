@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub struct CaseSensitivePathsPluginOptions {
+pub struct CaseSensitivePathsPluginOpts {
   pub debug: bool,
   pub use_cache: bool,
 }

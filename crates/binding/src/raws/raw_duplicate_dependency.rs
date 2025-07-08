@@ -7,26 +7,26 @@ use napi_derive::napi;
 use rspack_core::BoxPlugin;
 // use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_plugin_duplicate_dependency::{
-  CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOptions,
-  DuplicateDependencyPluginResponse, Library,
+  CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOpts,
+  DuplicateDependencyPluginResp, Library,
 };
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
-pub struct RawDuplicateDependencyPluginOptions {
-  #[napi(ts_type = "async (response: JsDuplicateDependencyPluginResponse) => void")]
+pub struct RawDuplicateDependencyPluginOpts {
+  #[napi(ts_type = "async (response: JsDuplicateDependencyPluginResp) => void")]
   #[debug(skip)]
-  pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResponse, ()>>,
+  pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResp, ()>>,
 }
 
-impl From<RawDuplicateDependencyPluginOptions> for DuplicateDependencyPluginOptions {
-  fn from(value: RawDuplicateDependencyPluginOptions) -> Self {
+impl From<RawDuplicateDependencyPluginOpts> for DuplicateDependencyPluginOpts {
+  fn from(value: RawDuplicateDependencyPluginOpts) -> Self {
     let on_detected: Option<CompilationHookFn> = match value.on_detected {
       Some(callback) => {
         let callback = Arc::new(callback);
         Some(Box::new(move |libraries| {
           let callback = callback.clone();
-          let response = JsDuplicateDependencyPluginResponse::from(libraries);
+          let response = JsDuplicateDependencyPluginResp::from(libraries);
           Box::pin({
             async move {
               // TODO: handle error
@@ -65,13 +65,13 @@ impl From<Library> for JsLibrary {
 
 #[derive(Debug)]
 #[napi(object)]
-pub struct JsDuplicateDependencyPluginResponse {
+pub struct JsDuplicateDependencyPluginResp {
   pub libraries: Vec<JsLibrary>,
   pub duration: f64,
 }
 
-impl From<DuplicateDependencyPluginResponse> for JsDuplicateDependencyPluginResponse {
-  fn from(value: DuplicateDependencyPluginResponse) -> Self {
+impl From<DuplicateDependencyPluginResp> for JsDuplicateDependencyPluginResp {
+  fn from(value: DuplicateDependencyPluginResp) -> Self {
     Self {
       libraries: value.libraries.into_iter().map(|l| l.into()).collect(),
       duration: value.duration,
@@ -80,6 +80,6 @@ impl From<DuplicateDependencyPluginResponse> for JsDuplicateDependencyPluginResp
 }
 
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
-  let options = RawDuplicateDependencyPluginOptions::from_unknown(options)?;
+  let options = RawDuplicateDependencyPluginOpts::from_unknown(options)?;
   Ok(Box::new(DuplicateDependencyPlugin::new(options.into())) as BoxPlugin)
 }
