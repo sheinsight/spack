@@ -9,6 +9,7 @@ version              = "0.1.0"
 
 [lib]
 crate-type = ["cdylib"]
+test       = false
 
 [features]
 plugin = ["rspack_binding_builder/plugin"]
