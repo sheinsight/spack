@@ -48,6 +48,8 @@ jobs:
       - name: Cargo test
         shell: bash
         run: |
+          apt-get update
+          apt-get install -y musl-tools
           cargo test --target ${{ inputs.target }}
              
  
