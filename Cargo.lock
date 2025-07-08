@@ -305,6 +305,8 @@ dependencies = [
  "rspack_error",
  "rspack_javascript_compiler",
  "rspack_napi",
+ "serde",
+ "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
  "spack_plugin_duplicate_dependency",
  "swc_core",
@@ -6286,6 +6288,29 @@ checksum = "e22376abed350d73dd1cd119b57ffccad95b4e585a7cda43e286245ce23c0678"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "spack_plugin_bundle_analyzer"
+version = "0.1.0"
+dependencies = [
+ "derive_more 1.0.0",
+ "futures",
+ "napi",
+ "napi-derive",
+ "napi-derive-backend",
+ "package_json_parser",
+ "rspack_binding_builder",
+ "rspack_binding_builder_macros",
+ "rspack_core",
+ "rspack_error",
+ "rspack_hook",
+ "rspack_javascript_compiler",
+ "serde",
+ "swc_core",
+ "tracing",
+ "tracing-subscriber",
+ "up_finder",
 ]
 
 [[package]]

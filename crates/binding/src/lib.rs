@@ -16,3 +16,5 @@ register_plugin!(
   "CaseSensitivePathsPlugin",
   raws::raw_case_sensitive_paths::binding
 );
+
+register_plugin!("BundleAnalyzerPlugin", raws::raw_bundle_analyzer::binding);
