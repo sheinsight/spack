@@ -35,6 +35,7 @@ impl Plugin for BundleAnalyzerPlugin {
     ctx: PluginContext<&mut ApplyContext>,
     _options: &CompilerOptions,
   ) -> rspack_error::Result<()> {
+    println!("BundleAnalyzerPlugin apply");
     ctx
       .context
       .compiler_hooks
@@ -69,42 +70,31 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     chunks: HashMap::new(),
   };
 
-  let module_graph = compilation.get_module_graph();
-
-  // 1. 分析输出的资源
-  for (id, module) in module_graph.modules() {
-    if let Some(source) = compilation.assets().get(&module.identifier().to_string()) {
-      let size = source.get_source().map(|s| s.size()).unwrap_or(0);
-      let name = module.readable_identifier(&compilation.options.context);
-      println!("name: {}", name);
-      println!("size: {}", size);
-      println!("-----");
-      // let path = module.resource().unwrap_or_default().to_string();
-      // let dependencies = module
-      //   .dependencies()
-      //   .iter()
-      //   .map(|d| d.identifier().to_string())
-      //   .collect();
-      // stats.modules.push(ModuleInfo {
-      //   name: name.to_string(),
-      //   size,
-      //   path,
-      //   dependencies,
-      // });
-      // stats.total_size += size;
-    }
-  }
-
-  let chunk_graph_entries = compilation.get_chunk_graph_entries();
-  for entry in chunk_graph_entries {
-    // let chunk = entry.chunk();
-    // let modules = chunk.get_modules();
-    // let size = chunk.get_size();
-    // let name = chunk.get_name();
+  for (id, asset) in compilation.assets() {
+    println!(
+      "name: {:?} , size: {:?}",
+      id,
+      asset.source.as_ref().map(|s| s.size())
+    );
   }
 
   // 2. 分析模块依赖关系
   let module_graph = compilation.get_module_graph();
+
+  for (id, module) in module_graph.modules() {
+    let dependencies = module.get_dependencies();
+    println!("module: {:?}", id);
+    for dependency in dependencies {
+      if let Some(dependency) = module_graph
+        .dependency_by_id(dependency)
+        .and_then(|dep| dep.as_module_dependency())
+      {
+        println!(" dependency: {:?}", dependency.user_request());
+      }
+    }
+    println!("-----");
+    // println!("module: {:?}, dependencies: {:?}", id, dependencies);
+  }
 
   // 3. 生成分析报告
   // - 文件大小统计

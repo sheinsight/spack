@@ -22,7 +22,7 @@ rspack_hook                   = "=0.2.1-alpha.1"
 rspack_javascript_compiler    = "=0.2.1-alpha.1"
 rspack_napi                   = "=0.2.1-alpha.1"
 
-swc_core = { version = "=30.0.2", default-features = false, features = ["parallel_rayon"] }
+swc_core = { version = "=31.0.1", default-features = false, features = ["parallel_rayon"] }
 
 futures = { version = "0.3.31" }
 

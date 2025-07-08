@@ -1,4 +1,4 @@
-export interface JsDuplicateDependencyPluginResponse {
+export interface JsDuplicateDependencyPluginResp {
   libraries: Array<JsLibrary>
   duration: number
 }
@@ -9,14 +9,20 @@ export interface JsLibrary {
   version: string
 }
 
-export interface RawCaseSensitivePathsPluginOptions {
+export interface RawBundleAnalyzerPluginOpts {
+
+}
+
+export interface RawCaseSensitivePathsPluginOpts {
   debug: boolean
   useCache: boolean
 }
 
-export interface RawDuplicateDependencyPluginOptions {
-  onDetected?: async (response: JsDuplicateDependencyPluginResponse) => void
+export interface RawDuplicateDependencyPluginOpts {
+  onDetected?: async (response: JsDuplicateDependencyPluginResp) => Promise<void>
 }
+
+export declare function registerBundleAnalyzerPlugin(): void
 
 export declare function registerCaseSensitivePathsPlugin(): void
 

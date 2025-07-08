@@ -309,7 +309,7 @@ dependencies = [
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
  "spack_plugin_duplicate_dependency",
- "swc_core 30.0.2",
+ "swc_core",
 ]
 
 [[package]]
@@ -4152,7 +4152,7 @@ dependencies = [
  "rustc-hash 2.1.1",
  "serde",
  "serde_json",
- "swc_core 31.0.1",
+ "swc_core",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -4220,7 +4220,7 @@ dependencies = [
  "rspack_sources",
  "serde_json",
  "smol_str",
- "swc_core 31.0.1",
+ "swc_core",
  "ustr-fxhash",
  "xxhash-rust",
 ]
@@ -4298,7 +4298,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sugar_path",
- "swc_core 31.0.1",
+ "swc_core",
  "swc_node_comments",
  "tokio",
  "tracing",
@@ -4333,7 +4333,7 @@ dependencies = [
  "rspack_location",
  "rspack_paths",
  "serde_json",
- "swc_core 31.0.1",
+ "swc_core",
  "termcolor",
  "textwrap",
  "thiserror 1.0.69",
@@ -4429,7 +4429,7 @@ dependencies = [
  "serde_json",
  "stacker",
  "swc_config",
- "swc_core 31.0.1",
+ "swc_core",
  "swc_ecma_minifier",
  "swc_error_reporters",
  "swc_node_comments",
@@ -4535,7 +4535,7 @@ dependencies = [
  "stacker",
  "swc",
  "swc_config",
- "swc_core 31.0.1",
+ "swc_core",
  "tokio",
  "tracing",
 ]
@@ -4562,7 +4562,7 @@ checksum = "2537dfc7c56b02c3ffb74ea46a260433dc184e6e615892241300d9758ab66835"
 dependencies = [
  "itoa",
  "rspack_cacheable",
- "swc_core 31.0.1",
+ "swc_core",
 ]
 
 [[package]]
@@ -4933,7 +4933,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sugar_path",
- "swc_core 31.0.1",
+ "swc_core",
  "swc_html",
  "swc_html_minifier",
  "tracing",
@@ -4992,7 +4992,7 @@ dependencies = [
  "rustc-hash 2.1.1",
  "serde_json",
  "sugar_path",
- "swc_core 31.0.1",
+ "swc_core",
  "swc_ecma_lexer",
  "swc_node_comments",
  "tracing",
@@ -5054,7 +5054,7 @@ dependencies = [
  "rspack_plugin_javascript",
  "rustc-hash 2.1.1",
  "serde_json",
- "swc_core 31.0.1",
+ "swc_core",
  "tracing",
 ]
 
@@ -5262,7 +5262,7 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_plugin_javascript",
- "swc_core 31.0.1",
+ "swc_core",
  "tracing",
 ]
 
@@ -5281,7 +5281,7 @@ dependencies = [
  "rspack_hook",
  "rspack_plugin_javascript",
  "rspack_util",
- "swc_core 31.0.1",
+ "swc_core",
  "tracing",
 ]
 
@@ -5446,7 +5446,7 @@ dependencies = [
  "rspack_util",
  "serde_json",
  "swc_config",
- "swc_core 31.0.1",
+ "swc_core",
  "swc_ecma_minifier",
  "tracing",
 ]
@@ -5485,7 +5485,7 @@ dependencies = [
  "rspack_hook",
  "rspack_util",
  "serde_json",
- "swc_core 31.0.1",
+ "swc_core",
  "tokio",
  "tracing",
  "wasmparser 0.222.1",
@@ -5525,7 +5525,7 @@ dependencies = [
  "regress",
  "rspack_cacheable",
  "rspack_error",
- "swc_core 31.0.1",
+ "swc_core",
 ]
 
 [[package]]
@@ -5597,7 +5597,7 @@ dependencies = [
  "heck 0.5.0",
  "rustc-hash 2.1.1",
  "serde",
- "swc_core 31.0.1",
+ "swc_core",
 ]
 
 [[package]]
@@ -5607,7 +5607,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0197b953c7cacb19733c69a2e8834f478a12ce6320803f86bef010cb53d578"
 dependencies = [
  "rustc-hash 2.1.1",
- "swc_core 31.0.1",
+ "swc_core",
 ]
 
 [[package]]
@@ -5664,7 +5664,7 @@ dependencies = [
  "serde_json",
  "sugar_path",
  "swc_config",
- "swc_core 31.0.1",
+ "swc_core",
  "unicase",
 ]
 
@@ -6303,7 +6303,7 @@ dependencies = [
  "rspack_hook",
  "rspack_javascript_compiler",
  "serde",
- "swc_core 30.0.2",
+ "swc_core",
  "tracing",
  "tracing-subscriber",
  "up_finder",
@@ -6319,7 +6319,7 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_javascript_compiler",
- "swc_core 30.0.2",
+ "swc_core",
  "tracing",
  "up_finder",
 ]
@@ -6340,7 +6340,7 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_javascript_compiler",
- "swc_core 30.0.2",
+ "swc_core",
  "tracing",
  "tracing-subscriber",
  "up_finder",
@@ -6650,17 +6650,6 @@ dependencies = [
  "quote",
  "swc_macros_common",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "swc_core"
-version = "30.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "042bbc04e5b5f6b687951dee0a2fe5455ac7b83b9e3268932323422330e43c61"
-dependencies = [
- "par-core",
- "swc_allocator",
- "vergen",
 ]
 
 [[package]]

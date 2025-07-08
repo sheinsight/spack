@@ -376,5 +376,6 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
+module.exports.registerBundleAnalyzerPlugin = nativeBinding.registerBundleAnalyzerPlugin
 module.exports.registerCaseSensitivePathsPlugin = nativeBinding.registerCaseSensitivePathsPlugin
 module.exports.registerDuplicateDependencyPlugin = nativeBinding.registerDuplicateDependencyPlugin
