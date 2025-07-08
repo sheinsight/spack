@@ -365,11 +365,12 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
 
 if (!nativeBinding) {
   if (loadErrors.length > 0) {
-    // TODO Link to documentation with potential fixes
-    //  - The package owner could build/publish bindings for this arch
-    //  - The user may need to bundle the correct files
-    //  - The user may need to re-install node_modules to get new packages
-    throw new Error('Failed to load native binding', { cause: loadErrors })
+    throw new Error(
+      `Cannot find native binding. ` +
+        `npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). ` +
+        'Please try `npm i` again after removing both package-lock.json and node_modules directory.',
+      { cause: loadErrors }
+    )
   }
   throw new Error(`Failed to load native binding`)
 }
@@ -377,53 +378,3 @@ if (!nativeBinding) {
 module.exports = nativeBinding
 module.exports.registerCaseSensitivePathsPlugin = nativeBinding.registerCaseSensitivePathsPlugin
 module.exports.registerDuplicateDependencyPlugin = nativeBinding.registerDuplicateDependencyPlugin
-module.exports.Assets = nativeBinding.Assets
-module.exports.AsyncDependenciesBlock = nativeBinding.AsyncDependenciesBlock
-module.exports.Chunk = nativeBinding.Chunk
-module.exports.ChunkGraph = nativeBinding.ChunkGraph
-module.exports.ChunkGroup = nativeBinding.ChunkGroup
-module.exports.Chunks = nativeBinding.Chunks
-module.exports.CodeGenerationResult = nativeBinding.CodeGenerationResult
-module.exports.CodeGenerationResults = nativeBinding.CodeGenerationResults
-module.exports.ConcatenatedModule = nativeBinding.ConcatenatedModule
-module.exports.ContextModule = nativeBinding.ContextModule
-module.exports.Dependency = nativeBinding.Dependency
-module.exports.Diagnostics = nativeBinding.Diagnostics
-module.exports.EntryDataDto = nativeBinding.EntryDataDto
-module.exports.EntryDataDTO = nativeBinding.EntryDataDTO
-module.exports.EntryDependency = nativeBinding.EntryDependency
-module.exports.EntryOptionsDto = nativeBinding.EntryOptionsDto
-module.exports.EntryOptionsDTO = nativeBinding.EntryOptionsDTO
-module.exports.ExternalModule = nativeBinding.ExternalModule
-module.exports.JsCompilation = nativeBinding.JsCompilation
-module.exports.JsCompiler = nativeBinding.JsCompiler
-module.exports.JsContextModuleFactoryAfterResolveData = nativeBinding.JsContextModuleFactoryAfterResolveData
-module.exports.JsContextModuleFactoryBeforeResolveData = nativeBinding.JsContextModuleFactoryBeforeResolveData
-module.exports.JsDependencies = nativeBinding.JsDependencies
-module.exports.JsEntries = nativeBinding.JsEntries
-module.exports.JsExportsInfo = nativeBinding.JsExportsInfo
-module.exports.JsModuleGraph = nativeBinding.JsModuleGraph
-module.exports.JsResolver = nativeBinding.JsResolver
-module.exports.JsResolverFactory = nativeBinding.JsResolverFactory
-module.exports.JsStats = nativeBinding.JsStats
-module.exports.KnownBuildInfo = nativeBinding.KnownBuildInfo
-module.exports.Module = nativeBinding.Module
-module.exports.ModuleGraphConnection = nativeBinding.ModuleGraphConnection
-module.exports.NormalModule = nativeBinding.NormalModule
-module.exports.RawExternalItemFnCtx = nativeBinding.RawExternalItemFnCtx
-module.exports.ReadonlyResourceData = nativeBinding.ReadonlyResourceData
-module.exports.Sources = nativeBinding.Sources
-module.exports.BuiltinPluginName = nativeBinding.BuiltinPluginName
-module.exports.cleanupGlobalTrace = nativeBinding.cleanupGlobalTrace
-module.exports.formatDiagnostic = nativeBinding.formatDiagnostic
-module.exports.JsLoaderState = nativeBinding.JsLoaderState
-module.exports.JsRspackSeverity = nativeBinding.JsRspackSeverity
-module.exports.loadBrowserslist = nativeBinding.loadBrowserslist
-module.exports.minify = nativeBinding.minify
-module.exports.minifySync = nativeBinding.minifySync
-module.exports.RawRuleSetConditionType = nativeBinding.RawRuleSetConditionType
-module.exports.registerGlobalTrace = nativeBinding.registerGlobalTrace
-module.exports.RegisterJsTapKind = nativeBinding.RegisterJsTapKind
-module.exports.syncTraceEvent = nativeBinding.syncTraceEvent
-module.exports.transform = nativeBinding.transform
-module.exports.transformSync = nativeBinding.transformSync

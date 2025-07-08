@@ -37,7 +37,12 @@ impl CaseSensitivePathsPlugin {
     Self::new_inner(options)
   }
 
-  fn check_case_sensitive_path_optimized(&self, path: &Path) -> Option<String> {
+  fn check_case_sensitive_path_optimized(
+    &self,
+    path: &Path,
+    raw_request: &str,
+    current_file: &str,
+  ) -> Option<String> {
     if !path.exists() {
       return None;
     }
@@ -50,11 +55,13 @@ impl CaseSensitivePathsPlugin {
 
     // 2. 比较请求的路径和真实路径
     if canonical_path.to_string_lossy() != path.to_string_lossy() {
-      return Some(format!(
-        "Path case mismatch: requested '{}' but actual is '{}'",
-        path.display(),
+      let msg = format!(
+        r#"Can't resolve {:?} in {:?}. Actual {:?} (case mismatch)"#,
+        raw_request,
+        current_file,
         canonical_path.display()
-      ));
+      );
+      return Some(msg);
     }
 
     None
@@ -138,9 +145,9 @@ impl CaseSensitivePathsPlugin {
     source_content: Option<&str>,
     import_position: Option<(usize, usize)>,
   ) -> Diagnostic {
-    let title = "case-sensitive-paths".to_string();
+    let title = "Module not found:".to_string();
 
-    let error_message = format!("\n{error_message}\n");
+    let error_message = format!("{error_message}");
 
     let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
 It may work fine on macOS/Windows, but will fail on Linux."#;
@@ -193,6 +200,7 @@ async fn after_resolve(
   create_data: &mut NormalModuleCreateData,
 ) -> rspack_error::Result<Option<bool>> {
   let resource_path = &create_data.resource_resolve_data.resource;
+
   let resource_path = Path::new(resource_path);
 
   let current_file = data.issuer.as_deref().unwrap_or("");
@@ -204,7 +212,11 @@ async fn after_resolve(
 
   if let Some(dependency) = first_dependency
     && resource_path.is_absolute()
-    && let Some(error_message) = self.check_case_sensitive_path_optimized(resource_path)
+    && let Some(error_message) = self.check_case_sensitive_path_optimized(
+      resource_path,
+      &create_data.raw_request,
+      current_file,
+    )
     && let Ok(source_content) = std::fs::read_to_string(current_file)
   {
     let user_request = dependency.user_request();
