@@ -18,6 +18,7 @@ pub struct BundleAnalyzerPluginOpts {
 #[plugin]
 #[derive(Debug)]
 pub struct BundleAnalyzerPlugin {
+  #[allow(unused)]
   options: BundleAnalyzerPluginOpts,
 }
 
