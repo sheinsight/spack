@@ -5,17 +5,11 @@ use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitiveP
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
-pub struct RawCaseSensitivePathsPluginOpts {
-  pub debug: bool,
-  pub use_cache: bool,
-}
+pub struct RawCaseSensitivePathsPluginOpts {}
 
 impl From<RawCaseSensitivePathsPluginOpts> for CaseSensitivePathsPluginOpts {
-  fn from(value: RawCaseSensitivePathsPluginOpts) -> Self {
-    Self {
-      debug: value.debug,
-      use_cache: value.use_cache,
-    }
+  fn from(_value: RawCaseSensitivePathsPluginOpts) -> Self {
+    Self {}
   }
 }
 

@@ -128,7 +128,7 @@ impl CaseSensitivePathsPlugin {
       None,
     ) {
       Ok(ast) => {
-        let mut finder = ImportFinder::new(original_request.to_string(), self.options.debug);
+        let mut finder = ImportFinder::new(original_request.to_string());
         ast.visit(|program, _context| {
           program.visit_with(&mut finder);
         });
@@ -210,13 +210,12 @@ async fn after_resolve(
     .first()
     .and_then(|dep| dep.as_module_dependency());
 
+  let check_res =
+    self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
+
   if let Some(dependency) = first_dependency
     && resource_path.is_absolute()
-    && let Some(error_message) = self.check_case_sensitive_path_optimized(
-      resource_path,
-      &create_data.raw_request,
-      current_file,
-    )
+    && let Some(error_message) = check_res
     && let Ok(source_content) = std::fs::read_to_string(current_file)
   {
     let user_request = dependency.user_request();

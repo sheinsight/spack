@@ -3,7 +3,8 @@
     "cdylib",
     "napi",
     "spack",
-    "Threadsafe"
+    "Threadsafe",
+    "ukey"
   ],
   "rust-analyzer.cargo.extraEnv": {
     "CARGO_WORKSPACE_DIR": "${workspaceFolder}"

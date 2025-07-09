@@ -2,8 +2,10 @@ use std::collections::HashMap;
 
 use derive_more::Debug;
 use napi::tokio::time::Instant;
+use rspack_collections::DatabaseItem;
 use rspack_core::{
-  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Plugin, PluginContext,
+  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Module, Plugin, PluginContext,
+  SourceType,
 };
 use rspack_hook::{plugin, plugin_hook};
 use serde::Serialize;
@@ -70,30 +72,43 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     chunks: HashMap::new(),
   };
 
-  for (id, asset) in compilation.assets() {
-    println!(
-      "name: {:?} , size: {:?}",
-      id,
-      asset.source.as_ref().map(|s| s.size())
-    );
+  for (_id, asset) in compilation.assets() {
+    let size = asset.source.as_ref().map(|s| s.size()).unwrap_or(0);
+    stats.total_size += size as u64;
   }
 
-  // 2. 分析模块依赖关系
   let module_graph = compilation.get_module_graph();
 
-  for (id, module) in module_graph.modules() {
-    let dependencies = module.get_dependencies();
-    println!("module: {:?}", id);
-    for dependency in dependencies {
-      if let Some(dependency) = module_graph
-        .dependency_by_id(dependency)
-        .and_then(|dep| dep.as_module_dependency())
-      {
-        println!(" dependency: {:?}", dependency.user_request());
+  for chunk in compilation.chunk_by_ukey.values() {
+    let chunk_name = chunk.name().unwrap_or_default();
+    // 获取该 chunk 的所有模块
+    let chunk_modules = compilation.chunk_graph.get_chunk_modules_by_source_type(
+      &chunk.ukey(),
+      SourceType::JavaScript,
+      &module_graph,
+    );
+
+    for module in chunk_modules {
+      if let Some(context_module) = module.as_context_module() {
+        println!("context_module: {:?}", context_module.get_resolve_options());
       }
     }
-    println!("-----");
-    // println!("module: {:?}, dependencies: {:?}", id, dependencies);
+
+    // println!("chunk_modules: {:#?}", chunk_modules);
+    // let mut module_list = Vec::new();
+    // for module in chunk_modules {
+    //   let module_info = ModuleInfo {
+    //     name: module.identifier().as_str().to_string(),
+    //     size: module.size(&compilation, None) as u64,
+    //     path: module.filename().to_string(),
+    //     dependencies: module
+    //       .dependencies(&compilation, None)
+    //       .iter()
+    //       .map(|d| d.identifier().as_str().to_string())
+    //       .collect(),
+    //   };
+    // module_list.push(module_info);
+    // }
   }
 
   // 3. 生成分析报告
@@ -101,6 +116,16 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // - 模块依赖图
   // - 重复模块检测
   // - 分块(chunk)信息等
+
+  let duration = start_time.elapsed().as_secs_f64();
+  // let resp = JsBundleAnalyzerPluginResp {
+  //   modules: stats.modules,
+  //   total_size: stats.total_size,
+  //   chunks: stats.chunks,
+  //   duration,
+  // };
+
+  println!("duration: {:?}", duration);
 
   Ok(())
 }

@@ -14,8 +14,7 @@ export interface RawBundleAnalyzerPluginOpts {
 }
 
 export interface RawCaseSensitivePathsPluginOpts {
-  debug: boolean
-  useCache: boolean
+
 }
 
 export interface RawDuplicateDependencyPluginOpts {

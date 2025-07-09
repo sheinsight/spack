@@ -6298,6 +6298,7 @@ dependencies = [
  "package_json_parser",
  "rspack_binding_builder",
  "rspack_binding_builder_macros",
+ "rspack_collections",
  "rspack_core",
  "rspack_error",
  "rspack_hook",

@@ -14,7 +14,7 @@ pub struct RawBundleAnalyzerPluginOpts {
 }
 
 impl From<RawBundleAnalyzerPluginOpts> for BundleAnalyzerPluginOpts {
-  fn from(value: RawBundleAnalyzerPluginOpts) -> Self {
+  fn from(_value: RawBundleAnalyzerPluginOpts) -> Self {
     Self {}
   }
 }

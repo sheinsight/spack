@@ -7,9 +7,13 @@ name                 = "spack_plugin_bundle_analyzer"
 repository.workspace = true
 version              = "0.1.0"
 
+[lib]
+test = false
+
 [dependencies]
 rspack_binding_builder        = { workspace = true }
 rspack_binding_builder_macros = { workspace = true }
+rspack_collections            = { workspace = true }
 rspack_core                   = { workspace = true }
 rspack_error                  = { workspace = true }
 rspack_hook                   = { workspace = true }
