@@ -81,7 +81,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let module_graph = compilation.get_module_graph();
 
   for chunk in compilation.chunk_by_ukey.values() {
-    let chunk_name = chunk.name().unwrap_or_default();
+    let _chunk_name = chunk.name().unwrap_or_default();
     // 获取该 chunk 的所有模块
     let chunk_modules = compilation.chunk_graph.get_chunk_modules_by_source_type(
       &chunk.ukey(),

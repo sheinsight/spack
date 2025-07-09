@@ -5,8 +5,7 @@ use std::{collections::HashMap, path::PathBuf, time::Instant};
 use derive_more::Debug;
 use package_json_parser::PackageJsonParser;
 use rspack_core::{
-  ApplyContext, Compilation, CompilerAfterEmit, CompilerFinishMake, CompilerOptions, Plugin,
-  PluginContext,
+  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Plugin, PluginContext,
 };
 use rspack_hook::{plugin, plugin_hook};
 use up_finder::UpFinder;
