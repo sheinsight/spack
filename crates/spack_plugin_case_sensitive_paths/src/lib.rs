@@ -29,6 +29,7 @@ use crate::import_finder::ImportFinder;
 #[plugin]
 #[derive(Debug)]
 pub struct CaseSensitivePathsPlugin {
+  #[allow(unused)]
   options: CaseSensitivePathsPluginOpts,
 }
 
