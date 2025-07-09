@@ -15,16 +15,17 @@ test       = false
 plugin = ["rspack_binding_builder/plugin"]
 
 [dependencies]
+spack_binding_builder_macros      = { workspace = true }
 spack_plugin_bundle_analyzer      = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
 spack_plugin_duplicate_dependency = { workspace = true }
 
-rspack_binding_builder        = { workspace = true }
-rspack_binding_builder_macros = { workspace = true }
-rspack_core                   = { workspace = true }
-rspack_error                  = { workspace = true }
-rspack_javascript_compiler    = { workspace = true }
-rspack_napi                   = { workspace = true }
+rspack_binding_builder = { workspace = true }
+# rspack_binding_builder_macros = { workspace = true }
+rspack_core                = { workspace = true }
+rspack_error               = { workspace = true }
+rspack_javascript_compiler = { workspace = true }
+rspack_napi                = { workspace = true }
 
 napi                = { workspace = true }
 napi-derive         = { workspace = true }
@@ -33,7 +34,9 @@ napi-derive-backend = { workspace = true }
 derive_more = { workspace = true }
 swc_core    = { workspace = true }
 
-serde = { workspace = true }
+serde        = { workspace = true }
+strum        = { workspace = true }
+strum_macros = { workspace = true }
 
 [build-dependencies]
 rspack_binding_build = { workspace = true }

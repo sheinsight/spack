@@ -376,6 +376,7 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
+module.exports.CustomPluginNames = nativeBinding.CustomPluginNames
 module.exports.registerBundleAnalyzerPlugin = nativeBinding.registerBundleAnalyzerPlugin
 module.exports.registerCaseSensitivePathsPlugin = nativeBinding.registerCaseSensitivePathsPlugin
 module.exports.registerDuplicateDependencyPlugin = nativeBinding.registerDuplicateDependencyPlugin

@@ -2,6 +2,7 @@
   "cSpell.words": [
     "cdylib",
     "napi",
+    "serde",
     "spack",
     "Threadsafe",
     "ukey"

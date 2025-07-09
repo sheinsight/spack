@@ -13,7 +13,7 @@ use spack_plugin_duplicate_dependency::{
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawDuplicateDependencyPluginOpts {
-  #[napi(ts_type = "async (response: JsDuplicateDependencyPluginResp) => Promise<void>")]
+  #[napi(ts_type = "(response: JsDuplicateDependencyPluginResp) => Promise<void>")]
   #[debug(skip)]
   pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResp, ()>>,
 }

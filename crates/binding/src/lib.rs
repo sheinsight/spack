@@ -2,19 +2,32 @@
 
 mod raws;
 
-use napi::bindgen_prelude::*;
+// use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use rspack_binding_builder_macros::register_plugin;
-// use rspack_napi::napi::bindgen_prelude::*;
+use serde::{Deserialize, Serialize};
+// use rspack_binding_builder_macros::register_plugin;
+use spack_binding_builder_macros::register_plugin;
+use strum_macros::{Display, EnumString};
+
+#[napi(string_enum)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
+pub enum CustomPluginNames {
+  DuplicateDependencyPlugin,
+  CaseSensitivePathsPlugin,
+  BundleAnalyzerPlugin,
+}
 
 register_plugin!(
-  "DuplicateDependencyPlugin",
+  CustomPluginNames::DuplicateDependencyPlugin,
   raws::raw_duplicate_dependency::binding
 );
 
 register_plugin!(
-  "CaseSensitivePathsPlugin",
+  CustomPluginNames::CaseSensitivePathsPlugin,
   raws::raw_case_sensitive_paths::binding
 );
 
-register_plugin!("BundleAnalyzerPlugin", raws::raw_bundle_analyzer::binding);
+register_plugin!(
+  CustomPluginNames::BundleAnalyzerPlugin,
+  raws::raw_bundle_analyzer::binding
+);

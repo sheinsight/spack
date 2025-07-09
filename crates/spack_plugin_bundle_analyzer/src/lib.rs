@@ -2,10 +2,8 @@ use std::collections::HashMap;
 
 use derive_more::Debug;
 use napi::tokio::time::Instant;
-use rspack_collections::DatabaseItem;
 use rspack_core::{
-  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Module, Plugin, PluginContext,
-  SourceType,
+  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Plugin, PluginContext,
 };
 use rspack_hook::{plugin, plugin_hook};
 use serde::Serialize;
@@ -78,22 +76,22 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     stats.total_size += size as u64;
   }
 
-  let module_graph = compilation.get_module_graph();
+  // let module_graph = compilation.get_module_graph();
 
   for chunk in compilation.chunk_by_ukey.values() {
     let _chunk_name = chunk.name().unwrap_or_default();
     // 获取该 chunk 的所有模块
-    let chunk_modules = compilation.chunk_graph.get_chunk_modules_by_source_type(
-      &chunk.ukey(),
-      SourceType::JavaScript,
-      &module_graph,
-    );
+    // let chunk_modules = compilation.chunk_graph.get_chunk_modules_by_source_type(
+    //   &chunk.ukey(),
+    //   SourceType::JavaScript,
+    //   &module_graph,
+    // );
 
-    for module in chunk_modules {
-      if let Some(context_module) = module.as_context_module() {
-        println!("context_module: {:?}", context_module.get_resolve_options());
-      }
-    }
+    // for module in chunk_modules {
+    //   if let Some(context_module) = module.as_context_module() {
+    //     println!("context_module: {:?}", context_module.get_resolve_options());
+    //   }
+    // }
 
     // println!("chunk_modules: {:#?}", chunk_modules);
     // let mut module_list = Vec::new();

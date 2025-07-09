@@ -1,3 +1,9 @@
+export declare const enum CustomPluginNames {
+  DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
+  CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
+  BundleAnalyzerPlugin = 'BundleAnalyzerPlugin'
+}
+
 export interface JsDuplicateDependencyPluginResp {
   libraries: Array<JsLibrary>
   duration: number
@@ -18,7 +24,7 @@ export interface RawCaseSensitivePathsPluginOpts {
 }
 
 export interface RawDuplicateDependencyPluginOpts {
-  onDetected?: async (response: JsDuplicateDependencyPluginResp) => Promise<void>
+  onDetected?: (response: JsDuplicateDependencyPluginResp) => Promise<void>
 }
 
 export declare function registerBundleAnalyzerPlugin(): void
