@@ -46,11 +46,14 @@ up_finder                         = { version = "0.0.4" }
 tracing            = { version = "0.1.41", features = ["max_level_trace", "release_max_level_trace"] }
 tracing-subscriber = { version = "0.3.19" }
 
-serde        = { version = "1.0.210" }
-serde_json   = { version = "1.0.140" }
+serde      = { version = "1.0.210" }
+serde_json = { version = "1.0.140" }
+
 strum        = { version = "0.27.1" }
 strum_macros = { version = "0.27.1" }
 
 proc-macro2 = { version = "1.0.95" }
 quote       = { version = "1.0.40" }
 syn         = { version = "2.0.104", features = ["full"] }
+
+byte-unit = { version = "5.1" }
