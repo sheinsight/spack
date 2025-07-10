@@ -1,0 +1,1 @@
+ln -s /Users/ityuany/GitRepository/spack/crates/binding/spack.darwin-arm64.node spack.darwin-arm64.node

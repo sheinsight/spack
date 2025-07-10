@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 use std::{
   collections::{HashMap, HashSet},
   path::PathBuf,
@@ -13,6 +15,15 @@ use rspack_core::{
 use rspack_hook::{plugin, plugin_hook};
 use serde::Serialize;
 use up_finder::UpFinder;
+
+#[derive(Debug, Serialize)]
+struct ChunkAnalysis {
+  name: String,
+  size: u64,
+  is_initial: bool,
+  third_party_packages: HashSet<String>,
+  files: HashSet<String>,
+}
 
 #[derive(Debug)]
 pub struct BundleAnalyzerPluginOpts {
@@ -86,15 +97,43 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let chunk_group_by_ukey = &compilation.chunk_group_by_ukey;
 
+  // let mut initial_chunks = Vec::new();
+  // let mut async_chunks = Vec::new();
+
+  let mut chunk_analysis_list = Vec::new();
+
   for (ukey, chunk) in compilation.chunk_by_ukey.iter() {
+    let is_initial = chunk.can_be_initial(chunk_group_by_ukey);
+
+    let chunk_size: u64 = chunk
+      .files()
+      .iter()
+      .filter_map(|file| compilation.assets().get(file))
+      .filter_map(|asset| asset.source.as_ref())
+      .map(|source| source.size() as u64)
+      .sum();
+
+    // let chunk_size = Byte::from_u64(chunk_size).get_appropriate_unit(UnitType::Binary);
+
+    let mut chunk_analysis = ChunkAnalysis {
+      name: chunk.name().unwrap_or("None").to_string(),
+      size: chunk_size,
+      is_initial,
+      third_party_packages: HashSet::new(),
+      files: chunk.files().iter().cloned().collect(),
+    };
+
+    // if is_initial {
+    //   initial_chunks.push(chunk);
+    // } else {
+    //   async_chunks.push(chunk);
+    // }
+
     let chunk_modules = compilation.chunk_graph.get_chunk_modules_by_source_type(
       ukey,
       SourceType::JavaScript,
       &module_graph,
     );
-
-    let mut third_party_packages = HashSet::new();
-
     // 分析chunk中的所有模块，看哪些来自node_modules
     for module in chunk_modules {
       let module_path = module.readable_identifier(&compilation.options.context);
@@ -107,57 +146,17 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
       if let Some(package_json) = package_json.first() {
         let package_json = PackageJsonParser::parse(package_json).unwrap();
-        if let Some(name) = package_json.name {
-          third_party_packages.insert(name.to_string());
+        if let Some(name) = package_json.name
+          && package_json
+            .__raw_path
+            .map(|path| path.contains("node_modules"))
+            .unwrap_or(false)
+        {
+          chunk_analysis.third_party_packages.insert(name.to_string());
         }
       }
     }
-
-    println!("Third-party packages: {:?}", third_party_packages);
-
-    // println!("chunk_modules: {:?}", chunk_modules);
-
-    let _chunk_name = chunk.name().unwrap_or("None");
-
-    let files = chunk.files();
-    println!("files: {:?}", files);
-
-    let initial_chunks = chunk.get_all_initial_chunks(chunk_group_by_ukey);
-
-    for initial_chunk in initial_chunks {
-      if let Some(chunk) = compilation.chunk_by_ukey.get(&initial_chunk) {
-        let chunk_size: u64 = chunk
-          .files()
-          .iter()
-          .filter_map(|file| compilation.assets().get(file))
-          .filter_map(|asset| asset.source.as_ref())
-          .map(|source| source.size() as u64)
-          .sum();
-
-        let chunk_size = Byte::from_u64(chunk_size).get_appropriate_unit(UnitType::Binary);
-
-        println!("initial_chunk: {:?}, size: {:?}", chunk.name(), chunk_size);
-      }
-    }
-
-    let async_chunks = chunk.get_all_async_chunks(chunk_group_by_ukey);
-
-    for async_chunk in async_chunks {
-      if let Some(chunk) = compilation.chunk_by_ukey.get(&async_chunk) {
-        let chunk_size: u64 = chunk
-          .files()
-          .iter()
-          .filter_map(|file| compilation.assets().get(file))
-          .filter_map(|asset| asset.source.as_ref())
-          .map(|source| source.size() as u64)
-          .sum();
-
-        let chunk_size = Byte::from_u64(chunk_size).get_appropriate_unit(UnitType::Binary);
-
-        println!("async_chunk: {:?}, size: {:?}", chunk.name(), chunk_size);
-      }
-    }
-
+    chunk_analysis_list.push(chunk_analysis);
     // 获取该 chunk 的所有模块
     // let chunk_modules = compilation.chunk_graph.get_chunk_modules_by_source_type(
     //   &chunk.ukey(),
@@ -193,6 +192,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // - 模块依赖图
   // - 重复模块检测
   // - 分块(chunk)信息等
+
+  println!("chunk_analysis_list: {:#?}", chunk_analysis_list);
 
   let duration = start_time.elapsed().as_secs_f64();
   // let resp = JsBundleAnalyzerPluginResp {
