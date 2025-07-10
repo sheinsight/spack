@@ -83,7 +83,11 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
             && let Some(version) = package_json.version
             && let Some(path) = package_json.__raw_path
           {
-            return Some(Library::new(path.clone(), name.0, version.0));
+            return Some(Library::new(
+              path.clone(),
+              name.to_string(),
+              version.to_string(),
+            ));
           }
           return None;
         })

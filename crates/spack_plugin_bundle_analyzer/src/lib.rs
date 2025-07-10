@@ -108,7 +108,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
       if let Some(package_json) = package_json.first() {
         let package_json = PackageJsonParser::parse(package_json).unwrap();
         if let Some(name) = package_json.name {
-          third_party_packages.insert(name.0.to_string());
+          third_party_packages.insert(name.to_string());
         }
       }
     }
