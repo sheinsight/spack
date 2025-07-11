@@ -6344,6 +6344,7 @@ dependencies = [
  "rspack_hook",
  "rspack_javascript_compiler",
  "serde",
+ "serde_json",
  "swc_core",
  "tracing",
  "tracing-subscriber",
