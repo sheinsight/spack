@@ -97,9 +97,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let chunk_group_by_ukey = &compilation.chunk_group_by_ukey;
 
-  // let mut initial_chunks = Vec::new();
-  // let mut async_chunks = Vec::new();
-
   let mut chunk_analysis_list = Vec::new();
 
   for (ukey, chunk) in compilation.chunk_by_ukey.iter() {
@@ -115,8 +112,16 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
     // let chunk_size = Byte::from_u64(chunk_size).get_appropriate_unit(UnitType::Binary);
 
+    let real_chunk_filename = chunk
+      .files()
+      .iter()
+      .find(|file| file.ends_with(".js") && !file.ends_with(".map"))
+      .cloned()
+      .unwrap_or_else(|| "unknown.js".to_string());
+
     let mut chunk_analysis = ChunkAnalysis {
-      name: chunk.name().unwrap_or("None").to_string(),
+      // name: chunk.name().unwrap_or("None").to_string(),
+      name: real_chunk_filename,
       size: chunk_size,
       is_initial,
       third_party_packages: HashSet::new(),
