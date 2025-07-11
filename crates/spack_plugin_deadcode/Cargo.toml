@@ -1,0 +1,25 @@
+[package]
+authors.workspace       = true
+categories.workspace    = true
+documentation.workspace = true
+edition.workspace       = true
+homepage.workspace      = true
+license.workspace       = true
+name                    = "spack_plugin_deadcode"
+repository.workspace    = true
+version.workspace       = true
+
+[lib]
+test = false
+
+[dependencies]
+rspack_binding_builder        = { workspace = true }
+rspack_binding_builder_macros = { workspace = true }
+rspack_collections            = { workspace = true }
+rspack_core                   = { workspace = true }
+rspack_error                  = { workspace = true }
+rspack_hook                   = { workspace = true }
+rspack_javascript_compiler    = { workspace = true }
+
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }

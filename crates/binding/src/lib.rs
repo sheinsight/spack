@@ -15,6 +15,7 @@ pub enum CustomPluginNames {
   DuplicateDependencyPlugin,
   CaseSensitivePathsPlugin,
   BundleAnalyzerPlugin,
+  DeadcodePlugin,
 }
 
 register_plugin!(
@@ -30,4 +31,9 @@ register_plugin!(
 register_plugin!(
   CustomPluginNames::BundleAnalyzerPlugin,
   raws::raw_bundle_analyzer::binding
+);
+
+register_plugin!(
+  CustomPluginNames::DeadcodePlugin,
+  raws::raw_deadcode::binding
 );
