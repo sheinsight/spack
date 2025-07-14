@@ -1,19 +1,12 @@
 #![feature(let_chains)]
 
-use std::{
-  collections::{HashMap, HashSet},
-  fs,
-};
-
 use derive_more::Debug;
 use napi::tokio::time::Instant;
 use rspack_core::{
-  ApplyContext, Chunk, ChunkGroupByUkey, ChunkUkey, Compilation, CompilerAfterEmit,
-  CompilerOptions, EntrypointsStatsOption, ExtendedStatsOptions, ModuleGraph, ModuleIdentifier,
-  Plugin, PluginContext, SourceType,
+  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, EntrypointsStatsOption,
+  ExtendedStatsOptions, ModuleIdentifier, Plugin, PluginContext,
 };
 use rspack_hook::{plugin, plugin_hook};
-use serde::Serialize;
 
 #[derive(Debug, Clone)]
 pub struct ModuleReasonInfo {
@@ -23,34 +16,6 @@ pub struct ModuleReasonInfo {
   pub user_request: Option<String>,
   pub active: bool,
   pub location: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-struct ChunkReason {
-  module: Option<String>,      // 来源模块
-  module_name: Option<String>, // 模块名称
-  type_: String,               // 导入类型: "entry", "import", "require", "dynamic import"
-  user_request: String,        // 用户请求
-  loc: Option<String>,         // 位置信息
-}
-
-#[derive(Debug, Serialize)]
-struct ChunkAnalysis {
-  name: String,
-  size: u64,
-  initial: bool,
-  third_party_packages: HashSet<String>,
-  files: HashSet<String>,
-  reasons: Vec<ChunkReason>, // 改为 reasons 数组
-  origins: Vec<ChunkOrigin>, // 🔍 具体的起源信息
-}
-
-#[derive(Debug, Serialize)]
-struct ChunkOrigin {
-  module: String,            // 模块路径
-  module_id: Option<String>, // 改为 String 类型
-  location: Option<String>,  // 位置信息
-  request: String,           // 导入请求
 }
 
 #[derive(Debug)]
@@ -89,21 +54,6 @@ impl Plugin for BundleAnalyzerPlugin {
       .tap(after_emit::new(self));
     Ok(())
   }
-}
-
-#[derive(Debug, Serialize)]
-struct ModuleInfo {
-  name: String,
-  size: u64,
-  path: String,
-  dependencies: Vec<String>,
-}
-
-#[derive(Debug, Serialize)]
-struct BundleStats {
-  modules: Vec<ModuleInfo>,
-  total_size: u64,
-  chunks: HashMap<String, Vec<String>>, // chunk名称 -> 模块列表
 }
 
 #[plugin_hook(CompilerAfterEmit for BundleAnalyzerPlugin)]

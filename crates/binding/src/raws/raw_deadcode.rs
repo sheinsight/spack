@@ -13,7 +13,7 @@ pub struct RawDeadcodePluginOpts {
 }
 
 impl From<RawDeadcodePluginOpts> for DeadcodePluginOpts {
-  fn from(value: RawDeadcodePluginOpts) -> Self {
+  fn from(_value: RawDeadcodePluginOpts) -> Self {
     Self {}
   }
 }
