@@ -24,25 +24,26 @@ rspack_hook                   = "=0.4.7-alpha.1"
 rspack_javascript_compiler    = "=0.4.7-alpha.1"
 rspack_napi                   = "=0.4.7-alpha.1"
 
-swc_core = { version = "=31.1.0", default-features = false, features = ["parallel_rayon"] }
-
-futures = { version = "0.3.31" }
-
-derive_more = { version = "1.0.0" }
-
 napi                = { version = "=3.0.0-beta.9", features = ["async", "tokio_rt", "serde-json", "anyhow", "napi7", "compat-mode"] }
 napi-derive         = { version = "=3.0.0-beta.9", features = ["compat-mode"] }
 napi-derive-backend = { version = "=2.0.0-beta.9" }
 
+swc_core = { version = "=31.1.0", default-features = false, features = ["parallel_rayon"] }
+
+derive_more = { version = "1.0.0" }
+futures     = { version = "0.3.31" }
+rustc-hash  = { version = "2.1.1" }
+
+
+package_json_parser = { version = "0.0.12" }
+up_finder           = { version = "0.0.4" }
 
 binding                           = { path = "crates/binding" }
-package_json_parser               = { version = "0.0.12" }
 spack_binding_builder_macros      = { path = "crates/spack_binding_builder_macros" }
 spack_plugin_bundle_analyzer      = { path = "crates/spack_plugin_bundle_analyzer" }
 spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
 spack_plugin_deadcode             = { path = "crates/spack_plugin_deadcode" }
 spack_plugin_duplicate_dependency = { path = "crates/spack_plugin_duplicate_dependency" }
-up_finder                         = { version = "0.0.4" }
 
 tracing            = { version = "0.1.41", features = ["max_level_trace", "release_max_level_trace"] }
 tracing-subscriber = { version = "0.3.19" }
