@@ -1,9 +1,10 @@
 #![feature(let_chains)]
 
-use std::{path::PathBuf, time::Instant};
+use std::{path::Path, time::Instant};
 
 use derive_more::Debug;
-use package_json_parser::{FxHashMap, PackageJsonParser};
+use itertools::Itertools as _;
+use package_json_parser::PackageJsonParser;
 use rspack_core::{
   ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Plugin, PluginContext,
 };
@@ -11,9 +12,9 @@ use rspack_hook::{plugin, plugin_hook};
 use up_finder::UpFinder;
 mod opts;
 mod resp;
-
 pub use opts::{CompilationHookFn, DuplicateDependencyPluginOpts};
 pub use resp::{DuplicateDependencyPluginResp, Library};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 #[plugin]
 #[derive(Debug)]
@@ -59,56 +60,53 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let module_graph = compilation.get_module_graph();
 
-  let mut cache = FxHashMap::default();
+  let modules = module_graph.modules();
 
-  for (_identifier, module) in module_graph.modules().iter() {
-    if module.module_type().is_js_like()
-      && let readable_name = module.readable_identifier(&compilation.options.context)
-      && let Some(dir) = PathBuf::from(readable_name.to_string()).parent()
-    {
-      let up_finder = UpFinder::builder().cwd(dir).build();
-      let paths = up_finder.find_up("package.json");
-
-      if let Some(library) = paths
-        .iter()
-        .filter(|path| {
-          let path_str = path.to_string_lossy().to_string();
-          let cached = !cache.contains_key(path_str.as_str());
-          let is_node_modules = path_str.contains("node_modules");
-          cached && is_node_modules
-        })
-        .find_map(|path| {
-          if let Ok(package_json) = PackageJsonParser::parse(path)
-            && let Some(name) = package_json.name
-            && let Some(version) = package_json.version
-            && let Some(path) = package_json.__raw_path
-          {
-            return Some(Library::new(
-              path.clone(),
-              name.to_string(),
-              version.to_string(),
-            ));
-          }
-          return None;
-        })
-      {
-        cache.insert(library.dir.clone(), library);
+  let dir_iter = modules.iter().filter_map(|(_, module)| {
+    let readable_name = module.readable_identifier(&compilation.options.context);
+    if let Some(dir) = Path::new(readable_name.as_ref()).parent() {
+      let res = dir.components().any(|c| c.as_os_str() == "node_modules");
+      let is_js_file = module.module_type().is_js_like();
+      if res && is_js_file {
+        return Some(dir.to_path_buf());
       }
+    }
+    None
+  });
+
+  let mut cache = FxHashMap::default();
+  let mut searched = FxHashSet::default();
+
+  for dir in dir_iter {
+    if !searched.insert(dir.clone()) {
+      continue; // 已搜索过，跳过
+    }
+
+    let up_finder = UpFinder::builder().cwd(&dir).build();
+    let paths = up_finder.find_up("package.json");
+    let library = paths.iter().find_map(|p| {
+      if let Ok(package_json) = PackageJsonParser::parse(p)
+        && let Some(name) = package_json.name
+        && let Some(version) = package_json.version
+        && let Some(path) = package_json.__raw_path
+      {
+        return Some(Library::new(
+          path.clone(),
+          name.to_string(),
+          version.to_string(),
+        ));
+      }
+      None
+    });
+
+    if let Some(library) = library {
+      cache.insert(dir.clone(), library);
     }
   }
 
-  // 按包名分组，只保留有重复版本的依赖
-  let mut package_groups: FxHashMap<String, Vec<Library>> = FxHashMap::default();
-
-  for library in cache.values() {
-    package_groups
-      .entry(library.name.clone())
-      .or_insert_with(Vec::new)
-      .push(library.clone());
-  }
-
-  // 只保留有多个版本的包
-  let duplicate_libraries: Vec<Library> = package_groups
+  let duplicate_libraries: Vec<Library> = cache
+    .into_values()
+    .into_group_map_by(|lib| lib.name.clone())
     .into_values()
     .filter(|libs| libs.len() > 1)
     .flatten()

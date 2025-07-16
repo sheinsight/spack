@@ -34,3 +34,6 @@ up_finder           = { workspace = true }
 
 tracing            = { workspace = true }
 tracing-subscriber = { workspace = true }
+
+itertools  = { workspace = true }
+rustc-hash = { workspace = true }

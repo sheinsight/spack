@@ -6442,6 +6442,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more 1.0.0",
  "futures",
+ "itertools 0.14.0",
  "napi",
  "napi-derive",
  "napi-derive-backend",
@@ -6452,6 +6453,7 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_javascript_compiler",
+ "rustc-hash 2.1.1",
  "swc_core",
  "tracing",
  "tracing-subscriber",

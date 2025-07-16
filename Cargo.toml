@@ -59,3 +59,4 @@ quote       = { version = "1.0.40" }
 syn         = { version = "2.0.104", features = ["full"] }
 
 byte-unit = { version = "5.1" }
+itertools = { version = "0.14.0" }
