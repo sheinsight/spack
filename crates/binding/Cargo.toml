@@ -39,5 +39,7 @@ serde        = { workspace = true }
 strum        = { workspace = true }
 strum_macros = { workspace = true }
 
+rustc-hash = { workspace = true }
+
 [build-dependencies]
 rspack_binding_build = { workspace = true }

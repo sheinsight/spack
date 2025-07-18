@@ -304,6 +304,7 @@ dependencies = [
  "rspack_error",
  "rspack_javascript_compiler",
  "rspack_napi",
+ "rustc-hash 2.1.1",
  "serde",
  "spack_binding_builder_macros",
  "spack_plugin_bundle_analyzer",
