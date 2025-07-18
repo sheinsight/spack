@@ -1,7 +1,9 @@
 {
   "cSpell.words": [
     "cdylib",
+    "itertools",
     "napi",
+    "rustc",
     "serde",
     "spack",
     "Threadsafe",
