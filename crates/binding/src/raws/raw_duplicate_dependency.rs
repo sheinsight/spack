@@ -5,6 +5,7 @@ use napi::threadsafe_function::ThreadsafeFunction;
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
+use rustc_hash::FxHashMap;
 use spack_plugin_duplicate_dependency::{
   CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOpts,
   DuplicateDependencyPluginResp, Library,
@@ -13,7 +14,7 @@ use spack_plugin_duplicate_dependency::{
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawDuplicateDependencyPluginOpts {
-  #[napi(ts_type = "(response: JsDuplicateDependencyPluginResp) => Promise<void>")]
+  #[napi(ts_type = "(error: null, response: JsDuplicateDependencyPluginResp) => Promise<void>")]
   #[debug(skip)]
   pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResp, ()>>,
 }
@@ -29,10 +30,14 @@ impl From<RawDuplicateDependencyPluginOpts> for DuplicateDependencyPluginOpts {
           Box::pin({
             async move {
               // TODO: handle error
+              // callback
+              //   .call_async(Ok(response))
+              //   .await
+              //   .expect("callback error");
               callback
-                .call_async(Ok(response))
+                .call_async(Ok(response)) // 移除 Ok() 包装
                 .await
-                .expect("callback error");
+                .map_err(|e| rspack_error::Error::msg(format!("callback error: {}", e)))?;
               Ok(())
             }
           })
@@ -65,14 +70,18 @@ impl From<Library> for JsLibrary {
 #[derive(Debug)]
 #[napi(object)]
 pub struct JsDuplicateDependencyPluginResp {
-  pub libraries: Vec<JsLibrary>,
+  pub libraries: FxHashMap<String, Vec<JsLibrary>>,
   pub duration: f64,
 }
 
 impl From<DuplicateDependencyPluginResp> for JsDuplicateDependencyPluginResp {
   fn from(value: DuplicateDependencyPluginResp) -> Self {
     Self {
-      libraries: value.libraries.into_iter().map(|l| l.into()).collect(),
+      libraries: value
+        .libraries
+        .into_iter()
+        .map(|(k, v)| (k, v.into_iter().map(|l| l.into()).collect()))
+        .collect(),
       duration: value.duration,
     }
   }
@@ -80,5 +89,6 @@ impl From<DuplicateDependencyPluginResp> for JsDuplicateDependencyPluginResp {
 
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawDuplicateDependencyPluginOpts::from_unknown(options)?;
+
   Ok(Box::new(DuplicateDependencyPlugin::new(options.into())) as BoxPlugin)
 }

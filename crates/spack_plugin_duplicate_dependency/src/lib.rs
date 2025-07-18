@@ -38,12 +38,6 @@ impl Plugin for DuplicateDependencyPlugin {
     ctx: PluginContext<&mut ApplyContext>,
     _options: &CompilerOptions,
   ) -> rspack_error::Result<()> {
-    // ctx
-    //   .context
-    //   .compiler_hooks
-    //   .finish_make
-    //   .tap(finish_make::new(self));
-
     ctx
       .context
       .compiler_hooks
@@ -104,12 +98,11 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     }
   }
 
-  let duplicate_libraries: Vec<Library> = cache
+  let duplicate_libraries: FxHashMap<String, Vec<Library>> = cache
     .into_values()
     .into_group_map_by(|lib| lib.name.clone())
-    .into_values()
-    .filter(|libs| libs.len() > 1)
-    .flatten()
+    .into_iter()
+    .filter(|(_, libs)| libs.len() > 1)
     .collect();
 
   let duration = start_time.elapsed().as_millis() as f64;

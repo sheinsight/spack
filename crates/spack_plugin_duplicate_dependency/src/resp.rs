@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+
 #[derive(Debug, Clone)]
 pub struct Library {
   pub dir: String,
@@ -13,12 +15,12 @@ impl Library {
 
 #[derive(Debug)]
 pub struct DuplicateDependencyPluginResp {
-  pub libraries: Vec<Library>,
+  pub libraries: FxHashMap<String, Vec<Library>>,
   pub duration: f64,
 }
 
 impl DuplicateDependencyPluginResp {
-  pub fn new(libraries: Vec<Library>, duration: f64) -> Self {
+  pub fn new(libraries: FxHashMap<String, Vec<Library>>, duration: f64) -> Self {
     Self {
       libraries,
       duration,
