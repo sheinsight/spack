@@ -16,6 +16,8 @@ pub use opts::{CompilationHookFn, DuplicateDependencyPluginOpts};
 pub use resp::{DuplicateDependencyPluginResp, Library};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::resp::LibraryGroup;
+
 #[plugin]
 #[derive(Debug)]
 pub struct DuplicateDependencyPlugin {
@@ -98,11 +100,27 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     }
   }
 
-  let duplicate_libraries: FxHashMap<String, Vec<Library>> = cache
+  // let duplicate_libraries: FxHashMap<String, Vec<Library>> = cache
+  //   .into_values()
+  //   .into_group_map_by(|lib| lib.name.clone())
+  //   .into_iter()
+  //   .filter(|(_, libs)| libs.len() > 1)
+  //   .collect();
+
+  let duplicate_libraries: Vec<LibraryGroup> = cache
     .into_values()
-    .into_group_map_by(|lib| lib.name.clone())
+    .into_group_map_by(|lib| (lib.name.clone(), lib.version.clone())) // 按name和version分组
     .into_iter()
-    .filter(|(_, libs)| libs.len() > 1)
+    .into_group_map_by(|((name, _), _)| name.clone()) // 按name重新分组
+    .into_iter()
+    .filter(|(_, libs)| libs.len() > 1) // 过滤出有多个版本的包
+    .map(|(name, groups)| LibraryGroup {
+      name,
+      libraries: groups
+        .into_iter()
+        .map(|(_, libs)| libs[0].clone())
+        .collect(),
+    })
     .collect();
 
   let duration = start_time.elapsed().as_millis() as f64;

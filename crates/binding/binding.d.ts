@@ -6,7 +6,7 @@ export declare const enum CustomPluginNames {
 }
 
 export interface JsDuplicateDependencyPluginResp {
-  libraries: FxHashMap<string, Array<JsLibrary>>
+  libraryGroups: Array<JsLibraryGroup>
   duration: number
 }
 
@@ -14,6 +14,11 @@ export interface JsLibrary {
   dir: string
   name: string
   version: string
+}
+
+export interface JsLibraryGroup {
+  name: string
+  libraries: Array<JsLibrary>
 }
 
 export interface RawBundleAnalyzerPluginOpts {
@@ -29,7 +34,7 @@ export interface RawDeadcodePluginOpts {
 }
 
 export interface RawDuplicateDependencyPluginOpts {
-  onDetected?: (error: null, response: JsDuplicateDependencyPluginResp) => Promise<void>
+  onDetected?: (response: JsDuplicateDependencyPluginResp) => Promise<void>
 }
 
 export declare function registerBundleAnalyzerPlugin(): void
