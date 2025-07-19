@@ -13,10 +13,8 @@ use up_finder::UpFinder;
 mod opts;
 mod resp;
 pub use opts::{CompilationHookFn, DuplicateDependencyPluginOpts};
-pub use resp::{DuplicateDependencyPluginResp, Library};
+pub use resp::{DuplicateDependencyPluginResp, Library, LibraryGroup};
 use rustc_hash::{FxHashMap, FxHashSet};
-
-use crate::resp::LibraryGroup;
 
 #[plugin]
 #[derive(Debug)]
@@ -100,13 +98,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     }
   }
 
-  // let duplicate_libraries: FxHashMap<String, Vec<Library>> = cache
-  //   .into_values()
-  //   .into_group_map_by(|lib| lib.name.clone())
-  //   .into_iter()
-  //   .filter(|(_, libs)| libs.len() > 1)
-  //   .collect();
-
   let duplicate_libraries: Vec<LibraryGroup> = cache
     .into_values()
     .into_group_map_by(|lib| (lib.name.clone(), lib.version.clone())) // 按name和version分组
@@ -128,7 +119,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let response = DuplicateDependencyPluginResp::new(duplicate_libraries, duration);
 
   if let Some(on_detected) = &self.options.on_detected {
-    on_detected(response).await?;
+    on_detected(response)
+      .await
+      .map_err(|e| rspack_error::Error::msg(format!("callback error11: {:?}", e)))?;
   }
 
   Ok(())

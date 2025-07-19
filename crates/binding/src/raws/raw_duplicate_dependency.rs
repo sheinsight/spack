@@ -1,50 +1,53 @@
 use std::sync::Arc;
 
 use derive_more::Debug;
-use napi::threadsafe_function::ThreadsafeFunction;
+use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
+use napi::Status;
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use spack_plugin_duplicate_dependency::{
   CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOpts,
-  DuplicateDependencyPluginResp, Library,
+  DuplicateDependencyPluginResp, Library, LibraryGroup,
 };
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawDuplicateDependencyPluginOpts {
-  #[napi(ts_type = "(response: JsDuplicateDependencyPluginResp) => Promise<void>")]
+  #[napi(
+    ts_type = "(error?: Error, response?: JsDuplicateDependencyPluginResp) => void|Promise<void>"
+  )]
   #[debug(skip)]
-  pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResp, ()>>,
+  pub on_detected: Option<
+    ThreadsafeFunction<
+      JsDuplicateDependencyPluginResp,
+      (),
+      JsDuplicateDependencyPluginResp,
+      Status,
+      true,
+      false,
+      0,
+    >,
+  >,
 }
 
-impl From<RawDuplicateDependencyPluginOpts> for DuplicateDependencyPluginOpts {
-  fn from(value: RawDuplicateDependencyPluginOpts) -> Self {
-    let on_detected: Option<CompilationHookFn> = match value.on_detected {
+impl Into<DuplicateDependencyPluginOpts> for RawDuplicateDependencyPluginOpts {
+  fn into(self) -> DuplicateDependencyPluginOpts {
+    let on_detected: Option<CompilationHookFn> = match self.on_detected {
       Some(callback) => {
         let callback = Arc::new(callback);
-        Some(Box::new(move |libraries| {
+        Some(Box::new(move |response| {
           let callback = callback.clone();
-          let response = JsDuplicateDependencyPluginResp::from(libraries);
-          Box::pin({
-            async move {
-              // TODO: handle error
-              // callback
-              //   .call_async(Ok(response))
-              //   .await
-              //   .expect("callback error");
-              callback
-                .call_async(Ok(response))
-                .await
-                .map_err(|e| rspack_error::Error::msg(format!("callback error: {}", e)))?;
-              Ok(())
-            }
+          let response = JsDuplicateDependencyPluginResp::from(response);
+          Box::pin(async move {
+            callback.call(Ok(response), ThreadsafeFunctionCallMode::Blocking);
+            Ok(())
           })
         }))
       }
       _ => None,
     };
-    Self { on_detected }
+    DuplicateDependencyPluginOpts { on_detected }
   }
 }
 
@@ -73,6 +76,15 @@ pub struct JsLibraryGroup {
   pub libraries: Vec<JsLibrary>,
 }
 
+impl From<LibraryGroup> for JsLibraryGroup {
+  fn from(value: LibraryGroup) -> Self {
+    Self {
+      name: value.name.clone(),
+      libraries: value.libraries.into_iter().map(|l| l.into()).collect(),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsDuplicateDependencyPluginResp {
@@ -86,10 +98,7 @@ impl From<DuplicateDependencyPluginResp> for JsDuplicateDependencyPluginResp {
       library_groups: value
         .library_groups
         .into_iter()
-        .map(|lg| JsLibraryGroup {
-          name: lg.name.clone(),
-          libraries: lg.libraries.into_iter().map(|l| l.into()).collect(),
-        })
+        .map(|lg| lg.into())
         .collect(),
       duration: value.duration,
     }

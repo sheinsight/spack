@@ -3,11 +3,8 @@ use futures::future::BoxFuture;
 
 use crate::resp::DuplicateDependencyPluginResp;
 
-pub type CompilationHookFn = Box<
-  dyn Fn(DuplicateDependencyPluginResp) -> BoxFuture<'static, rspack_error::Result<()>>
-    + Sync
-    + Send,
->;
+pub type CompilationHookFn =
+  Box<dyn Fn(DuplicateDependencyPluginResp) -> BoxFuture<'static, napi::Result<()>> + Sync + Send>;
 
 #[derive(Debug)]
 pub struct DuplicateDependencyPluginOpts {
