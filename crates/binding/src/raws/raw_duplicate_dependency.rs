@@ -41,7 +41,6 @@ impl Into<DuplicateDependencyPluginOpts> for RawDuplicateDependencyPluginOpts {
           let response = JsDuplicateDependencyPluginResp::from(response);
           Box::pin(async move {
             callback.call(Ok(response), ThreadsafeFunctionCallMode::Blocking);
-            Ok(())
           })
         }))
       }

@@ -4,7 +4,7 @@ use futures::future::BoxFuture;
 use crate::resp::DuplicateDependencyPluginResp;
 
 pub type CompilationHookFn =
-  Box<dyn Fn(DuplicateDependencyPluginResp) -> BoxFuture<'static, napi::Result<()>> + Sync + Send>;
+  Box<dyn Fn(DuplicateDependencyPluginResp) -> BoxFuture<'static, ()> + Sync + Send>;
 
 #[derive(Debug)]
 pub struct DuplicateDependencyPluginOpts {
