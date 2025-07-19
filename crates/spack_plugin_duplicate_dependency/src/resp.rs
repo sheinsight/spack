@@ -17,7 +17,7 @@ pub struct LibraryGroup {
   pub libraries: Vec<Library>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DuplicateDependencyPluginResp {
   pub library_groups: Vec<LibraryGroup>,
   pub duration: f64,
