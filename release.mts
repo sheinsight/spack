@@ -49,7 +49,7 @@ const choices = versionType.map((type) => {
   
   const isLatest = /\d+\.\d+\.\d+-\d+/.test(packageJson.version);
 
-  const isCanary = /\d+\.\d+\.\d+-\d+-canary-\d+/.test(packageJson.version);
+  const isCanary = /\d+\.\d+\.\d+-\d+-canary.\d+/.test(packageJson.version);
 
 
 
@@ -59,7 +59,7 @@ const choices = versionType.map((type) => {
 
   const matchLatest = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<v>\d+)/);
 
-  const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary-(?<canaryVersion>\d+)/);
+  const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary.(?<canaryVersion>\d+)/);
 
   if (!matchLatest) {
     throw new Error(`Invalid version: ${packageJson.version}`)
@@ -76,7 +76,7 @@ const choices = versionType.map((type) => {
       value: nextV,
     }
   }else if (type === "canary") {
-    const nextV = `${prefix}-${Number(v) + 1}.canary-0`;
+    const nextV = `${prefix}-${Number(v) + 1}-canary.0`;
     return {
       name: nextV,
       message: type,
@@ -84,10 +84,10 @@ const choices = versionType.map((type) => {
       value: nextV,
     }
   } else if (type === "prerelease") {
-    const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary-(?<canaryVersion>\d+)/);
+    const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary.(?<canaryVersion>\d+)/);
     if (matchCanary) {
       const { prefix, vv, canaryVersion } = matchCanary.groups as { prefix: string, vv: string, canaryVersion: string };
-      const nextV = `${prefix}-${Number(vv)}.canary-${Number(canaryVersion) + 1}`;
+      const nextV = `${prefix}-${Number(vv)}-canary.${Number(canaryVersion) + 1}`;
       return {
         name: nextV,
         message: type,
@@ -95,7 +95,7 @@ const choices = versionType.map((type) => {
         value: nextV,
       }
     }else {
-      const nextV = `${prefix}-${Number(v)}.canary-${Number(v) + 1}`;
+      const nextV = `${prefix}-${Number(v)}-canary.${Number(v) + 1}`;
       return {
         name: nextV,
         message: type,
