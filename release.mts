@@ -1,9 +1,20 @@
 import fs from "node:fs"
-import semver from 'semver';
+import path from 'node:path';
 import consola from 'consola';
 import TOML from "@iarna/toml"
 import enquirer from 'enquirer';
 import { readPackage } from 'read-pkg'; 
+import readYamlFile from 'read-yaml-file';
+import { findPackages } from 'find-packages';
+import { writePackage } from 'write-package';
+import { $ } from 'execa';
+
+
+const $$ = $({
+  stdout: process.stdout,
+  stderr: process.stderr,
+});
+
 
 interface CargoToml {
   workspace?: {
@@ -28,10 +39,6 @@ if (!packageJson.version.startsWith(`${version}-`)) {
   process.exit(1)
 }
 
- 
-console.log("version-->",packageJson.version);
-
-
 const versionType = [
   'latest',
   'canary',
@@ -52,31 +59,42 @@ const choices = versionType.map((type) => {
 
   const matchLatest = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<v>\d+)/);
 
-  const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+-\d+-canary)-(?<v>\d+)/);
+  // const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary-(?<v>\d+)/);
 
-  if (!matchLatest && !matchCanary) {
+  if (!matchLatest) {
     throw new Error(`Invalid version: ${packageJson.version}`)
   }
 
-  if (matchLatest) {
-    const { prefix, v } = matchLatest.groups as { prefix: string, v: string };
+
+  const { prefix, v } = matchLatest.groups as { prefix: string, v: string };  
+  if (type === "latest") {
+    const nextV = `${prefix}-${Number(v)}`;
     return {
-      name: `${prefix}-${Number(v) + 1}`,
+      name: nextV,
       message: type,
-      hint: packageJson.version,
-      value: packageJson.version,
+      hint: nextV,
+      value: nextV,
     }
-  } else if (matchCanary) {
-    const { prefix, v } = matchCanary.groups as { prefix: string, v: string };
+  }else if (type === "canary") {
+    const nextV = `${prefix}-${Number(v) + 1}.canary-0`;
     return {
-      name: `${prefix}-${Number(v) + 1}`,
+      name: nextV,
       message: type,
-      hint: packageJson.version,
-      value: packageJson.version,
+      hint: nextV,
+      value: nextV,
+    }
+  } else if (type === "prerelease") {
+    const nextV = `${prefix}-${Number(v)}.canary-${Number(v) + 1}`;
+    return {
+      name: nextV,
+      message: type,
+      hint: nextV,
+      value: nextV,
     }
   } else {
     throw new Error(`Invalid version: ${packageJson.version}`)
-  } 
+  }
+ 
 });
 
 const { v } = await enquirer.prompt<{ v: string }>({
@@ -86,6 +104,49 @@ const { v } = await enquirer.prompt<{ v: string }>({
   choices: choices,
 });
 
-console.log("v-->",v);
+// console.log("v-->",v);
 
+const { isSure } = await enquirer.prompt<{ isSure: boolean }>({
+  type: 'confirm',
+  initial: false,
+  name: 'isSure',
+  message: `Are you sure to release? [ ${v} ]`,
+});
+
+
+if (isSure) {
+  const tag = /^\d+\.\d+\.\d+-\d+$/.test(v) ? "latest" : "canary";
+
+  packageJson.version = v;
+  packageJson._id = v;
+  packageJson.private = true;
+  await writePackage(path.join(process.cwd(), 'package.json'), packageJson);
+  
+  const yaml = await readYamlFile.default<{ packages: string[] }>(
+    path.join(process.cwd(), 'pnpm-workspace.yaml')
+  );
+
+  const packages = await findPackages(process.cwd(), {
+    patterns: yaml.packages,
+  });
+
+  for (const item of packages) {
+    const packageJson = await readPackage({ cwd: item.dir });
+    if (!packageJson.private) {
+      packageJson.version = v;
+      packageJson._id = v;
+      packageJson.publishConfig = {
+        access: 'public',
+        tag,
+      };
+      await writePackage(path.join(item.dir, 'package.json'), packageJson);
+    }
+  }
+
+
+  // await $$`git add .`;
+  // await $$`git commit -m ${v}`;
+  // await $$`git tag v${v}`;
+  // consola.success(`tag v${v} created`);
+}
 
