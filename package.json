@@ -1,6 +1,6 @@
 {
   "name": "@shined/monorepo",
-  "version": "0.4.8-0-canary.0",
+  "version": "0.4.8-0-canary.1",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
@@ -37,7 +37,7 @@
     "write-package": "^7.1.0"
   },
   "readme": "ERROR: No README data found!",
-  "_id": "0.0.21-canary.19",
+  "_id": "0.4.8-0-canary.1",
   "dependencies": {
     "chalk": "^5.4.1"
   }
