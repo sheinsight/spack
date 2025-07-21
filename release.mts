@@ -8,7 +8,7 @@ import readYamlFile from 'read-yaml-file';
 import { findPackages } from 'find-packages';
 import { writePackage } from 'write-package';
 import { $ } from 'execa';
-
+import chalk from 'chalk';
 
 const $$ = $({
   stdout: process.stdout,
@@ -106,16 +106,19 @@ const { v } = await enquirer.prompt<{ v: string }>({
 
 // console.log("v-->",v);
 
+const tag = /^\d+\.\d+\.\d+-\d+$/.test(v) ? "latest" : "canary";
+
+const tagColor = tag === "canary" ? chalk.yellow(tag):chalk.green(tag);
+
 const { isSure } = await enquirer.prompt<{ isSure: boolean }>({
   type: 'confirm',
   initial: false,
   name: 'isSure',
-  message: `Are you sure to release? [ ${v} ]`,
+  message: `Are you sure to release? [ ${chalk.green(v)} ] with tag ${tagColor}`,
 });
 
 
 if (isSure) {
-  const tag = /^\d+\.\d+\.\d+-\d+$/.test(v) ? "latest" : "canary";
 
   packageJson.version = v;
   packageJson._id = v;
@@ -143,10 +146,11 @@ if (isSure) {
     }
   }
 
+  const gitTag = `${tag}/v${v}`;
 
-  // await $$`git add .`;
-  // await $$`git commit -m ${v}`;
-  // await $$`git tag v${v}`;
-  // consola.success(`tag v${v} created`);
+  await $$`git add .`;
+  await $$`git commit -m ${gitTag}`;
+  await $$`git tag ${gitTag}`;
+  consola.success(`tag ${gitTag} created`);
 }
 

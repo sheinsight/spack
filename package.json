@@ -9,7 +9,8 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
-    "release": "node --experimental-strip-types --no-warnings build.mts "
+    "release": "node --experimental-strip-types --no-warnings build.mts ",
+    "release-new": "node --experimental-strip-types --no-warnings release.mts "
   },
   "homepage": "https://github.com/sheinsight/spack",
   "bugs": {
@@ -36,5 +37,8 @@
     "write-package": "^7.1.0"
   },
   "readme": "ERROR: No README data found!",
-  "_id": "0.0.21-canary.19"
+  "_id": "0.0.21-canary.19",
+  "dependencies": {
+    "chalk": "^5.4.1"
+  }
 }
