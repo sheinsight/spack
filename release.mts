@@ -59,7 +59,7 @@ const choices = versionType.map((type) => {
 
   const matchLatest = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<v>\d+)/);
 
-  // const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary-(?<v>\d+)/);
+  const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary-(?<canaryVersion>\d+)/);
 
   if (!matchLatest) {
     throw new Error(`Invalid version: ${packageJson.version}`)
@@ -84,12 +84,24 @@ const choices = versionType.map((type) => {
       value: nextV,
     }
   } else if (type === "prerelease") {
-    const nextV = `${prefix}-${Number(v)}.canary-${Number(v) + 1}`;
-    return {
-      name: nextV,
-      message: type,
-      hint: nextV,
-      value: nextV,
+    const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary-(?<canaryVersion>\d+)/);
+    if (matchCanary) {
+      const { prefix, vv, canaryVersion } = matchCanary.groups as { prefix: string, vv: string, canaryVersion: string };
+      const nextV = `${prefix}-${Number(vv)}.canary-${Number(canaryVersion) + 1}`;
+      return {
+        name: nextV,
+        message: type,
+        hint: nextV,
+        value: nextV,
+      }
+    }else {
+      const nextV = `${prefix}-${Number(v)}.canary-${Number(v) + 1}`;
+      return {
+        name: nextV,
+        message: type,
+        hint: nextV,
+        value: nextV,
+      }
     }
   } else {
     throw new Error(`Invalid version: ${packageJson.version}`)
@@ -103,8 +115,6 @@ const { v } = await enquirer.prompt<{ v: string }>({
   message: `What type of release? Current version: ${packageJson.version}`,
   choices: choices,
 });
-
-// console.log("v-->",v);
 
 const tag = /^\d+\.\d+\.\d+-\d+$/.test(v) ? "latest" : "canary";
 
@@ -148,9 +158,9 @@ if (isSure) {
 
   const gitTag = `${tag}/v${v}`;
 
-  await $$`git add .`;
-  await $$`git commit -m ${gitTag}`;
-  await $$`git tag ${gitTag}`;
+  // await $$`git add .`;
+  // await $$`git commit -m ${gitTag}`;
+  // await $$`git tag ${gitTag}`;
   consola.success(`tag ${gitTag} created`);
 }
 
