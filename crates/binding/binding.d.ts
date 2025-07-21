@@ -11,7 +11,7 @@ export interface JsDuplicateDependencyPluginResp {
 }
 
 export interface JsLibrary {
-  dir: string
+  file: string
   name: string
   version: string
 }

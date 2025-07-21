@@ -53,7 +53,7 @@ impl Into<DuplicateDependencyPluginOpts> for RawDuplicateDependencyPluginOpts {
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsLibrary {
-  pub dir: String,
+  pub file: String,
   pub name: String,
   pub version: String,
 }
@@ -61,7 +61,7 @@ pub struct JsLibrary {
 impl From<Library> for JsLibrary {
   fn from(value: Library) -> Self {
     Self {
-      dir: value.dir.clone(),
+      file: value.file.clone(),
       name: value.name.clone(),
       version: value.version.clone(),
     }

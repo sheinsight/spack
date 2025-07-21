@@ -1,13 +1,17 @@
 #[derive(Debug, Clone)]
 pub struct Library {
-  pub dir: String,
+  pub file: String,
   pub name: String,
   pub version: String,
 }
 
 impl Library {
-  pub fn new(dir: String, name: String, version: String) -> Self {
-    Self { dir, name, version }
+  pub fn new(file: String, name: String, version: String) -> Self {
+    Self {
+      file,
+      name,
+      version,
+    }
   }
 }
 
