@@ -6,7 +6,7 @@ export declare const enum CustomPluginNames {
 }
 
 export interface JsDuplicateDependencyPluginResp {
-  libraryGroups: Array<JsLibraryGroup>
+  groups: Array<JsLibraryGroup>
   duration: number
 }
 
@@ -18,7 +18,7 @@ export interface JsLibrary {
 
 export interface JsLibraryGroup {
   name: string
-  libraries: Array<JsLibrary>
+  libs: Array<JsLibrary>
 }
 
 export interface RawBundleAnalyzerPluginOpts {

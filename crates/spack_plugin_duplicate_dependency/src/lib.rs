@@ -107,7 +107,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     .filter(|(_, libs)| libs.len() > 1) // 过滤出有多个版本的包
     .map(|(name, groups)| LibraryGroup {
       name,
-      libraries: groups
+      libs: groups
         .into_iter()
         .map(|(_, libs)| libs[0].clone())
         .collect(),

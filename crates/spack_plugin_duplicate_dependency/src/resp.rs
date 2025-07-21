@@ -18,20 +18,17 @@ impl Library {
 #[derive(Debug, Clone)]
 pub struct LibraryGroup {
   pub name: String,
-  pub libraries: Vec<Library>,
+  pub libs: Vec<Library>,
 }
 
 #[derive(Debug, Clone)]
 pub struct DuplicateDependencyPluginResp {
-  pub library_groups: Vec<LibraryGroup>,
+  pub groups: Vec<LibraryGroup>,
   pub duration: f64,
 }
 
 impl DuplicateDependencyPluginResp {
-  pub fn new(library_groups: Vec<LibraryGroup>, duration: f64) -> Self {
-    Self {
-      library_groups,
-      duration,
-    }
+  pub fn new(groups: Vec<LibraryGroup>, duration: f64) -> Self {
+    Self { groups, duration }
   }
 }

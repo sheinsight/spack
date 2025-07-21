@@ -72,14 +72,14 @@ impl From<Library> for JsLibrary {
 #[napi(object)]
 pub struct JsLibraryGroup {
   pub name: String,
-  pub libraries: Vec<JsLibrary>,
+  pub libs: Vec<JsLibrary>,
 }
 
 impl From<LibraryGroup> for JsLibraryGroup {
   fn from(value: LibraryGroup) -> Self {
     Self {
       name: value.name.clone(),
-      libraries: value.libraries.into_iter().map(|l| l.into()).collect(),
+      libs: value.libs.into_iter().map(|l| l.into()).collect(),
     }
   }
 }
@@ -87,18 +87,14 @@ impl From<LibraryGroup> for JsLibraryGroup {
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsDuplicateDependencyPluginResp {
-  pub library_groups: Vec<JsLibraryGroup>,
+  pub groups: Vec<JsLibraryGroup>,
   pub duration: f64,
 }
 
 impl From<DuplicateDependencyPluginResp> for JsDuplicateDependencyPluginResp {
   fn from(value: DuplicateDependencyPluginResp) -> Self {
     Self {
-      library_groups: value
-        .library_groups
-        .into_iter()
-        .map(|lg| lg.into())
-        .collect(),
+      groups: value.groups.into_iter().map(|lg| lg.into()).collect(),
       duration: value.duration,
     }
   }
