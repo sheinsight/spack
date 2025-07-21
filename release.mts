@@ -158,9 +158,9 @@ if (isSure) {
 
   const gitTag = `${tag}/v${v}`;
 
-  // await $$`git add .`;
-  // await $$`git commit -m ${gitTag}`;
-  // await $$`git tag ${gitTag}`;
+  await $$`git add .`;
+  await $$`git commit -m ${gitTag}`;
+  await $$`git tag ${gitTag}`;
   consola.success(`tag ${gitTag} created`);
 }
 
