@@ -1,6 +1,6 @@
 {
   "name": "@shined/monorepo",
-  "version": "0.0.21-canary.19",
+  "version": "0.4.8-0",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
@@ -20,6 +20,7 @@
     "url": "git+https://github.com/sheinsight/spack.git"
   },
   "devDependencies": {
+    "@iarna/toml": "^2.2.5",
     "@tsconfig/node-ts": "^23.6.1",
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.15.31",

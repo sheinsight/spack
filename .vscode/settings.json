@@ -1,8 +1,11 @@
 {
   "cSpell.words": [
     "cdylib",
+    "deadcode",
+    "iarna",
     "itertools",
     "napi",
+    "premajor",
     "rustc",
     "serde",
     "spack",
