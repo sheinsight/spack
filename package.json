@@ -24,7 +24,7 @@
     "@iarna/toml": "^2.2.5",
     "@tsconfig/node-ts": "^23.6.1",
     "@tsconfig/node22": "^22.0.2",
-    "@types/node": "^22.15.31",
+    "@types/node": "^22.16.5",
     "@types/semver": "^7.7.0",
     "consola": "^3.4.2",
     "enquirer": "^2.4.1",
