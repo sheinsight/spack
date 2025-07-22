@@ -84,6 +84,7 @@ jobs:
             -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index 
             -v ${{ github.workspace }}:/build 
             -w /build
+            --privileged
           run: |
             set -e 
             rustup target add ${{ inputs.target }}
