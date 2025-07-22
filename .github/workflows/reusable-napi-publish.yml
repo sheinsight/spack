@@ -42,17 +42,22 @@ jobs:
         run: |
           ls -R ${{ inputs.binding_dir }}/artifacts
 
-      - name: Download Js
-        uses: actions/download-artifact@v4
-        with:
-          name: js
-          path: ${{ inputs.binding_dir }}
-          merge-multiple: true
-
-      - name: Show js
-        shell: bash
+      - name: Move js to binding
         run: |
-          ls -R ${{ inputs.binding_dir }}
+          mv ${{ inputs.binding_dir }}/artifacts/binding.js ${{ inputs.binding_dir }}/binding.js
+          mv ${{ inputs.binding_dir }}/artifacts/binding.d.ts ${{ inputs.binding_dir }}/binding.d.ts
+
+      # - name: Download Js
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: js
+      #     path: ${{ inputs.binding_dir }}
+      #     merge-multiple: true
+
+      # - name: Show js
+      #   shell: bash
+      #   run: |
+      #     ls -R ${{ inputs.binding_dir }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

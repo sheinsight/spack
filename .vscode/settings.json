@@ -5,9 +5,11 @@
     "iarna",
     "itertools",
     "napi",
+    "npmjs",
     "premajor",
     "rustc",
     "serde",
+    "softprops",
     "spack",
     "Threadsafe",
     "ukey"
