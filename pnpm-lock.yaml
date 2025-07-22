@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      chalk:
-        specifier: ^5.4.1
-        version: 5.4.1
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -27,6 +23,9 @@ importers:
       '@types/semver':
         specifier: ^7.7.0
         version: 7.7.0
+      chalk:
+        specifier: ^5.4.1
+        version: 5.4.1
       consola:
         specifier: ^3.4.2
         version: 3.4.2
