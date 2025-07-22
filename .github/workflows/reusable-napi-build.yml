@@ -87,7 +87,7 @@ jobs:
             set -e 
             rustup target add ${{ inputs.target }}
             cd ${{ inputs.binding_dir }}
-            npm run build -- --target ${{ inputs.target }}
+            DEBUG=napi:build npm run build -- --target ${{ inputs.target }}
             
             
       - name: Build binding
