@@ -87,9 +87,46 @@ jobs:
             --privileged
           run: |
             set -e 
+            
+            echo "=== Environment ==="
+            pwd
+            echo "Node version: $(node -v)"
+            echo "NPM version: $(npm -v)"
+            echo "Rust version: $(rustc --version)"
+            
+            echo "=== Pre-build Directory Check ==="
+            ls -la /build/crates/binding/
+            
+            echo "=== Build Process ==="
             rustup target add ${{ inputs.target }}
             cd ${{ inputs.binding_dir }}
-            npm run build -- --target ${{ inputs.target }}
+            
+            # 构建前检查目标目录
+            mkdir -p /build/target/x86_64-unknown-linux-musl/release/
+            touch /build/target/x86_64-unknown-linux-musl/release/test_write_permission
+            
+            # 检查 binding 目录的写入权限
+            touch /build/crates/binding/test_write_permission
+            
+            # 运行构建
+            DEBUG=napi:* RUST_LOG=debug npm run build -- --target ${{ inputs.target }}
+            
+            echo "=== Post-build Checks ==="
+            echo "Source file exists:"
+            ls -la /build/target/x86_64-unknown-linux-musl/release/libbinding.so || echo "Source file missing!"
+            
+            echo "Target directory status:"
+            ls -la /build/crates/binding/
+            
+            echo "=== Manual Copy Attempt ==="
+            if [ -f "/build/target/x86_64-unknown-linux-musl/release/libbinding.so" ]; then
+              cp -v "/build/target/x86_64-unknown-linux-musl/release/libbinding.so" "/build/crates/binding/spack.linux-x64-musl.node" || {
+                echo "Copy failed with: $?"
+                echo "File details:"
+                file "/build/target/x86_64-unknown-linux-musl/release/libbinding.so"
+                stat "/build/target/x86_64-unknown-linux-musl/release/libbinding.so"
+              }
+            fi
             
             
       - name: Build binding
