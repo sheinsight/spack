@@ -29,6 +29,7 @@ rspack_javascript_compiler = { workspace = true }
 rspack_napi                = { workspace = true }
 
 napi                = { workspace = true }
+napi-build          = { workspace = true }
 napi-derive         = { workspace = true }
 napi-derive-backend = { workspace = true }
 

@@ -25,6 +25,7 @@ rspack_javascript_compiler    = "=0.4.8"
 rspack_napi                   = "=0.4.8"
 
 napi                = { version = "=3.0.0-beta.9", features = ["async", "tokio_rt", "serde-json", "anyhow", "napi7", "compat-mode"] }
+napi-build          = { version = "=3.0.0-beta.0" }
 napi-derive         = { version = "=3.0.0-beta.9", features = ["compat-mode"] }
 napi-derive-backend = { version = "=2.0.0-beta.9" }
 

@@ -59,7 +59,6 @@ const choices = versionType.map((type) => {
 
   const matchLatest = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<v>\d+)/);
 
-  const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary.(?<canaryVersion>\d+)/);
 
   if (!matchLatest) {
     throw new Error(`Invalid version: ${packageJson.version}`)
