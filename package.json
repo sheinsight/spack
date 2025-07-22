@@ -1,6 +1,6 @@
 {
   "name": "@shined/monorepo",
-  "version": "0.4.9-0",
+  "version": "0.4.9-0-canary.1",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
@@ -25,6 +25,7 @@
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.16.5",
     "@types/semver": "^7.7.0",
+    "chalk": "^5.4.1",
     "consola": "^3.4.2",
     "enquirer": "^2.4.1",
     "execa": "^9.6.0",
@@ -33,9 +34,8 @@
     "read-yaml-file": "^2.1.0",
     "semver": "^7.7.2",
     "typescript": "^5.8.3",
-    "chalk": "^5.4.1",
     "write-package": "^7.1.0"
   },
   "readme": "ERROR: No README data found!",
-  "_id": "0.4.8-0-canary.2"
+  "_id": "0.4.9-0-canary.1"
 }
