@@ -6,6 +6,7 @@
     "itertools",
     "napi",
     "npmjs",
+    "pathdiff",
     "premajor",
     "rustc",
     "serde",

@@ -20,4 +20,5 @@ swc_core                   = { workspace = true }
 tracing                    = { workspace = true }
 
 package_json_parser = { workspace = true }
+pathdiff            = { workspace = true }
 up_finder           = { workspace = true }

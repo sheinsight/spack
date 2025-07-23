@@ -5965,6 +5965,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more 1.0.0",
  "package_json_parser",
+ "pathdiff",
  "rspack_core",
  "rspack_error",
  "rspack_hook",

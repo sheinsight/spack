@@ -56,11 +56,23 @@ impl CaseSensitivePathsPlugin {
 
     // 2. 比较请求的路径和真实路径
     if canonical_path.to_string_lossy() != path.to_string_lossy() {
+      let pathdiff =
+        pathdiff::diff_paths(canonical_path, Path::new(current_file).parent().unwrap());
+
+      let relative_path = pathdiff
+        .map(|p| {
+          let path_str = p.display().to_string();
+          if path_str.starts_with('.') {
+            path_str
+          } else {
+            format!("./{}", path_str)
+          }
+        })
+        .unwrap_or_default();
+
       let msg = format!(
         r#"Can't resolve {:?} in {:?}. Actual {:?} (case mismatch)"#,
-        raw_request,
-        current_file,
-        canonical_path.display()
+        raw_request, current_file, relative_path
       );
       return Some(msg);
     }
