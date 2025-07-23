@@ -31,11 +31,14 @@ use crate::import_finder::ImportFinder;
 pub struct CaseSensitivePathsPlugin {
   #[allow(unused)]
   options: CaseSensitivePathsPluginOpts,
+
+  // 用来记录已经处理过的路径
+  processed_paths: std::sync::Mutex<HashSet<String>>,
 }
 
 impl CaseSensitivePathsPlugin {
   pub fn new(options: CaseSensitivePathsPluginOpts) -> Self {
-    Self::new_inner(options)
+    Self::new_inner(options, Mutex::new(HashSet::new()))
   }
 
   fn check_case_sensitive_path_optimized(
@@ -201,39 +204,67 @@ async fn after_resolve(
 
   let current_file = data.issuer.as_deref().unwrap_or("");
 
-  let first_dependency = data
-    .dependencies
-    .first()
-    .and_then(|dep| dep.as_module_dependency());
-
   let check_res =
     self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
 
-  if let Some(dependency) = first_dependency
-    && resource_path.is_absolute()
-    && let Some(error_message) = check_res
-    && let Ok(source_content) = std::fs::read_to_string(current_file)
-  {
-    let user_request = dependency.user_request();
+  if let Some(error_message) = &check_res {
+    if let Ok(source_content) = std::fs::read_to_string(current_file) {
+      for dependency in data.dependencies.iter() {
+        if let Some(module_dep) = dependency.as_module_dependency() {
+          let user_request = module_dep.user_request();
 
-    if let Some(pos) = self.find_import_position(&source_content, user_request, current_file) {
-      let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-It may work fine on macOS/Windows, but will fail on Linux."#;
+          let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+  It may work fine on macOS/Windows, but will fail on Linux."#;
 
-      let rewrite_label = miette::LabeledSpan::at(pos, format!("path case mismatch"));
+          let pos = self.find_import_position(&source_content, user_request, current_file);
 
-      let diagnostic = miette::MietteDiagnostic::new(error_message)
-        .with_code("case mismatch")
-        .with_label(rewrite_label)
-        .with_severity(miette::Severity::Error)
-        .with_help(help);
+          if let Some(pos) = pos {
+            let rewrite_label = miette::LabeledSpan::at(pos, format!("path case mismatch"));
 
-      let named_source = miette::NamedSource::new(current_file, source_content.to_string());
-      let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
-      let diagnostic = Diagnostic::from(report);
-      data.diagnostics.push(diagnostic);
+            let diagnostic = miette::MietteDiagnostic::new(error_message)
+              .with_code("case mismatch")
+              .with_label(rewrite_label)
+              .with_severity(miette::Severity::Error)
+              .with_help(help);
+
+            let named_source = miette::NamedSource::new(current_file, source_content.to_string());
+            let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+            let diagnostic = Diagnostic::from(report);
+            data.diagnostics.push(diagnostic);
+          }
+        }
+      }
     }
   }
+
+  //   let check_res =
+  //     self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
+
+  //   if let Some(dependency) = first_dependency
+  //     && resource_path.is_absolute()
+  //     && let Some(error_message) = check_res
+  //     && let Ok(source_content) = std::fs::read_to_string(current_file)
+  //   {
+  //     let user_request = dependency.user_request();
+
+  //     if let Some(pos) = self.find_import_position(&source_content, user_request, current_file) {
+  //       let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+  // It may work fine on macOS/Windows, but will fail on Linux."#;
+
+  //       let rewrite_label = miette::LabeledSpan::at(pos, format!("path case mismatch"));
+
+  //       let diagnostic = miette::MietteDiagnostic::new(error_message)
+  //         .with_code("case mismatch")
+  //         .with_label(rewrite_label)
+  //         .with_severity(miette::Severity::Error)
+  //         .with_help(help);
+
+  //       let named_source = miette::NamedSource::new(current_file, source_content.to_string());
+  //       let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+  //       let diagnostic = Diagnostic::from(report);
+  //       data.diagnostics.push(diagnostic);
+  //     }
+  //   }
 
   Ok(None)
 }
