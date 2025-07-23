@@ -31,14 +31,11 @@ use crate::import_finder::ImportFinder;
 pub struct CaseSensitivePathsPlugin {
   #[allow(unused)]
   options: CaseSensitivePathsPluginOpts,
-
-  // 用来记录已经处理过的路径
-  processed_paths: std::sync::Mutex<HashSet<String>>,
 }
 
 impl CaseSensitivePathsPlugin {
   pub fn new(options: CaseSensitivePathsPluginOpts) -> Self {
-    Self::new_inner(options, Mutex::new(HashSet::new()))
+    Self::new_inner(options)
   }
 
   fn check_case_sensitive_path_optimized(
