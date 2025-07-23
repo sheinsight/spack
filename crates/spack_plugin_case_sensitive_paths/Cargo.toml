@@ -19,6 +19,7 @@ rspack_javascript_compiler = { workspace = true }
 swc_core                   = { workspace = true }
 tracing                    = { workspace = true }
 
+miette              = { workspace = true }
 package_json_parser = { workspace = true }
 pathdiff            = { workspace = true }
 up_finder           = { workspace = true }

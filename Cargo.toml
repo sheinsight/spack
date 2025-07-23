@@ -61,4 +61,5 @@ syn         = { version = "2.0.104", features = ["full"] }
 
 byte-unit = { version = "5.1" }
 itertools = { version = "0.14.0" }
+miette    = { version = "7.6.0" }
 pathdiff  = { version = "0.2.3" }

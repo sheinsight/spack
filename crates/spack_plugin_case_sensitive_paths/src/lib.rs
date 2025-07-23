@@ -7,7 +7,7 @@ use rspack_core::{
   ApplyContext, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData, Plugin,
   PluginContext,
 };
-use rspack_error::{Diagnostic, DiagnosticExt, TraceableError};
+use rspack_error::Diagnostic;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_javascript_compiler::JavaScriptCompiler;
 use swc_core::{
@@ -49,30 +49,13 @@ impl CaseSensitivePathsPlugin {
     }
 
     // 1. 首先检查完整路径的真实大小写
-    let canonical_path = match path.canonicalize() {
-      Ok(p) => p,
-      Err(_) => return None,
-    };
+    let canonical_path = path.canonicalize().ok()?;
 
     // 2. 比较请求的路径和真实路径
     if canonical_path.to_string_lossy() != path.to_string_lossy() {
-      let pathdiff =
-        pathdiff::diff_paths(canonical_path, Path::new(current_file).parent().unwrap());
-
-      let relative_path = pathdiff
-        .map(|p| {
-          let path_str = p.display().to_string();
-          if path_str.starts_with('.') {
-            path_str
-          } else {
-            format!("./{}", path_str)
-          }
-        })
-        .unwrap_or_default();
-
       let msg = format!(
-        r#"Can't resolve {:?} in {:?}. Actual {:?} (case mismatch)"#,
-        raw_request, current_file, relative_path
+        r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
+        raw_request, current_file
       );
       return Some(msg);
     }
@@ -152,38 +135,38 @@ impl CaseSensitivePathsPlugin {
   }
 
   // 优化后的版本，参考 rspack 内部插件的做法：
-  fn create_diagnostic_with_rspack(
-    &self,
-    error_message: &str,
-    source_content: Option<&str>,
-    import_position: Option<(usize, usize)>,
-  ) -> Diagnostic {
-    let title = "Module not found:".to_string();
+  //   fn create_diagnostic_with_rspack(
+  //     &self,
+  //     error_message: &str,
+  //     source_content: Option<&str>,
+  //     import_position: Option<(usize, usize)>,
+  //   ) -> Diagnostic {
+  //     let title = "Module not found:".to_string();
 
-    let error_message = format!("{error_message}");
+  //     let error_message = format!("{error_message}");
 
-    let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-It may work fine on macOS/Windows, but will fail on Linux."#;
+  //     let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+  // It may work fine on macOS/Windows, but will fail on Linux."#;
 
-    let error = match (source_content, import_position) {
-      (Some(source), Some((start, length))) => TraceableError::from_file(
-        source.to_string(),
-        start,
-        start + length,
-        title,
-        error_message,
-      )
-      .with_help(Some(help))
-      .with_hide_stack(Some(true))
-      .boxed(),
-      _ => TraceableError::from_lazy_file(0, 0, title, error_message)
-        .with_help(Some(help))
-        .with_hide_stack(Some(true))
-        .boxed(),
-    };
+  //     let error = match (source_content, import_position) {
+  //       (Some(source), Some((start, length))) => TraceableError::from_file(
+  //         source.to_string(),
+  //         start,
+  //         start + length,
+  //         title,
+  //         error_message,
+  //       )
+  //       .with_help(Some(help))
+  //       .with_hide_stack(Some(true))
+  //       .boxed(),
+  //       _ => TraceableError::from_lazy_file(0, 0, title, error_message)
+  //         .with_help(Some(help))
+  //         .with_hide_stack(Some(true))
+  //         .boxed(),
+  //     };
 
-    Diagnostic::from(error)
-  }
+  //     Diagnostic::from(error)
+  //   }
 }
 
 impl Plugin for CaseSensitivePathsPlugin {
@@ -232,14 +215,24 @@ async fn after_resolve(
     && let Ok(source_content) = std::fs::read_to_string(current_file)
   {
     let user_request = dependency.user_request();
-    let diagnostic = self
-      .find_import_position(&source_content, user_request, current_file)
-      .map(|pos| {
-        self.create_diagnostic_with_rspack(&error_message, Some(&source_content), Some(pos))
-      })
-      .unwrap_or_else(|| self.create_diagnostic_with_rspack(&error_message, None, None));
 
-    data.diagnostics.push(diagnostic);
+    if let Some(pos) = self.find_import_position(&source_content, user_request, current_file) {
+      let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+It may work fine on macOS/Windows, but will fail on Linux."#;
+
+      let rewrite_label = miette::LabeledSpan::at(pos, format!("path case mismatch"));
+
+      let diagnostic = miette::MietteDiagnostic::new(error_message)
+        .with_code("case mismatch")
+        .with_label(rewrite_label)
+        .with_severity(miette::Severity::Error)
+        .with_help(help);
+
+      let named_source = miette::NamedSource::new(current_file, source_content.to_string());
+      let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+      let diagnostic = Diagnostic::from(report);
+      data.diagnostics.push(diagnostic);
+    }
   }
 
   Ok(None)
