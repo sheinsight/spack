@@ -3,6 +3,9 @@ const { positionals } = require("util").parseArgs({
 	options: {
 		profile: {
 			type: "string"
+		},
+		target: {              // 👈 添加这个
+			type: "string"
 		}
 	},
 	strict: true,
