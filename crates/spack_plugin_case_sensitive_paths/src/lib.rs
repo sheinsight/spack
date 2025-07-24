@@ -216,7 +216,7 @@ async fn after_resolve(
           let pos = self.find_import_position(&source_content, user_request, current_file);
 
           if let Some(pos) = pos {
-            let rewrite_label = miette::LabeledSpan::at(pos, format!("path case mismatch"));
+            let rewrite_label = miette::LabeledSpan::at(pos, format!("Path case mismatch"));
 
             let diagnostic = miette::MietteDiagnostic::new(error_message)
               .with_code("case mismatch")
