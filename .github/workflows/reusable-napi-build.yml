@@ -72,7 +72,7 @@ jobs:
         run: |
           git config --system core.longpaths true
         
-      - name: Build binding in docker with LLVM setup
+      - name: Build binding in docker
         uses: addnab/docker-run-action@v3
         if: ${{ inputs.docker }}
         with:
@@ -92,14 +92,46 @@ jobs:
             if [[ "${{ inputs.docker }}" == *"alpine"* ]]; then
               echo "Installing for Alpine..."
               apk add --no-cache llvm15-dev llvm15-static clang15-dev clang15-static libffi-dev
+              
+              # 设置 Alpine 的 LLVM 环境变量
+              export LLVM_CONFIG_PATH=/usr/bin/llvm15-config
+              export LIBCLANG_PATH=/usr/lib/libclang.so.15
+              export CLANG_PATH=/usr/bin/clang-15
+              
+              # 验证安装
+              echo "LLVM Config: $(which llvm15-config)"
+              echo "LLVM Version: $(llvm15-config --version)"
+              echo "Clang Version: $(clang-15 --version)"
+              
             elif [[ "${{ inputs.docker }}" == *"debian"* ]]; then
               echo "Installing for Debian..."
               apt-get update && apt-get install -y llvm-dev libclang-dev clang
+              
+              # 设置 Debian 的 LLVM 环境变量
+              export LLVM_CONFIG_PATH=$(which llvm-config)
+              export LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu/libclang-1.so
+              
+              # 验证安装
+              echo "LLVM Config: $(which llvm-config)"
+              echo "LLVM Version: $(llvm-config --version)"
+              echo "Clang Version: $(clang --version)"
             fi
+            
+            # 显示设置的环境变量
+            echo "=== Environment Variables ==="
+            echo "LLVM_CONFIG_PATH: $LLVM_CONFIG_PATH"
+            echo "LIBCLANG_PATH: $LIBCLANG_PATH"
+            echo "CLANG_PATH: $CLANG_PATH"
             
             echo "=== Build Process ==="
             rustup target add ${{ inputs.target }}
             cd ${{ inputs.binding_dir }}
+            
+            # 确保环境变量传递给构建过程
+            export LLVM_CONFIG_PATH="$LLVM_CONFIG_PATH"
+            export LIBCLANG_PATH="$LIBCLANG_PATH"
+            export CLANG_PATH="$CLANG_PATH"
+            
             DEBUG=napi:* npm run build -- --target ${{ inputs.target }}
             
             echo "=== Post-build Checks ==="
