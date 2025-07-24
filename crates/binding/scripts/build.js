@@ -1,6 +1,6 @@
 const path = require("path");
 const { readFileSync, writeFileSync } = require("fs");
-const { positionals } = require("util").parseArgs({
+const { values,positionals } = require("util").parseArgs({
 	args: process.argv.slice(2),
 	options: {
 		profile: {
