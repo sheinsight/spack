@@ -157,7 +157,8 @@ jobs:
         shell: bash
         run: |
           # npm run build -- --target ${{ inputs.target }}
-          pnpm --filter ${{ inputs.npm_package_name }} build:release --target ${{ inputs.target }}
+          # pnpm --filter ${{ inputs.npm_package_name }} run build:release --target ${{ inputs.target }}
+          pnpm --filter ${{ inputs.npm_package_name }} run build:release -- --target ${{ inputs.target }}
 
       - name: Show binary
         shell: bash
