@@ -23,6 +23,7 @@ rspack_error                  = "=0.4.9"
 rspack_hook                   = "=0.4.9"
 rspack_javascript_compiler    = "=0.4.9"
 rspack_napi                   = "=0.4.9"
+rspack_resolver               = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "0.6.0", default-features = false }
 
 napi                = { version = "=3.1.2", features = ["async", "tokio_rt", "serde-json", "anyhow", "napi7", "compat-mode"] }
 napi-build          = { version = "=2.2.2" }
