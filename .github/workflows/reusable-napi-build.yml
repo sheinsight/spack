@@ -132,7 +132,7 @@ jobs:
             export LIBCLANG_PATH="$LIBCLANG_PATH"
             export CLANG_PATH="$CLANG_PATH"
             
-            DEBUG=napi:* npm run build -- --target ${{ inputs.target }}
+            DEBUG=napi:* npm run build:release -- --target ${{ inputs.target }}
             
             echo "=== Post-build Checks ==="
             echo "Source file exists:"
@@ -157,7 +157,7 @@ jobs:
         shell: bash
         run: |
           # npm run build -- --target ${{ inputs.target }}
-          pnpm --filter ${{ inputs.npm_package_name }} build --target ${{ inputs.target }}
+          pnpm --filter ${{ inputs.npm_package_name }} build:release --target ${{ inputs.target }}
 
       - name: Show binary
         shell: bash

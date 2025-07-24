@@ -23,11 +23,12 @@ spack_plugin_duplicate_dependency = { workspace = true }
 
 # Enable SWC plugin feature for targets that support it
 # [target.'cfg(not(any(target_arch = "wasm32", all(target_os = "windows", target_arch = "x86"), all(target_os = "windows", target_arch = "aarch64"))))'.dependencies]
-[target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
-rspack_binding_builder = { workspace = true, features = ["plugin"] }
+# [target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
+# rspack_binding_builder = { workspace = true, features = ["plugin"] }
 
 
 # rspack_binding_builder_macros = { workspace = true }
+rspack_binding_builder     = { workspace = true }
 rspack_core                = { workspace = true }
 rspack_error               = { workspace = true }
 rspack_javascript_compiler = { workspace = true }
