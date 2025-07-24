@@ -21,6 +21,8 @@ spack_plugin_case_sensitive_paths = { workspace = true }
 spack_plugin_deadcode             = { workspace = true }
 spack_plugin_duplicate_dependency = { workspace = true }
 
+# Enable SWC plugin feature for targets that support it
+[target.'cfg(not(any(target_arch = "wasm32", all(target_os = "windows", target_arch = "x86"), all(target_os = "windows", target_arch = "aarch64"))))'.dependencies]
 rspack_binding_builder = { workspace = true, features = ["plugin"] }
 # rspack_binding_builder_macros = { workspace = true }
 rspack_core                = { workspace = true }
@@ -44,7 +46,3 @@ rustc-hash = { workspace = true }
 
 [build-dependencies]
 rspack_binding_build = { workspace = true }
-
-# Enable SWC plugin feature for targets that support it
-# [target.'cfg(not(any(target_arch = "wasm32", all(target_os = "windows", target_arch = "x86"), all(target_os = "windows", target_arch = "aarch64"))))'.dependencies]
-# rspack_binding_builder = { workspace = true, features = ["plugin"] }
