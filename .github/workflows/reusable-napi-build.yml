@@ -72,7 +72,7 @@ jobs:
         run: |
           git config --system core.longpaths true
         
-      - name: Build binding in docker
+      - name: Build binding in docker with LLVM setup
         uses: addnab/docker-run-action@v3
         if: ${{ inputs.docker }}
         with:
@@ -88,28 +88,19 @@ jobs:
           run: |
             set -e 
             
-            echo "=== Environment ==="
-            pwd
-            echo "Node version: $(node -v)"
-            echo "NPM version: $(npm -v)"
-            echo "Rust version: $(rustc --version)"
-            
-            echo "=== Pre-build Directory Check ==="
-            ls -la /build/crates/binding/
+            echo "=== Installing LLVM Dependencies ==="
+            if [[ "${{ inputs.docker }}" == *"alpine"* ]]; then
+              echo "Installing for Alpine..."
+              apk add --no-cache llvm15-dev llvm15-static clang15-dev clang15-static libffi-dev
+            elif [[ "${{ inputs.docker }}" == *"debian"* ]]; then
+              echo "Installing for Debian..."
+              apt-get update && apt-get install -y llvm-dev libclang-dev clang
+            fi
             
             echo "=== Build Process ==="
             rustup target add ${{ inputs.target }}
             cd ${{ inputs.binding_dir }}
-            
-            # 构建前检查目标目录
-            mkdir -p /build/target/x86_64-unknown-linux-musl/release/
-            touch /build/target/x86_64-unknown-linux-musl/release/test_write_permission
-            
-            # 检查 binding 目录的写入权限
-            touch /build/crates/binding/test_write_permission
-            
-            # 运行构建
-            DEBUG=napi:* RUST_LOG=debug npm run build -- --target ${{ inputs.target }}
+            DEBUG=napi:* npm run build -- --target ${{ inputs.target }}
             
             echo "=== Post-build Checks ==="
             echo "Source file exists:"
