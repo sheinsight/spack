@@ -37,6 +37,7 @@ impl Plugin for DeadcodePlugin {
       .compiler_hooks
       .after_emit
       .tap(after_emit::new(self));
+
     Ok(())
   }
 }
