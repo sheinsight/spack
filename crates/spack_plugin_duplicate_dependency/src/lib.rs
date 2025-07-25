@@ -119,7 +119,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let response = DuplicateDependencyPluginResp::new(duplicate_libraries, duration);
 
   if let Some(on_detected) = &self.options.on_detected {
-    on_detected(response).await;
+    if let Err(e) = on_detected(response).await {
+      println!("plugin-error: {:?}", e);
+    }
   }
 
   Ok(())

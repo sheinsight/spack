@@ -34,7 +34,7 @@ export interface RawDeadcodePluginOpts {
 }
 
 export interface RawDuplicateDependencyPluginOpts {
-  onDetected?: (error?: Error, response?: JsDuplicateDependencyPluginResp) => void|Promise<void>
+  onDetected?: (response: JsDuplicateDependencyPluginResp) => void|Promise<void>
 }
 
 export declare function registerBundleAnalyzerPlugin(): void

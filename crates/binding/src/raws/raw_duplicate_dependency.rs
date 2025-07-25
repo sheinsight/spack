@@ -1,11 +1,8 @@
-use std::sync::Arc;
-
 use derive_more::Debug;
-use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
-use napi::Status;
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
+use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_plugin_duplicate_dependency::{
   CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOpts,
   DuplicateDependencyPluginResp, Library, LibraryGroup,
@@ -14,38 +11,27 @@ use spack_plugin_duplicate_dependency::{
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawDuplicateDependencyPluginOpts {
-  #[napi(
-    ts_type = "(error?: Error, response?: JsDuplicateDependencyPluginResp) => void|Promise<void>"
-  )]
+  #[napi(ts_type = "(response: JsDuplicateDependencyPluginResp) => void|Promise<void>")]
   #[debug(skip)]
-  pub on_detected: Option<
-    ThreadsafeFunction<
-      JsDuplicateDependencyPluginResp,
-      (),
-      JsDuplicateDependencyPluginResp,
-      Status,
-      true,
-      false,
-      0,
-    >,
-  >,
+  pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResp, ()>>,
 }
 
 impl Into<DuplicateDependencyPluginOpts> for RawDuplicateDependencyPluginOpts {
   fn into(self) -> DuplicateDependencyPluginOpts {
     let on_detected: Option<CompilationHookFn> = match self.on_detected {
       Some(callback) => {
-        let callback = Arc::new(callback);
+        let callback = std::sync::Arc::new(callback);
         Some(Box::new(move |response| {
           let callback = callback.clone();
-          let response = JsDuplicateDependencyPluginResp::from(response);
           Box::pin(async move {
-            callback.call(Ok(response), ThreadsafeFunctionCallMode::Blocking);
+            callback.call_with_sync(response.into()).await?;
+            Ok(())
           })
         }))
       }
       _ => None,
     };
+
     DuplicateDependencyPluginOpts { on_detected }
   }
 }
