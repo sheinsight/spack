@@ -208,7 +208,7 @@ async fn after_resolve(
   let check_res =
     self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
 
-  println!("check_res: {:?}", create_data.raw_request);
+  // println!("check_res: {:?}", create_data.raw_request);
 
   if let Some(error_message) = &check_res {
     if let Ok(source_content) = std::fs::read_to_string(current_file) {
@@ -216,7 +216,7 @@ async fn after_resolve(
         if let Some(module_dep) = dependency.as_module_dependency() {
           let user_request = module_dep.user_request();
 
-          println!("user_request: {}", user_request);
+          // println!("user_request: {}", user_request);
 
           // resolve(user_request,{
           //   alias: compile.options.alias

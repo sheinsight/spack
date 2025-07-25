@@ -1,4 +1,4 @@
-export declare const enum CustomPluginNames {
+export declare enum CustomPluginNames {
   DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
   CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   BundleAnalyzerPlugin = 'BundleAnalyzerPlugin',
