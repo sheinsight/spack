@@ -23,6 +23,7 @@ mod import_finder;
 mod opts;
 
 pub use opts::CaseSensitivePathsPluginOpts;
+use tracing::debug;
 
 use crate::import_finder::ImportFinder;
 
@@ -216,11 +217,7 @@ async fn after_resolve(
         if let Some(module_dep) = dependency.as_module_dependency() {
           let user_request = module_dep.user_request();
 
-          // println!("user_request: {}", user_request);
-
-          // resolve(user_request,{
-          //   alias: compile.options.alias
-          // })
+          debug!("user_request: {}", user_request);
 
           let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
   It may work fine on macOS/Windows, but will fail on Linux."#;
