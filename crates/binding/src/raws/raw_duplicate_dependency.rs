@@ -3,37 +3,19 @@ use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
+use spack_binding_builder_macros::ThreadsafeCallback;
 use spack_plugin_duplicate_dependency::{
-  CompilationHookFn, DuplicateDependencyPlugin, DuplicateDependencyPluginOpts,
-  DuplicateDependencyPluginResp, Library, LibraryGroup,
+  DuplicateDependencyPlugin, DuplicateDependencyPluginOpts, DuplicateDependencyPluginResp, Library,
+  LibraryGroup,
 };
 
-#[derive(Debug)]
+#[derive(Debug, ThreadsafeCallback)]
 #[napi(object, object_to_js = false)]
 pub struct RawDuplicateDependencyPluginOpts {
   #[napi(ts_type = "(response: JsDuplicateDependencyPluginResp) => void|Promise<void>")]
   #[debug(skip)]
+  #[threadsafe_callback]
   pub on_detected: Option<ThreadsafeFunction<JsDuplicateDependencyPluginResp, ()>>,
-}
-
-impl Into<DuplicateDependencyPluginOpts> for RawDuplicateDependencyPluginOpts {
-  fn into(self) -> DuplicateDependencyPluginOpts {
-    let on_detected: Option<CompilationHookFn> = match self.on_detected {
-      Some(callback) => {
-        let callback = std::sync::Arc::new(callback);
-        Some(Box::new(move |response| {
-          let callback = callback.clone();
-          Box::pin(async move {
-            callback.call_with_sync(response.into()).await?;
-            Ok(())
-          })
-        }))
-      }
-      _ => None,
-    };
-
-    DuplicateDependencyPluginOpts { on_detected }
-  }
 }
 
 #[derive(Debug, Clone)]
