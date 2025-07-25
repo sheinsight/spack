@@ -165,27 +165,22 @@ jobs:
         run: |
           ls -l ${{ inputs.binding_dir }}
 
-      # - name: Build npm
-      #   shell: bash
-      #   run: |
-      #     pnpm --filter @shined/doctor build
-        
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.binding_name }}-${{ inputs.target }}
           path: |
             ${{ inputs.binding_dir }}/${{ inputs.binding_name }}.*.node
+            # ${{ inputs.binding_dir }}/binding.js
+            # ${{ inputs.binding_dir }}/binding.d.ts
+          if-no-files-found: error 
+
+      - name: Upload Js
+        uses: actions/upload-artifact@v4
+        with:
+          name: js
+          path: |
             ${{ inputs.binding_dir }}/binding.js
             ${{ inputs.binding_dir }}/binding.d.ts
           if-no-files-found: error 
-
-      # - name: Upload Js
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: js
-      #     path: |
-      #       ${{ inputs.binding_dir }}/binding.js
-      #       ${{ inputs.binding_dir }}/binding.d.ts
-      #     if-no-files-found: error 
-      #     overwrite: true
+          overwrite: true
