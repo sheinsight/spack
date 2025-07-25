@@ -43,19 +43,19 @@ impl CaseSensitivePathsPlugin {
 
   fn check_case_sensitive_path_optimized(
     &self,
-    path: &Path,
+    resource_path: &Path,
     raw_request: &str,
     current_file: &str,
   ) -> Option<String> {
-    if !path.exists() {
+    if !resource_path.exists() {
       return None;
     }
 
     // 1. 首先检查完整路径的真实大小写
-    let canonical_path = path.canonicalize().ok()?;
+    let canonical_path = resource_path.canonicalize().ok()?;
 
     // 2. 比较请求的路径和真实路径
-    if canonical_path.to_string_lossy() != path.to_string_lossy() {
+    if canonical_path.to_string_lossy() != resource_path.to_string_lossy() {
       let msg = format!(
         r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
         raw_request, current_file
@@ -202,15 +202,17 @@ async fn after_resolve(
   data: &mut ModuleFactoryCreateData,
   create_data: &mut NormalModuleCreateData,
 ) -> rspack_error::Result<Option<bool>> {
-  let resource_path = &create_data.resource_resolve_data.resource;
+  let issuer = data.issuer.as_deref().unwrap_or("");
 
-  let resource_path = Path::new(resource_path);
+  if issuer.contains("node_modules") {
+    return Ok(None);
+  }
 
-  let current_file = data.issuer.as_deref().unwrap_or("");
+  let resource = &create_data.resource_resolve_data.resource;
+
+  let resource_path = Path::new(resource);
 
   if data.request.starts_with("@/components") || data.request == "@shein-components/Icon" {
-    let resource = Path::new(&create_data.resource_resolve_data.resource);
-
     println!(
       r#"
 --------------------------------
@@ -222,19 +224,15 @@ async fn after_resolve(
 "#,
       data.request,
       create_data.resource_resolve_data.resource,
-      resource.canonicalize(),
+      resource_path.canonicalize(),
       data.resolve_options
     );
   }
 
-  if create_data
-    .resource_resolve_data
-    .resource
-    .contains("node_modules")
-    && !data.request.starts_with("./")
-    && !data.request.starts_with("../")
-    && !data.request.starts_with("/")
-    && !current_file.contains("node_modules")
+  if resource.contains("node_modules")
+    && vec!["./", "../", "/"]
+      .into_iter()
+      .all(|prefix: &'static str| !data.request.starts_with(prefix))
   {
     let finder = UpFinder::builder()
       .cwd(resource_path)
@@ -247,24 +245,41 @@ async fn after_resolve(
       let package_json = PackageJsonParser::parse(package_json).unwrap();
       if let Some(name) = package_json.name {
         if !data.request.starts_with(&name.to_string()) {
-          println!(
-            "error 
---------------------------------
-raw: {:?} 
-pkg: {:?} 
-request: {:?}",
-            data.request, name, data.request
+          let error_message = format!(
+            "Package name mismatch: request '{}' should start with package name '{}'",
+            data.request,
+            name.to_string()
           );
+
+          let help = "The import path should match the package name in package.json";
+
+          if let Ok(source_content) = std::fs::read_to_string(issuer) {
+            if let Some(pos) = self.find_import_position(&source_content, &data.request, issuer) {
+              let rewrite_label = miette::LabeledSpan::at(pos, "Package name mismatch");
+
+              let diagnostic = miette::MietteDiagnostic::new(error_message)
+                .with_code("package_name_mismatch")
+                .with_label(rewrite_label)
+                .with_severity(miette::Severity::Error)
+                .with_help(help);
+
+              let named_source = miette::NamedSource::new(issuer, source_content.to_string());
+              let report =
+                miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+              let diagnostic = Diagnostic::from(report);
+              data.diagnostics.push(diagnostic);
+            }
+          }
         }
       }
     }
   }
 
   let check_res =
-    self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
+    self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, issuer);
 
   if let Some(error_message) = &check_res {
-    if let Ok(source_content) = std::fs::read_to_string(current_file) {
+    if let Ok(source_content) = std::fs::read_to_string(issuer) {
       for dependency in data.dependencies.iter() {
         if let Some(module_dep) = dependency.as_module_dependency() {
           let user_request = module_dep.user_request();
@@ -272,9 +287,9 @@ request: {:?}",
           debug!("user_request: {}", user_request);
 
           let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-  It may work fine on macOS/Windows, but will fail on Linux."#;
+It may work fine on macOS/Windows, but will fail on Linux."#;
 
-          let pos = self.find_import_position(&source_content, user_request, current_file);
+          let pos = self.find_import_position(&source_content, user_request, issuer);
 
           if let Some(pos) = pos {
             let rewrite_label = miette::LabeledSpan::at(pos, format!("Path case mismatch"));
@@ -285,7 +300,7 @@ request: {:?}",
               .with_severity(miette::Severity::Error)
               .with_help(help);
 
-            let named_source = miette::NamedSource::new(current_file, source_content.to_string());
+            let named_source = miette::NamedSource::new(issuer, source_content.to_string());
             let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
             let diagnostic = Diagnostic::from(report);
             data.diagnostics.push(diagnostic);
