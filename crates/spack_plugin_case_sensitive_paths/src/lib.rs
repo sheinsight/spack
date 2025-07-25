@@ -3,6 +3,7 @@
 use std::path::Path;
 
 use derive_more::Debug;
+use package_json_parser::PackageJsonParser;
 use rspack_core::{
   ApplyContext, CompilationId, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData,
   Plugin, PluginContext,
@@ -24,6 +25,7 @@ mod opts;
 
 pub use opts::CaseSensitivePathsPluginOpts;
 use tracing::debug;
+use up_finder::{FindUpKind, UpFinder};
 
 use crate::import_finder::ImportFinder;
 
@@ -206,10 +208,60 @@ async fn after_resolve(
 
   let current_file = data.issuer.as_deref().unwrap_or("");
 
+  if data.request.starts_with("@/components") || data.request == "@shein-components/Icon" {
+    let resource = Path::new(&create_data.resource_resolve_data.resource);
+
+    println!(
+      r#"
+--------------------------------
+{}
+{} 
+{:?}
+{:?}
+--------------------------------
+"#,
+      data.request,
+      create_data.resource_resolve_data.resource,
+      resource.canonicalize(),
+      data.resolve_options
+    );
+  }
+
+  if create_data
+    .resource_resolve_data
+    .resource
+    .contains("node_modules")
+    && !data.request.starts_with("./")
+    && !data.request.starts_with("../")
+    && !data.request.starts_with("/")
+    && !current_file.contains("node_modules")
+  {
+    let finder = UpFinder::builder()
+      .cwd(resource_path)
+      .kind(FindUpKind::File)
+      .build();
+
+    let res = finder.find_up("package.json");
+
+    if let Some(package_json) = res.first() {
+      let package_json = PackageJsonParser::parse(package_json).unwrap();
+      if let Some(name) = package_json.name {
+        if !data.request.starts_with(&name.to_string()) {
+          println!(
+            "error 
+--------------------------------
+raw: {:?} 
+pkg: {:?} 
+request: {:?}",
+            data.request, name, data.request
+          );
+        }
+      }
+    }
+  }
+
   let check_res =
     self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
-
-  // println!("check_res: {:?}", create_data.raw_request);
 
   if let Some(error_message) = &check_res {
     if let Ok(source_content) = std::fs::read_to_string(current_file) {
