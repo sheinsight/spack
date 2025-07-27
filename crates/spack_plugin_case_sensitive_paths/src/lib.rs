@@ -24,7 +24,6 @@ mod import_finder;
 mod opts;
 
 pub use opts::CaseSensitivePathsPluginOpts;
-use tracing::debug;
 use up_finder::{FindUpKind, UpFinder};
 
 use crate::import_finder::ImportFinder;
@@ -280,11 +279,16 @@ async fn after_resolve(
 
   if let Some(error_message) = &check_res {
     if let Ok(source_content) = std::fs::read_to_string(issuer) {
+      let mut processed_requests = std::collections::HashSet::new();
+
       for dependency in data.dependencies.iter() {
         if let Some(module_dep) = dependency.as_module_dependency() {
           let user_request = module_dep.user_request();
 
-          debug!("user_request: {}", user_request);
+          // 如果这个请求已经处理过，就跳过
+          if !processed_requests.insert(user_request.to_string()) {
+            continue;
+          }
 
           let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
 It may work fine on macOS/Windows, but will fail on Linux."#;
