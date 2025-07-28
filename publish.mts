@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { findPackages } from 'find-packages';
-import { readPackage } from 'read-pkg'; 
+import { readPackage } from 'read-pkg';
 import { globby } from 'globby';
 
 const bindingDir = path.join(__dirname, 'crates', 'binding');
@@ -9,7 +9,7 @@ const bindingDir = path.join(__dirname, 'crates', 'binding');
 const bindingJs = path.join(bindingDir, 'binding.js');
 const bindingDts = path.join(bindingDir, 'binding.d.ts');
 
-if (!fs.existsSync(bindingJs) ) {
+if (!fs.existsSync(bindingJs)) {
   throw new Error('binding.js not found');
 }
 
@@ -27,16 +27,16 @@ const nodeFiles = await globby(['**/*.node'], {
 
 // console.log(bindingJsFiles);
 
-const packages = await findPackages(__dirname,{
-  patterns: ['crates/binding/npm/*','crates/binding'],
+const packages = await findPackages(__dirname, {
+  patterns: ['crates/binding/npm/*', 'crates/binding'],
   includeRoot: true,
 });
 
 for (const pkg of packages) {
-  console.log(pkg.dir,pkg.manifest.name,pkg.manifest.version);
+  console.log(pkg.dir, pkg.manifest.name, pkg.manifest.version);
 }
 
-const root = packages.find(pkg => pkg.dir === __dirname);
+const root = packages.find((pkg) => pkg.dir === __dirname);
 
 if (!root) {
   throw new Error('root package not found');
@@ -46,9 +46,11 @@ for (const pkg of packages) {
   if (pkg.dir === __dirname) {
     continue;
   }
-  await pkg.writeProjectManifest({
-    ...pkg.manifest,
-    version: root.manifest.version,
-  },true);
+  await pkg.writeProjectManifest(
+    {
+      ...pkg.manifest,
+      version: root.manifest.version,
+    },
+    true
+  );
 }
- 

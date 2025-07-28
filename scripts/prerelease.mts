@@ -28,6 +28,11 @@ interface CargoToml {
 
 export async function prerelease() {
   const cargoTomlPath = new URL('../Cargo.toml', import.meta.url);
+  const cargoTomlFullPath = fileURLToPath(cargoTomlPath);
+
+  consola.info('Project paths:');
+  consola.info(`  Root dir: ${ROOT_DIR}`);
+  consola.info(`  Cargo.toml: ${cargoTomlFullPath}`);
 
   if (!fs.existsSync(cargoTomlPath)) {
     throw new Error(
@@ -44,6 +49,11 @@ export async function prerelease() {
     patterns: ['crates/binding/npm/*', 'crates/binding'],
     includeRoot: true,
   });
+
+  consola.info('Found packages:');
+  for (const pkg of packages) {
+    consola.info(`  ${pkg.dir}`);
+  }
 
   const rootPackageJson = packages.find((pkg) => pkg.dir === ROOT_DIR);
 

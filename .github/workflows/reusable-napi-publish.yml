@@ -1,5 +1,5 @@
 name: NAPI Publish
- 
+
 on:
   workflow_call:
     inputs:
@@ -8,16 +8,16 @@ on:
         type: string
       npm_package_name:
         required: true
-        type: string 
+        type: string
     secrets:
       NPM_TOKEN:
-        required: true 
+        required: true
 
 env:
   DEBUG: napi:*
   # 如果没有的话 napi prepublish 会报错
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
 permissions:
   contents: write
   id-token: write
@@ -115,13 +115,14 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
           # pnpm --filter ${{ inputs.npm_package_name }} publish --no-git-checks --force
-          pnpm publish -r --no-git-checks
+          # pnpm publish -r --no-git-checks
+          pnpm run release publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_ID: ${{ steps.create_release.outputs.id }}
 
       - name: Update Release
         if: startsWith(github.ref, 'refs/tags/')
-        run: | 
+        run: |
           echo "Updating release..."
           gh release edit ${{ github.ref_name }} --draft=false --latest
