@@ -160,7 +160,6 @@ if (isSure) {
     await pkg.writeProjectManifest({
       ...pkg.manifest,
       version: v,
-      private: true,
     },true);
   } 
   
