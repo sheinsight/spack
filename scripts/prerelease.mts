@@ -1,17 +1,14 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import consola from 'consola';
 import TOML from '@iarna/toml';
-import { fileURLToPath } from 'node:url';
 import { findPackages } from 'find-packages';
 import { $ } from 'execa';
 import chalk from 'chalk';
 import enquirer from 'enquirer';
+import { getRootDir } from './utils/paths.mts';
+import { fileURLToPath } from 'node:url';
 
-const { dirname } = path;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = getRootDir(import.meta.url);
 
 const $$ = $({
   stdout: process.stdout,

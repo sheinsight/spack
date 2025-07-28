@@ -2,12 +2,9 @@ import { $ } from 'execa';
 import consola from 'consola';
 import path from 'node:path';
 import { globby } from 'globby';
-import { fileURLToPath } from 'node:url';
+import { getRootDir } from './utils/paths.mts';
 
-const { dirname } = path;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = getRootDir(import.meta.url);
 
 const bindingDir = path.join(ROOT_DIR, 'crates', 'binding');
 
