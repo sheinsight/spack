@@ -20,6 +20,29 @@ jobs:
   build-platforms:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "Hello, world!"
-    
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: crates/binding/artifacts
+
+      - name: Show artifacts
+        shell: bash
+        run: |
+          ls -R crates/binding/artifacts
+
+      - name: Download Js
+        uses: actions/download-artifact@v4
+        with:
+          name: js
+          path: crates/binding
+          merge-multiple: true
+
+      - name: Show js
+        shell: bash
+        run: |
+          ls -R crates/binding
