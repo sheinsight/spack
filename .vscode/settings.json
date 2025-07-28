@@ -4,6 +4,7 @@
     "deadcode",
     "iarna",
     "itertools",
+    "miette",
     "napi",
     "npmjs",
     "pathdiff",
