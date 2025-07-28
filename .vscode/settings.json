@@ -5,6 +5,7 @@
     "iarna",
     "itertools",
     "miette",
+    "msvc",
     "napi",
     "npmjs",
     "pathdiff",

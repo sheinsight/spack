@@ -57,6 +57,16 @@
     "emnapi": "^1.4.5",
     "typescript": "^5.8.3"
   },
+  "optionalDependencies": {
+    "@shined/spack-binding-darwin-x64": "workspace:*",
+    "@shined/spack-binding-darwin-arm64": "workspace:*",
+    "@shined/spack-binding-win32-x64-msvc": "workspace:*",
+    "@shined/spack-binding-win32-arm64-msvc": "workspace:*",
+    "@shined/spack-binding-linux-x64-gnu": "workspace:*",
+    "@shined/spack-binding-linux-x64-musl": "workspace:*",
+    "@shined/spack-binding-linux-arm64-gnu": "workspace:*",
+    "@shined/spack-binding-linux-arm64-musl": "workspace:*"
+  },
   "readme": "ERROR: No README data found!",
   "_id": "0.4.10-0-canary.1",
   "publishConfig": {

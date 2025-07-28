@@ -32,10 +32,24 @@ const rspackCoreVersion = toml.workspace?.dependencies?.rspack_core as string
 
 let version = rspackCoreVersion.replace("=", "").trim();
 
-const packageJson = await readPackage()
+// const packageJson = await readPackage()
 
-if (!packageJson.version.startsWith(`${version}-`)) {
-  consola.error(`Version mismatch: ${packageJson.version} !== ${version}`)
+const packages = await findPackages(__dirname,{
+  patterns: ['crates/binding/npm/*','crates/binding'],
+  includeRoot: true,
+});
+
+const rootPackageJson = packages.find(pkg => pkg.dir === __dirname);
+
+const rootVersion = rootPackageJson?.manifest?.version;
+
+if (!rootVersion) {
+  consola.error(`Version not found in root package.json`)
+  process.exit(1)
+}
+
+if (!rootVersion.startsWith(`${version}-`)) {
+  consola.error(`Version mismatch: ${rootVersion} !== ${version}`)
   process.exit(1)
 }
 
@@ -47,21 +61,21 @@ const versionType = [
 
 const choices = versionType.map((type) => {
   
-  const isLatest = /\d+\.\d+\.\d+-\d+/.test(packageJson.version);
+  const isLatest = /\d+\.\d+\.\d+-\d+/.test(rootVersion);
 
-  const isCanary = /\d+\.\d+\.\d+-\d+-canary.\d+/.test(packageJson.version);
+  const isCanary = /\d+\.\d+\.\d+-\d+-canary.\d+/.test(rootVersion);
 
 
 
   if (!(isLatest || isCanary)) {
-    throw new Error(`Invalid version: ${packageJson.version}`)
+    throw new Error(`Invalid version: ${rootVersion}`)
   }
 
-  const matchLatest = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<v>\d+)/);
+  const matchLatest = rootVersion.match(/(?<prefix>\d+\.\d+\.\d+)-(?<v>\d+)/);
 
 
   if (!matchLatest) {
-    throw new Error(`Invalid version: ${packageJson.version}`)
+    throw new Error(`Invalid version: ${rootVersion}`)
   }
 
 
@@ -83,7 +97,7 @@ const choices = versionType.map((type) => {
       value: nextV,
     }
   } else if (type === "prerelease") {
-    const matchCanary = packageJson.version.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary.(?<canaryVersion>\d+)/);
+    const matchCanary = rootVersion.match(/(?<prefix>\d+\.\d+\.\d+)-(?<vv>\d+)-canary.(?<canaryVersion>\d+)/);
     if (matchCanary) {
       const { prefix, vv, canaryVersion } = matchCanary.groups as { prefix: string, vv: string, canaryVersion: string };
       const nextV = `${prefix}-${Number(vv)}-canary.${Number(canaryVersion) + 1}`;
@@ -103,7 +117,7 @@ const choices = versionType.map((type) => {
       }
     }
   } else {
-    throw new Error(`Invalid version: ${packageJson.version}`)
+    throw new Error(`Invalid version: ${rootVersion}`)
   }
  
 });
@@ -111,7 +125,7 @@ const choices = versionType.map((type) => {
 const { v } = await enquirer.prompt<{ v: string }>({
   type: 'select',
   name: 'v',
-  message: `What type of release? Current version: ${packageJson.version}`,
+  message: `What type of release? Current version: ${rootVersion}`,
   choices: choices,
 });
 
@@ -129,37 +143,29 @@ const { isSure } = await enquirer.prompt<{ isSure: boolean }>({
 
 if (isSure) {
 
-  packageJson.version = v;
-  packageJson._id = v;
-  packageJson.private = true;
-  await writePackage(path.join(process.cwd(), 'package.json'), packageJson);
-  
-  const yaml = await readYamlFile.default<{ packages: string[] }>(
-    path.join(process.cwd(), 'pnpm-workspace.yaml')
-  );
+  rootPackageJson?.writeProjectManifest({
+    ...rootPackageJson.manifest,
+    version: v,
+    private: true,
+  },true);
 
-  const packages = await findPackages(process.cwd(), {
-    patterns: yaml.packages,
-  });
-
-  for (const item of packages) {
-    const packageJson = await readPackage({ cwd: item.dir });
-    if (!packageJson.private) {
-      packageJson.version = v;
-      packageJson._id = v;
-      packageJson.publishConfig = {
-        access: 'public',
-        tag,
-      };
-      await writePackage(path.join(item.dir, 'package.json'), packageJson);
+  for (const pkg of packages) {
+    if (pkg.dir === __dirname) {
+      continue;
     }
-  }
+    await pkg.writeProjectManifest({
+      ...pkg.manifest,
+      version: v,
+      private: true,
+    },true);
+  } 
+  
 
-  const gitTag = `${tag}/v${v}`;
+  // const gitTag = `${tag}/v${v}`;
 
-  await $$`git add .`;
-  await $$`git commit -m ${gitTag}`;
-  await $$`git tag ${gitTag}`;
-  consola.success(`tag ${gitTag} created`);
+  // await $$`git add .`;
+  // await $$`git commit -m ${gitTag}`;
+  // await $$`git tag ${gitTag}`;
+  // consola.success(`tag ${gitTag} created`);
 }
 
