@@ -1,0 +1,16 @@
+# 构建输出
+dist/
+build/
+target/
+
+# 依赖
+node_modules/
+npm/
+
+# 其他
+.git/
+.vscode/
+.idea/
+*.lock
+*.log
+*.toml 
