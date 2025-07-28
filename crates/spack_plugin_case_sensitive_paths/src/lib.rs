@@ -5,8 +5,8 @@ use std::path::Path;
 use derive_more::Debug;
 use package_json_parser::PackageJsonParser;
 use rspack_core::{
-  ApplyContext, CompilationId, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData,
-  Plugin, PluginContext,
+  ApplyContext, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData, Plugin,
+  PluginContext,
 };
 use rspack_error::Diagnostic;
 use rspack_hook::{plugin, plugin_hook};
@@ -189,10 +189,6 @@ impl Plugin for CaseSensitivePathsPlugin {
 
     Ok(())
   }
-
-  fn clear_cache(&self, _id: CompilationId) {
-    println!("clear_cache");
-  }
 }
 
 #[plugin_hook(rspack_core::NormalModuleFactoryAfterResolve for CaseSensitivePathsPlugin)]
@@ -203,11 +199,17 @@ async fn after_resolve(
 ) -> rspack_error::Result<Option<bool>> {
   let issuer = data.issuer.as_deref().unwrap_or("");
 
+  // issuer 如果是 node_modules 的话, 说明这是三方包内部的逻辑, 不做任何验证
   if issuer.contains("node_modules") {
     return Ok(None);
   }
 
   let resource = &create_data.resource_resolve_data.resource;
+
+  // 如果 resource 包含 node_modules 的话, 说明是在引用三方包, 要考虑 npm alias 的情况
+  if resource.contains("node_modules") {
+    // TODO
+  }
 
   let resource_path = Path::new(resource);
 
@@ -221,9 +223,9 @@ async fn after_resolve(
 It may work fine on macOS/Windows, but will fail on Linux."#;
 
   if resource.contains("node_modules")
-    && vec!["./", "../", "/"]
-      .into_iter()
-      .all(|prefix: &'static str| !data.request.starts_with(prefix))
+  // && vec!["./", "../", "/"]
+  //   .into_iter()
+  //   .all(|prefix: &'static str| !data.request.starts_with(prefix))
   {
     let finder = UpFinder::builder()
       .cwd(resource_path)
