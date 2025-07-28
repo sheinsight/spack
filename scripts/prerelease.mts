@@ -11,6 +11,7 @@ import enquirer from 'enquirer';
 const { dirname } = path;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const ROOT_DIR = path.resolve(__dirname, '..');
 
 const $$ = $({
   stdout: process.stdout,
@@ -26,23 +27,33 @@ interface CargoToml {
 }
 
 export async function prerelease() {
-  const cargoToml = fs.readFileSync(new URL('./Cargo.toml', import.meta.url));
+  const cargoTomlPath = new URL('../Cargo.toml', import.meta.url);
+
+  if (!fs.existsSync(cargoTomlPath)) {
+    throw new Error(
+      'Cargo.toml not found in project root. Please ensure you are running this script from the correct directory.'
+    );
+  }
+
+  const cargoToml = fs.readFileSync(cargoTomlPath);
   const toml = TOML.parse(cargoToml.toString()) as unknown as CargoToml;
   const rspackCoreVersion = toml.workspace?.dependencies?.rspack_core as string;
   let version = rspackCoreVersion.replace('=', '').trim();
 
-  const packages = await findPackages(__dirname, {
+  const packages = await findPackages(ROOT_DIR, {
     patterns: ['crates/binding/npm/*', 'crates/binding'],
     includeRoot: true,
   });
 
-  const rootPackageJson = packages.find((pkg) => pkg.dir === __dirname);
+  const rootPackageJson = packages.find((pkg) => pkg.dir === ROOT_DIR);
 
-  const rootVersion = rootPackageJson?.manifest?.version;
-
-  if (!rootVersion) {
-    throw new Error(`Version not found in root package.json`);
+  if (!rootPackageJson?.manifest?.version) {
+    throw new Error(
+      'Version not found in root package.json. Please ensure the root package.json has a valid version field.'
+    );
   }
+
+  const rootVersion = rootPackageJson.manifest.version;
 
   if (!rootVersion.startsWith(`${version}-`)) {
     throw new Error(`Version mismatch: ${rootVersion} !== ${version}`);
@@ -142,7 +153,7 @@ export async function prerelease() {
     );
 
     for (const pkg of packages) {
-      if (pkg.dir === __dirname) {
+      if (pkg.dir === ROOT_DIR) {
         continue;
       }
       await pkg.writeProjectManifest(
