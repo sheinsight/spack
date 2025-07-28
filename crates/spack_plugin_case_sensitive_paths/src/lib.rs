@@ -207,31 +207,17 @@ async fn after_resolve(
     return Ok(None);
   }
 
+  // let mut processed_requests = std::collections::HashSet::new();
+
   let resource = &create_data.resource_resolve_data.resource;
 
   let resource_path = Path::new(resource);
-
-  if data.request.starts_with("@/components") || data.request == "@shein-components/Icon" {
-    println!(
-      r#"
---------------------------------
-{}
-{} 
-{:?}
-{:?}
---------------------------------
-"#,
-      data.request,
-      create_data.resource_resolve_data.resource,
-      resource_path.canonicalize(),
-      data.resolve_options
-    );
-  }
 
   if resource.contains("node_modules")
     && vec!["./", "../", "/"]
       .into_iter()
       .all(|prefix: &'static str| !data.request.starts_with(prefix))
+  // && !processed_requests.insert(create_data.raw_request.clone())
   {
     let finder = UpFinder::builder()
       .cwd(resource_path)
@@ -267,6 +253,7 @@ async fn after_resolve(
                 miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
               let diagnostic = Diagnostic::from(report);
               data.diagnostics.push(diagnostic);
+              return Ok(None);
             }
           }
         }
@@ -279,69 +266,36 @@ async fn after_resolve(
 
   if let Some(error_message) = &check_res {
     if let Ok(source_content) = std::fs::read_to_string(issuer) {
-      let mut processed_requests = std::collections::HashSet::new();
+      let Some(dependency) = data.dependencies.first() else {
+        return Ok(None);
+      };
 
-      for dependency in data.dependencies.iter() {
-        if let Some(module_dep) = dependency.as_module_dependency() {
-          let user_request = module_dep.user_request();
+      if let Some(module_dep) = dependency.as_module_dependency() {
+        let user_request = module_dep.user_request();
 
-          // 如果这个请求已经处理过，就跳过
-          if !processed_requests.insert(user_request.to_string()) {
-            continue;
-          }
-
-          let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+        let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
 It may work fine on macOS/Windows, but will fail on Linux."#;
 
-          let pos = self.find_import_position(&source_content, user_request, issuer);
+        let pos = self.find_import_position(&source_content, user_request, issuer);
 
-          if let Some(pos) = pos {
-            let rewrite_label = miette::LabeledSpan::at(pos, format!("Path case mismatch"));
+        if let Some(pos) = pos {
+          let rewrite_label = miette::LabeledSpan::at(pos, format!("Path case mismatch"));
 
-            let diagnostic = miette::MietteDiagnostic::new(error_message)
-              .with_code("case mismatch")
-              .with_label(rewrite_label)
-              .with_severity(miette::Severity::Error)
-              .with_help(help);
+          let diagnostic = miette::MietteDiagnostic::new(error_message)
+            .with_code("case mismatch")
+            .with_label(rewrite_label)
+            .with_severity(miette::Severity::Error)
+            .with_help(help);
 
-            let named_source = miette::NamedSource::new(issuer, source_content.to_string());
-            let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
-            let diagnostic = Diagnostic::from(report);
-            data.diagnostics.push(diagnostic);
-          }
+          let named_source = miette::NamedSource::new(issuer, source_content.to_string());
+          let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+          let diagnostic = Diagnostic::from(report);
+          data.diagnostics.push(diagnostic);
+          return Ok(None);
         }
       }
     }
   }
-
-  //   let check_res =
-  //     self.check_case_sensitive_path_optimized(resource_path, &create_data.raw_request, current_file);
-
-  //   if let Some(dependency) = first_dependency
-  //     && resource_path.is_absolute()
-  //     && let Some(error_message) = check_res
-  //     && let Ok(source_content) = std::fs::read_to_string(current_file)
-  //   {
-  //     let user_request = dependency.user_request();
-
-  //     if let Some(pos) = self.find_import_position(&source_content, user_request, current_file) {
-  //       let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-  // It may work fine on macOS/Windows, but will fail on Linux."#;
-
-  //       let rewrite_label = miette::LabeledSpan::at(pos, format!("path case mismatch"));
-
-  //       let diagnostic = miette::MietteDiagnostic::new(error_message)
-  //         .with_code("case mismatch")
-  //         .with_label(rewrite_label)
-  //         .with_severity(miette::Severity::Error)
-  //         .with_help(help);
-
-  //       let named_source = miette::NamedSource::new(current_file, source_content.to_string());
-  //       let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
-  //       let diagnostic = Diagnostic::from(report);
-  //       data.diagnostics.push(diagnostic);
-  //     }
-  //   }
 
   Ok(None)
 }
