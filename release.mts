@@ -12,6 +12,10 @@ import { prerelease } from './scripts/prerelease.mts';
 
 const cli = cac('release');
 
-cli.command('prerelease').action(() => {
-  prerelease();
+cli.command('prerelease').action(async () => {
+  await prerelease();
 });
+
+cli.help();
+
+cli.parse();
