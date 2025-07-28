@@ -36,8 +36,6 @@ const rspackCoreVersion = toml.workspace?.dependencies?.rspack_core as string
 
 let version = rspackCoreVersion.replace("=", "").trim();
 
-// const packageJson = await readPackage()
-
 const packages = await findPackages(__dirname,{
   patterns: ['crates/binding/npm/*','crates/binding'],
   includeRoot: true,
