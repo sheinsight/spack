@@ -3,17 +3,21 @@ import path from 'node:path';
 import consola from 'consola';
 import TOML from "@iarna/toml"
 import enquirer from 'enquirer';
-import { readPackage } from 'read-pkg'; 
-import readYamlFile from 'read-yaml-file';
 import { findPackages } from 'find-packages';
-import { writePackage } from 'write-package';
 import { $ } from 'execa';
 import chalk from 'chalk';
+import { fileURLToPath } from 'url';
 
-const $$ = $({
-  stdout: process.stdout,
-  stderr: process.stderr,
-});
+const { dirname } = path;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// const rootDir = dirname(__dirname); 
+
+// const $$ = $({
+//   stdout: process.stdout,
+//   stderr: process.stderr,
+// });
 
 
 interface CargoToml {
