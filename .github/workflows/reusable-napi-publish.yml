@@ -35,7 +35,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ${{ inputs.binding_dir }}/artifacts
-          merge-multiple: true
+          # merge-multiple: true
 
       - name: Show artifacts
         shell: bash
