@@ -26,6 +26,31 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+    optionalDependencies:
+      '@shined/spack-binding-darwin-arm64':
+        specifier: workspace:*
+        version: link:npm/darwin-arm64
+      '@shined/spack-binding-darwin-x64':
+        specifier: workspace:*
+        version: link:npm/darwin-x64
+      '@shined/spack-binding-linux-arm64-gnu':
+        specifier: workspace:*
+        version: link:npm/linux-arm64-gnu
+      '@shined/spack-binding-linux-arm64-musl':
+        specifier: workspace:*
+        version: link:npm/linux-arm64-musl
+      '@shined/spack-binding-linux-x64-gnu':
+        specifier: workspace:*
+        version: link:npm/linux-x64-gnu
+      '@shined/spack-binding-linux-x64-musl':
+        specifier: workspace:*
+        version: link:npm/linux-x64-musl
+      '@shined/spack-binding-win32-arm64-msvc':
+        specifier: workspace:*
+        version: link:npm/win32-arm64-msvc
+      '@shined/spack-binding-win32-x64-msvc':
+        specifier: workspace:*
+        version: link:npm/win32-x64-msvc
 
 packages:
 
