@@ -31,6 +31,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: '**/pnpm-lock.yaml'
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -59,19 +72,6 @@ jobs:
         run: |
           ls -R ${{ inputs.binding_dir }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.0
-          run_install: false
-
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-          cache-dependency-path: '**/pnpm-lock.yaml'
-
       - name: List packages
         shell: bash
         run: |
@@ -81,10 +81,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
-      - name: Create napi npm dirs
-        run: |
-          cd ${{ inputs.binding_dir }}
-          pnpm run create-npm-dirs
+      # - name: Create napi npm dirs
+      #   run: |
+      #     cd ${{ inputs.binding_dir }}
+      #     pnpm run create-npm-dirs
 
       - name: Show npm dirs
         shell: bash
@@ -114,7 +114,8 @@ jobs:
       - name: Publish napi
         run: |
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          pnpm --filter ${{ inputs.npm_package_name }} publish --no-git-checks --force
+          # pnpm --filter ${{ inputs.npm_package_name }} publish --no-git-checks --force
+          pnpm publish -r --no-git-checks
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_ID: ${{ steps.create_release.outputs.id }}

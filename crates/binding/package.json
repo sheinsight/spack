@@ -32,7 +32,6 @@
   "scripts": {
     "create-npm-dirs": "napi create-npm-dirs",
     "artifacts": "napi artifacts ",
-    "prepublishOnly": "napi prepublish -t npm --gh-release-id $RELEASE_ID",
     "prepack": "clean-pkg-json",
     "build": "napi build --platform --release",
     "build:dev": "node scripts/build.js",
