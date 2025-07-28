@@ -1,0 +1,27 @@
+{
+  "name": "@shined/spack-binding-win32-x64-msvc",
+  "version": "0.4.10-0-canary.1",
+  "cpu": [
+    "x64"
+  ],
+  "main": "spack.win32-x64-msvc.node",
+  "files": [
+    "spack.win32-x64-msvc.node"
+  ],
+  "description": "Node binding for spack",
+  "homepage": "https://github.com/sheinsight/spack",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sheinsight/spack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sheinsight/spack/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "win32"
+  ]
+}

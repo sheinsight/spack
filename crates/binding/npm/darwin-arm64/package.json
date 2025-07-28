@@ -1,0 +1,27 @@
+{
+  "name": "@shined/spack-binding-darwin-arm64",
+  "version": "0.4.10-0-canary.1",
+  "cpu": [
+    "arm64"
+  ],
+  "main": "spack.darwin-arm64.node",
+  "files": [
+    "spack.darwin-arm64.node"
+  ],
+  "description": "Node binding for spack",
+  "homepage": "https://github.com/sheinsight/spack",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sheinsight/spack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sheinsight/spack/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "darwin"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@shined/spack-binding-linux-x64-musl",
+  "version": "0.4.10-0-canary.1",
+  "cpu": [
+    "x64"
+  ],
+  "main": "spack.linux-x64-musl.node",
+  "files": [
+    "spack.linux-x64-musl.node"
+  ],
+  "description": "Node binding for spack",
+  "homepage": "https://github.com/sheinsight/spack",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sheinsight/spack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sheinsight/spack/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": [
+    "linux"
+  ],
+  "libc": [
+    "musl"
+  ]
+}
