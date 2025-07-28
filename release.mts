@@ -12,12 +12,12 @@ const { dirname } = path;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// const rootDir = dirname(__dirname); 
 
-// const $$ = $({
-//   stdout: process.stdout,
-//   stderr: process.stderr,
-// });
+
+const $$ = $({
+  stdout: process.stdout,
+  stderr: process.stderr,
+});
 
 
 interface CargoToml {
@@ -164,11 +164,12 @@ if (isSure) {
   } 
   
 
-  // const gitTag = `${tag}/v${v}`;
+  const gitTag = `${tag}/v${v}`;
 
-  // await $$`git add .`;
-  // await $$`git commit -m ${gitTag}`;
-  // await $$`git tag ${gitTag}`;
-  // consola.success(`tag ${gitTag} created`);
+  await $$`git add .`;
+  await $$`git commit -m ${gitTag}`;
+  await $$`git tag ${gitTag}`;
+
+  consola.success(`tag ${gitTag} created`);
 }
 
