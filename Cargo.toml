@@ -37,7 +37,7 @@ futures     = { version = "0.3.31" }
 rustc-hash  = { version = "2.1.1" }
 
 
-package_json_parser = { version = "0.0.12" }
+package_json_parser = { version = "0.0.14" }
 up_finder           = { version = "0.0.4" }
 
 binding                           = { path = "crates/binding" }

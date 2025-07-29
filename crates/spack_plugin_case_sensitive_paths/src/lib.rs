@@ -1,6 +1,6 @@
 #![feature(let_chains)]
 
-use std::path::Path;
+use std::{collections::HashSet, path::Path};
 
 use derive_more::Debug;
 use package_json_parser::PackageJsonParser;
@@ -168,14 +168,22 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
       return Ok(None);
     };
 
-    // 解析不了 dependencies , 这是一种异常 放过
-    let Some(dependencies) = package_json.dependencies else {
-      return Ok(None);
-    };
+    let mut dep_key_set: HashSet<String> = HashSet::new();
+
+    if let Some(dependencies) = package_json.dependencies {
+      for item in dependencies.keys() {
+        dep_key_set.insert(item.to_string());
+      }
+    }
+
+    if let Some(dev_dependencies) = package_json.dev_dependencies {
+      for item in dev_dependencies.keys() {
+        dep_key_set.insert(item.to_string());
+      }
+    }
 
     // 匹配 dependencies， 如果 request 是三方包的依赖, 放过， 主要考虑的是 别名的场景
-
-    if dependencies.keys().any(|item| {
+    if dep_key_set.iter().any(|item| {
       create_data.raw_request.starts_with(&format!("{}/", item)) || create_data.raw_request == *item
     }) {
       return Ok(None);
