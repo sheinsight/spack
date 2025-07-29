@@ -153,10 +153,23 @@ jobs:
             
             
       - name: Build binding
-        if: ${{ !inputs.docker }}
+        if: ${{ contains(inputs.target, 'apple') }}
         shell: bash
         run: |
           RUST_TARGET=${{ inputs.target }} pnpm --filter ${{ inputs.npm_package_name }} run build:release
+
+        # Windows
+      - name: Build i686-pc-windows-msvc
+        if: ${{ inputs.target == 'i686-pc-windows-msvc' }}
+        run: RUST_TARGET=${{ inputs.target }} DISABLE_PLUGIN=1  pnpm --filter ${{ inputs.npm_package_name }} run build:release
+
+      - name: Build x86_64-pc-windows-msvc
+        if: ${{ inputs.target == 'x86_64-pc-windows-msvc' }}
+        run: RUST_TARGET=${{ inputs.target }}  pnpm --filter ${{ inputs.npm_package_name }} run build:release
+
+      - name: Build aarch64-pc-windows-msvc
+        if: ${{ inputs.target == 'aarch64-pc-windows-msvc' }}
+        run: RUST_TARGET=${{ inputs.target }} DISABLE_PLUGIN=1  pnpm --filter ${{ inputs.npm_package_name }} run build:release
 
       - name: Show binary
         shell: bash
