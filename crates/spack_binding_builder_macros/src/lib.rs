@@ -18,9 +18,9 @@ pub fn threadsafe_callback_derive(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn plugin_register(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn plugin_registry(_args: TokenStream, input: TokenStream) -> TokenStream {
   let input = parse_macro_input!(input as syn::ItemEnum);
-  plugin_register::expand_plugin_register(input)
+  plugin_register::expand_plugin_registry(input)
     .unwrap_or_else(syn::Error::into_compile_error)
     .into()
 }

@@ -17,7 +17,7 @@ fn to_snake_case(s: &str) -> String {
     result
 }
 
-pub fn expand_plugin_register(input: ItemEnum) -> Result<TokenStream> {
+pub fn expand_plugin_registry(input: ItemEnum) -> Result<TokenStream> {
     let enum_name = &input.ident;
     let enum_attrs = &input.attrs;
     let enum_vis = &input.vis;
