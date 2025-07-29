@@ -22,7 +22,7 @@ export async function publish() {
   });
 
   const binaries = await globby(['**/*.node'], {
-    cwd: bindingDir,
+    cwd: path.join(bindingDir, 'npm'),
     absolute: true,
   });
 
