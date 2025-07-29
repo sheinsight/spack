@@ -40,31 +40,6 @@ impl CaseSensitivePathsPlugin {
     Self::new_inner(options)
   }
 
-  // fn check_case_sensitive_path_optimized(
-  //   &self,
-  //   resource_path: &Path,
-  //   raw_request: &str,
-  //   current_file: &str,
-  // ) -> Option<String> {
-  //   if !resource_path.exists() {
-  //     return None;
-  //   }
-
-  //   // 1. 首先检查完整路径的真实大小写
-  //   let canonical_path = resource_path.canonicalize().ok()?;
-
-  //   // 2. 比较请求的路径和真实路径
-  //   if canonical_path.to_string_lossy() != resource_path.to_string_lossy() {
-  //     let msg = format!(
-  //       r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
-  //       raw_request, current_file
-  //     );
-  //     return Some(msg);
-  //   }
-
-  //   None
-  // }
-
   fn get_syntax_from_file_path(&self, file_path: impl Into<String>) -> Syntax {
     let file_path = file_path.into();
     let path = Path::new(&file_path);
@@ -135,40 +110,6 @@ impl CaseSensitivePathsPlugin {
       Err(_) => None,
     }
   }
-
-  // 优化后的版本，参考 rspack 内部插件的做法：
-  //   fn create_diagnostic_with_rspack(
-  //     &self,
-  //     error_message: &str,
-  //     source_content: Option<&str>,
-  //     import_position: Option<(usize, usize)>,
-  //   ) -> Diagnostic {
-  //     let title = "Module not found:".to_string();
-
-  //     let error_message = format!("{error_message}");
-
-  //     let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-  // It may work fine on macOS/Windows, but will fail on Linux."#;
-
-  //     let error = match (source_content, import_position) {
-  //       (Some(source), Some((start, length))) => TraceableError::from_file(
-  //         source.to_string(),
-  //         start,
-  //         start + length,
-  //         title,
-  //         error_message,
-  //       )
-  //       .with_help(Some(help))
-  //       .with_hide_stack(Some(true))
-  //       .boxed(),
-  //       _ => TraceableError::from_lazy_file(0, 0, title, error_message)
-  //         .with_help(Some(help))
-  //         .with_hide_stack(Some(true))
-  //         .boxed(),
-  //     };
-
-  //     Diagnostic::from(error)
-  //   }
 }
 
 impl Plugin for CaseSensitivePathsPlugin {
@@ -297,11 +238,6 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
   if canonical_path.to_string_lossy() == resource_path.to_string_lossy() {
     return Ok(None);
   }
-
-  println!(
-    "resource_path: {:?}, canonical_path: {:?}",
-    resource_path, canonical_path
-  );
 
   let error_message = format!(
     r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
