@@ -204,14 +204,9 @@ async fn after_resolve(
     return Ok(None);
   }
 
-  let resource = &create_data.resource_resolve_data.resource;
+  let resource_str = &create_data.resource_resolve_data.resource;
 
-  // 如果 resource 包含 node_modules 的话, 说明是在引用三方包, 要考虑 npm alias 的情况
-  if resource.contains("node_modules") {
-    // TODO
-  }
-
-  let resource_path = Path::new(resource);
+  let resource_path = Path::new(resource_str);
 
   let Ok(source) = std::fs::read_to_string(issuer) else {
     return Ok(None);
@@ -222,11 +217,29 @@ async fn after_resolve(
   let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
 It may work fine on macOS/Windows, but will fail on Linux."#;
 
-  if resource.contains("node_modules")
-  // && vec!["./", "../", "/"]
-  //   .into_iter()
-  //   .all(|prefix: &'static str| !data.request.starts_with(prefix))
-  {
+  // 如果 resource 包含 node_modules 的话, 说明是在引用三方包, 要考虑 npm alias 的情况
+  // 但是如果是 / 开头的, 说明是绝对路径, 不做三方包相关的验证，直接跳到下面做路径匹配
+  if resource_str.contains("node_modules") && !resource_str.starts_with("/") {
+    let file = data.options.context.as_path().join("package.json");
+
+    // 解析不了 pkg , 这是一种异常 放过
+    let Ok(package_json) = PackageJsonParser::parse(file) else {
+      return Ok(None);
+    };
+
+    // 解析不了 dependencies , 这是一种异常 放过
+    let Some(dependencies) = package_json.dependencies else {
+      return Ok(None);
+    };
+
+    // 匹配 dependencies， 如果 request 是三方包的依赖, 放过， 主要考虑的是 别名的场景
+    if dependencies
+      .keys()
+      .any(|item| create_data.raw_request.starts_with(item))
+    {
+      return Ok(None);
+    }
+
     let finder = UpFinder::builder()
       .cwd(resource_path)
       .kind(FindUpKind::File)
@@ -234,33 +247,39 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
 
     let res = finder.find_up("package.json");
 
-    if let Some(package_json) = res.first() {
-      let package_json = PackageJsonParser::parse(package_json).unwrap();
-      if let Some(name) = package_json.name {
-        if !data.request.starts_with(&name.to_string()) {
-          let error_message = format!(
-            "Package name mismatch: request '{}' should start with package name '{}'",
-            data.request,
-            name.to_string()
-          );
+    let Some(package_json) = res.first() else {
+      return Ok(None);
+    };
 
-          if let Some(pos) = self.find_import_position(&source, &data.request, issuer) {
-            let rewrite_label = miette::LabeledSpan::at(pos, "Path case mismatch");
+    let package_json = PackageJsonParser::parse(package_json).unwrap();
+    let Some(name) = package_json.name else {
+      return Ok(None);
+    };
 
-            let diagnostic = miette::MietteDiagnostic::new(error_message)
-              .with_code(code)
-              .with_label(rewrite_label)
-              .with_severity(miette::Severity::Error)
-              .with_help(help);
+    if create_data.raw_request.starts_with(&name.to_string()) {
+      return Ok(None);
+    }
 
-            let named_source = miette::NamedSource::new(issuer, source.to_string());
-            let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
-            let diagnostic = Diagnostic::from(report);
-            data.diagnostics.push(diagnostic);
-            return Ok(None);
-          }
-        }
-      }
+    let error_message = format!(
+      "Package name mismatch: request '{}' should start with package name '{}'",
+      data.request,
+      name.to_string()
+    );
+
+    if let Some(pos) = self.find_import_position(&source, &data.request, issuer) {
+      let rewrite_label = miette::LabeledSpan::at(pos, "Path case mismatch");
+
+      let diagnostic = miette::MietteDiagnostic::new(error_message)
+        .with_code(code)
+        .with_label(rewrite_label)
+        .with_severity(miette::Severity::Error)
+        .with_help(help);
+
+      let named_source = miette::NamedSource::new(issuer, source.to_string());
+      let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+      let diagnostic = Diagnostic::from(report);
+      data.diagnostics.push(diagnostic);
+      return Ok(None);
     }
   }
 
@@ -271,6 +290,11 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
   if canonical_path.to_string_lossy() == resource_path.to_string_lossy() {
     return Ok(None);
   }
+
+  println!(
+    "resource_path: {:?}, canonical_path: {:?}",
+    resource_path, canonical_path
+  );
 
   let error_message = format!(
     r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
