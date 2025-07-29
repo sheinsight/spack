@@ -219,7 +219,7 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
 
   // 如果 resource 包含 node_modules 的话, 说明是在引用三方包, 要考虑 npm alias 的情况
   // 但是如果是 / 开头的, 说明是绝对路径, 不做三方包相关的验证，直接跳到下面做路径匹配
-  if resource_str.contains("node_modules") && !resource_str.starts_with("/") {
+  if resource_str.contains("node_modules/") && !create_data.raw_request.starts_with("/") {
     let file = data.options.context.as_path().join("package.json");
 
     // 解析不了 pkg , 这是一种异常 放过
@@ -233,10 +233,10 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
     };
 
     // 匹配 dependencies， 如果 request 是三方包的依赖, 放过， 主要考虑的是 别名的场景
-    if dependencies
-      .keys()
-      .any(|item| create_data.raw_request.starts_with(item))
-    {
+
+    if dependencies.keys().any(|item| {
+      create_data.raw_request.starts_with(&format!("{}/", item)) || create_data.raw_request == *item
+    }) {
       return Ok(None);
     }
 
@@ -256,7 +256,14 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
       return Ok(None);
     };
 
-    if create_data.raw_request.starts_with(&name.to_string()) {
+    if create_data.raw_request == name.to_string() {
+      return Ok(None);
+    }
+
+    if create_data
+      .raw_request
+      .starts_with(&format!("{}/", name.to_string()))
+    {
       return Ok(None);
     }
 
