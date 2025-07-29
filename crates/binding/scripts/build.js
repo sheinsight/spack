@@ -52,6 +52,9 @@ async function build() {
 			args.push("--no-default-features");
 			features.push("plugin");
 		}
+		if (process.env.RUST_TARGET) {
+			args.push("--target", process.env.RUST_TARGET);
+		}
 		args.push("--no-dts-cache");
 		if (features.length) {
 			args.push("--features " + features.join(","));
