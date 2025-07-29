@@ -36,7 +36,7 @@ impl Plugin for DuplicateDependencyPlugin {
   fn apply(
     &self,
     ctx: PluginContext<&mut ApplyContext>,
-    options: &CompilerOptions,
+    _options: &CompilerOptions,
   ) -> rspack_error::Result<()> {
     ctx
       .context
