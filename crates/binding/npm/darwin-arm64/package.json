@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-darwin-arm64",
-  "version": "0.4.10-0-canary.8",
+  "version": "0.4.10-0-canary.9",
   "cpu": [
     "arm64"
   ],
