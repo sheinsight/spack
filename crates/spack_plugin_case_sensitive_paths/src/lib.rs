@@ -217,9 +217,8 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
     }
 
     let error_message = format!(
-      "Package name mismatch: request '{}' should start with package name '{}'",
-      data.request,
-      name.to_string()
+      r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
+      &create_data.raw_request, issuer
     );
 
     if let Some(pos) = self.find_import_position(&source, &data.request, issuer) {
