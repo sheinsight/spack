@@ -11,16 +11,3 @@ importers:
       '@shined/spack-binding':
         specifier: workspace:*
         version: link:../../../crates/binding
-      react19:
-        specifier: npm:react@19.1.1
-        version: react@19.1.1
-
-packages:
-
-  react@19.1.1:
-    resolution: {integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==}
-    engines: {node: '>=0.10.0'}
-
-snapshots:
-
-  react@19.1.1: {}

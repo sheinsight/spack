@@ -1,0 +1,13 @@
+{
+  "name": "duplicate_dependency",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "warning": "^4.0.3",
+    "warning2": "npm:warning@^2.0.0"
+  }
+}
