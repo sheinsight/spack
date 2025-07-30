@@ -8,42 +8,41 @@ env:
 permissions:
   # To publish packages with provenance
   id-token: write
-  contents: write 
+  contents: write
   # Allow commenting on issues for `reusable-build.yml`
   issues: write
 
 on:
   workflow_dispatch:
     # inputs:
-      # version:
-      #   type: choice
-      #   description: "Release Version"
-      #   required: true
-      #   options:
-      #     - major
-      #     - minor
-      #     - patch
-      #     - premajor
-      #     - preminor
-      #     - prepatch
-      #     - prerelease
-      # npm_tag:
-      #   type: choice
-      #   description: "Release Npm Tag"
-      #   required: true
-      #   default: "latest"
-      #   options:
-      #     - canary
-      #     - nightly
-      #     - latest
-      #     - beta
-      #     - alpha
-      # push_tags:
-      #   type: boolean
-      #   description: "push tags to github"
-      #   required: true
-      #   default: true
-
+    # version:
+    #   type: choice
+    #   description: "Release Version"
+    #   required: true
+    #   options:
+    #     - major
+    #     - minor
+    #     - patch
+    #     - premajor
+    #     - preminor
+    #     - prepatch
+    #     - prerelease
+    # npm_tag:
+    #   type: choice
+    #   description: "Release Npm Tag"
+    #   required: true
+    #   default: "latest"
+    #   options:
+    #     - canary
+    #     - nightly
+    #     - latest
+    #     - beta
+    #     - alpha
+    # push_tags:
+    #   type: boolean
+    #   description: "push tags to github"
+    #   required: true
+    #   default: true
 
 jobs:
   test-platforms:
@@ -52,22 +51,22 @@ jobs:
       matrix:
         platform:
           # Linux 平台
-          - host: ubuntu-latest 
+          - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian 
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig 
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig
           - host: macos-latest
             target: aarch64-apple-darwin
           # Windows 平台
           - host: windows-latest
-            target: x86_64-pc-windows-msvc 
+            target: x86_64-pc-windows-msvc
     name: Test ${{ matrix.platform.target }}
     uses: ./.github/workflows/reusable-cargo-test.yml
     with:
       host: ${{ matrix.platform.host }}
-      target: ${{ matrix.platform.target }} 
+      target: ${{ matrix.platform.target }}
 
   build-platforms:
     strategy:
@@ -75,7 +74,7 @@ jobs:
       matrix:
         platform:
           # Linux 平台
-          - host: ubuntu-latest 
+          - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
           - host: ubuntu-latest
@@ -108,21 +107,10 @@ jobs:
       npm_package_name: '@shined/spack-binding'
 
   napi-publish:
-    needs: [ build-platforms , test-platforms ]
+    needs: [build-platforms, test-platforms]
     uses: ./.github/workflows/reusable-napi-publish.yml
     with:
       binding_dir: crates/binding
       npm_package_name: '@shined/spack-binding'
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-
-  # npm-publish:
-  #   needs: [napi-publish]
-  #   uses: ./.github/workflows/reusable-npm-publish.yml
-  #   with:
-  #     binding_dir: crates/binding
-  #     npm_package_name: '@shined/doctor'
-  #   secrets:
-  #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-     

@@ -1,0 +1,103 @@
+name: Node Test
+
+on:
+  workflow_call:
+    inputs:
+      host:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+      docker:
+        required: false
+        type: string
+      binding_dir:
+        required: true
+        type: string
+      binding_name:
+        required: true
+        type: string
+
+env:
+  DEBUG: napi:*
+  # 如果没有的话 napi prepublish 会报错
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  test:
+    name: ${{ inputs.host }} - ${{ inputs.target }} - node@20
+    runs-on: ${{ inputs.host }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: '**/pnpm-lock.yaml'
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ inputs.binding_dir }}/artifacts
+          # merge-multiple: true
+
+      - name: Show artifacts
+        shell: bash
+        run: |
+          ls -R ${{ inputs.binding_dir }}/artifacts
+
+      - name: Download Js
+        uses: actions/download-artifact@v4
+        with:
+          name: js
+          path: ${{ inputs.binding_dir }}
+          merge-multiple: true
+
+      - name: Show js
+        shell: bash
+        run: |
+          ls -R ${{ inputs.binding_dir }}
+
+      - name: List packages
+        shell: bash
+        run: |
+          ls -l ${{ inputs.binding_dir }}
+          ls -R ${{ inputs.binding_dir }}/artifacts
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
+      - name: Show npm dirs
+        shell: bash
+        run: |
+          ls -R ${{ inputs.binding_dir }}/npm
+
+      - name: Move artifacts to npm
+        run: |
+          cd ${{ inputs.binding_dir }}
+          pnpm run artifacts
+
+      - name: Show npm dirs with artifacts
+        shell: bash
+        run: |
+          ls -R ${{ inputs.binding_dir }}/npm
+
+      - name: Run test
+        run: |
+          pnpm run test

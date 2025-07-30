@@ -19,31 +19,31 @@ jobs:
       matrix:
         platform:
           # Linux 平台
-          - host: ubuntu-latest 
+          - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian 
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig 
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig
           - host: macos-latest
             target: aarch64-apple-darwin
           # Windows 平台
           - host: windows-latest
-            target: x86_64-pc-windows-msvc 
+            target: x86_64-pc-windows-msvc
 
     name: Test ${{ matrix.platform.target }}
     uses: ./.github/workflows/reusable-cargo-test.yml
     with:
       host: ${{ matrix.platform.host }}
-      target: ${{ matrix.platform.target }} 
-      
+      target: ${{ matrix.platform.target }}
+
   build-platforms:
     strategy:
       fail-fast: false
       matrix:
         platform:
           # Linux 平台
-          - host: ubuntu-latest 
+          - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
           - host: ubuntu-latest
@@ -65,8 +65,7 @@ jobs:
             target: x86_64-pc-windows-msvc
           - host: windows-latest
             target: aarch64-pc-windows-msvc
-    
-   
+
     name: Build ${{ matrix.platform.target }}
     uses: ./.github/workflows/reusable-napi-build.yml
     with:
@@ -77,4 +76,46 @@ jobs:
       binding_name: spack
       npm_package_name: '@shined/spack-binding'
 
+  node-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # Linux 平台
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine-zig
+          # macOS 平台
+          - host: macos-latest
+            target: x86_64-apple-darwin
+          - host: macos-latest
+            target: aarch64-apple-darwin
+          # Windows 平台
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+    needs: [build-platforms, test-platforms]
+    uses: ./.github/workflows/reusable-node-test.yml
+    with:
+      host: ${{ matrix.platform.host }}
+      target: ${{ matrix.platform.target }}
+      docker: ${{ matrix.platform.docker }}
+      binding_dir: crates/binding
+      binding_name: spack
 
+  # node-test:
+  #   uses: ./.github/workflows/reusable-node-test.yml
+  #   with:
+  #     binding_dir: crates/binding
+  #     binding_name: spack
+  #     npm_package_name: '@shined/spack-binding'
