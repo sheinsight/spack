@@ -2,5 +2,6 @@ packages:
   - 'packages/**'
   - 'crates/binding'
   - 'crates/binding/npm/*'
+  - 'tests/**'
 
 sharedWorkspaceLockfile: false

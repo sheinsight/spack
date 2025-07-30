@@ -1,0 +1,1 @@
+(()=>{"use strict";var r={},e={};function o(t){var s=e[t];if(void 0!==s)return s.exports;var n=e[t]={exports:{}};return r[t](n,n.exports,o),n.exports}o.rv=()=>"1.4.10",o.ruid="bundler=rspack@1.4.10",console.log("hello")})();
