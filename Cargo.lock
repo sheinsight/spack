@@ -3009,9 +3009,9 @@ checksum = "48dd4f4a2c8405440fd0462561f0e5806bd0f77e86f51c761481bdd4018b545e"
 
 [[package]]
 name = "package_json_parser"
-version = "0.0.14"
+version = "0.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f07c360bd56394922d6a2d7c5442fc915e5cabcb9e11a91feca451e178ceee49"
+checksum = "0b910f3919039ddd41a8a99f7a9f836371be35d1e78b287c70490ab1a2524af6"
 dependencies = [
  "derive_more 2.0.1",
  "jsonc-parser",
