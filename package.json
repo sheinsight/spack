@@ -9,7 +9,7 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
-    "test": "vitest",
+    "test": "vitest run",
     "release": "node --experimental-strip-types --no-warnings release.mts "
   },
   "homepage": "https://github.com/sheinsight/spack",

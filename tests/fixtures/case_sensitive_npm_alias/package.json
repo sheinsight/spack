@@ -1,0 +1,13 @@
+{
+  "name": "case_sensitive",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@shined/spack-binding": "workspace:*",
+    "react19": "npm:react@19.1.1"
+  }
+}
