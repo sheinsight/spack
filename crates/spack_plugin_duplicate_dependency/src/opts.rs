@@ -9,11 +9,6 @@ pub type CompilationHookFn = Box<
     + Send,
 >;
 
-// pub type CycleHandlerFn =
-//   Box<dyn Fn(String, Vec<String>) -> BoxFuture<'static, Result<()>> + Sync + Send>;
-
-//   pub type CompilationHookFn = Box<dyn Fn() -> BoxFuture<'static, Result<()>> + Sync + Send>;
-
 #[derive(Debug)]
 pub struct DuplicateDependencyPluginOpts {
   #[debug(skip)]
