@@ -2,15 +2,10 @@
 
 mod raws;
 
-// use napi::bindgen_prelude::*;
 use napi_derive::napi;
-// use serde::{Deserialize, Serialize};
-// use rspack_binding_builder_macros::register_plugin;
-use spack_binding_builder_macros::plugin_registry;
-// use strum_macros::{Display, EnumString};
+use spack_macros::plugin_registry;
 
 #[napi(string_enum)]
-// #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
 #[plugin_registry]
 pub enum CustomPluginNames {
   #[register(raws::raw_duplicate_dependency::binding)]

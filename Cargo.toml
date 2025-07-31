@@ -41,7 +41,7 @@ package_json_parser = { version = "0.0.15" }
 up_finder           = { version = "0.0.4" }
 
 binding                           = { path = "crates/binding" }
-spack_binding_builder_macros      = { path = "crates/spack_binding_builder_macros" }
+spack_macros                      = { path = "crates/spack_macros" }
 spack_plugin_bundle_analyzer      = { path = "crates/spack_plugin_bundle_analyzer" }
 spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
 spack_plugin_deadcode             = { path = "crates/spack_plugin_deadcode" }

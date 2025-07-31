@@ -298,7 +298,7 @@ dependencies = [
  "rspack_napi",
  "rustc-hash 2.1.1",
  "serde",
- "spack_binding_builder_macros",
+ "spack_macros",
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
  "spack_plugin_deadcode",
@@ -5916,10 +5916,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "spack_binding_builder_macros"
+name = "spack_macros"
 version = "0.1.0"
 dependencies = [
- "napi",
  "proc-macro2",
  "quote",
  "rspack_binding_builder",

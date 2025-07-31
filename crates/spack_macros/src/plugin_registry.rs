@@ -22,8 +22,6 @@ pub fn expand_plugin_registry(input: ItemEnum) -> Result<TokenStream> {
     let enum_attrs = &input.attrs;
     let enum_vis = &input.vis;
     
-
-    
     // 清理枚举变体（移除 register 属性）
     let clean_variants: Vec<_> = input.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
@@ -70,9 +68,6 @@ pub fn expand_plugin_registry(input: ItemEnum) -> Result<TokenStream> {
         #enum_vis enum #enum_name {
             #(#clean_variants,)*
         }
-        
         #(#register_functions)*
-        
-
     })
 } 

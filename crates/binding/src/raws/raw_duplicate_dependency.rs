@@ -3,7 +3,7 @@ use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
-use spack_binding_builder_macros::ThreadsafeCallback;
+use spack_macros::ThreadsafeCallback;
 use spack_plugin_duplicate_dependency::{
   DuplicateDependencyPlugin, DuplicateDependencyPluginOpts, DuplicateDependencyPluginResp, Library,
   LibraryGroup,
