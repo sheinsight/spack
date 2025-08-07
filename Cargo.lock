@@ -302,6 +302,7 @@ dependencies = [
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
  "spack_plugin_deadcode",
+ "spack_plugin_demo",
  "spack_plugin_duplicate_dependency",
  "swc_core",
 ]
@@ -5979,6 +5980,17 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_javascript_compiler",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "spack_plugin_demo"
+version = "0.1.0"
+dependencies = [
+ "rspack_core",
+ "rspack_error",
+ "rspack_hook",
  "tracing",
  "tracing-subscriber",
 ]

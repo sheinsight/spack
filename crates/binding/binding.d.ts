@@ -2,7 +2,8 @@ export declare enum CustomPluginNames {
   DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
   CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   BundleAnalyzerPlugin = 'BundleAnalyzerPlugin',
-  DeadcodePlugin = 'DeadcodePlugin'
+  DeadcodePlugin = 'DeadcodePlugin',
+  DemoPlugin = 'DemoPlugin'
 }
 
 export interface JsDuplicateDependencyPluginResp {
@@ -33,6 +34,10 @@ export interface RawDeadcodePluginOpts {
 
 }
 
+export interface RawDemoPluginOpts {
+
+}
+
 export interface RawDuplicateDependencyPluginOpts {
   onDetected?: (response: JsDuplicateDependencyPluginResp) => void|Promise<void>
 }
@@ -42,5 +47,7 @@ export declare function registerBundleAnalyzerPlugin(): void
 export declare function registerCaseSensitivePathsPlugin(): void
 
 export declare function registerDeadcodePlugin(): void
+
+export declare function registerDemoPlugin(): void
 
 export declare function registerDuplicateDependencyPlugin(): void

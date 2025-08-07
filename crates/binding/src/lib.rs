@@ -16,4 +16,6 @@ pub enum CustomPluginNames {
   BundleAnalyzerPlugin,
   #[register(raws::raw_deadcode::binding)]
   DeadcodePlugin,
+  #[register(raws::raw_demo::binding)]
+  DemoPlugin,
 }

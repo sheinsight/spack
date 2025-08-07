@@ -19,6 +19,7 @@ spack_macros                      = { workspace = true }
 spack_plugin_bundle_analyzer      = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
 spack_plugin_deadcode             = { workspace = true }
+spack_plugin_demo                 = { workspace = true }
 spack_plugin_duplicate_dependency = { workspace = true }
 
 # Enable SWC plugin feature for targets that support it
