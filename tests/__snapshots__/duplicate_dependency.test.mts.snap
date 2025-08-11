@@ -4,23 +4,23 @@ exports[`should report errors when npm alias imports have incorrect case sensiti
 
 exports[`should report errors when npm alias imports have incorrect case sensitivity 2`] = `
 {
-  "duration": 1,
   "groups": [
     {
+      "name": "warning",
       "libs": [
-        {
-          "file": "./tests/fixtures/duplicate_dependency/node_modules/.pnpm/warning@4.0.3/node_modules/warning/package.json",
-          "name": "warning",
-          "version": "4.0.3",
-        },
         {
           "file": "./tests/fixtures/duplicate_dependency/node_modules/.pnpm/warning@2.1.0/node_modules/warning/package.json",
           "name": "warning",
-          "version": "2.1.0",
+          "version": "2.1.0"
         },
-      ],
-      "name": "warning",
-    },
+        {
+          "file": "./tests/fixtures/duplicate_dependency/node_modules/.pnpm/warning@4.0.3/node_modules/warning/package.json",
+          "name": "warning",
+          "version": "4.0.3"
+        }
+      ]
+    }
   ],
+  "duration": 0
 }
 `;

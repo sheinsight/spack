@@ -1,0 +1,22 @@
+{
+  "preferences": {
+    "autoCommit": false,
+    "autoLint": true,
+    "autoTypecheck": true,
+    "verboseOutput": false
+  },
+  "projectSettings": {
+    "buildCommand": "pnpm run build:dev",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm run lint",
+    "typecheckCommand": "pnpm run typecheck"
+  },
+  "rust": {
+    "toolchain": "nightly-2025-05-30",
+    "target": "darwin-arm64"
+  },
+  "hooks": {
+    "preCommit": "pnpm run lint && pnpm run typecheck",
+    "preBuild": "cargo check"
+  }
+}

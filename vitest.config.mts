@@ -5,6 +5,8 @@ export default defineConfig({
     include: ['**/*.test.mts'],
     testTimeout: 100_000,
     setupFiles: ['./setup.mts'],
-    snapshotSerializers: ['./snapshot-serializer.mts'],
+    snapshotSerializers: [
+      './snapshot-serializer.mts'
+    ],
   },
 });
