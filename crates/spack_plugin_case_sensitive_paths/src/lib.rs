@@ -9,13 +9,24 @@ use rspack_core::{
 };
 use rspack_error::Diagnostic;
 use rspack_hook::{plugin, plugin_hook};
-// 移除 swc_core 的直接导入以避免版本冲突
+use rspack_javascript_compiler::JavaScriptCompiler;
+// 使用与 rspack_javascript_compiler 相同版本的 swc_core
+use swc_core::{
+  base::config::IsModule,
+  common::FileName,
+  ecma::{
+    ast::EsVersion,
+    parser::{EsSyntax, Syntax, TsSyntax},
+  },
+};
 
 mod import_finder;
 mod opts;
 
 pub use opts::CaseSensitivePathsPluginOpts;
 use up_finder::{FindUpKind, UpFinder};
+
+use crate::import_finder::ImportFinder;
 
 
 #[plugin]
@@ -30,32 +41,75 @@ impl CaseSensitivePathsPlugin {
     Self::new_inner(options)
   }
 
-  // 移除直接的语法解析，让 JavaScriptCompiler 自己处理
+  fn get_syntax_from_file_path(&self, file_path: impl Into<String>) -> Syntax {
+    let file_path = file_path.into();
+    let path = Path::new(&file_path);
+    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
 
-  // 简化版本：通过字符串匹配查找 import 位置
+    match extension {
+      "ts" | "tsx" => Syntax::Typescript(TsSyntax {
+        tsx: extension == "tsx",
+        decorators: true,
+        dts: false,
+        no_early_errors: false,
+        disallow_ambiguous_jsx_like: false,
+        ..Default::default()
+      }),
+      "js" | "jsx" | "mjs" | "cjs" => Syntax::Es(EsSyntax {
+        jsx: extension == "jsx",
+        fn_bind: true,
+        decorators: true,
+        decorators_before_export: true,
+        export_default_from: true,
+        import_attributes: true,
+        allow_super_outside_method: true,
+        allow_return_outside_function: true,
+        ..Default::default()
+      }),
+      _ => {
+        // 默认使用 TypeScript 语法（兼容性最好）
+        Syntax::Typescript(TsSyntax {
+          tsx: true,
+          decorators: true,
+          dts: false,
+          no_early_errors: false,
+          disallow_ambiguous_jsx_like: false,
+          ..Default::default()
+        })
+      }
+    }
+  }
+
+  // 使用 AST 解析查找 import 位置
   fn find_import_position(
     &self,
     source_code: &str,
     original_request: &str,
-    _file_path: impl Into<String>,
+    file_path: impl Into<String>,
   ) -> Option<(usize, usize)> {
-    // 简单的字符串匹配查找 import 语句
-    let patterns = [
-      format!("import '{}'", original_request),
-      format!("import \"{}\"", original_request),
-      format!("from '{}'", original_request),
-      format!("from \"{}\"", original_request),
-      format!("require('{}'", original_request),
-      format!("require(\"{}\"", original_request),
-    ];
+    let file_path = file_path.into();
+    let syntax = self.get_syntax_from_file_path(&file_path);
+    let filename = FileName::Custom(file_path);
 
-    for pattern in &patterns {
-      if let Some(start) = source_code.find(pattern) {
-        return Some((start, start + pattern.len()));
+    let compiler = JavaScriptCompiler::new();
+
+    match compiler.parse(
+      filename,
+      source_code,
+      EsVersion::EsNext,
+      syntax,
+      IsModule::Bool(true),
+      None,
+    ) {
+      Ok(ast) => {
+        let mut finder = ImportFinder::new(original_request.to_string());
+        ast.visit(|program, _context| {
+          program.visit_with(&mut finder);
+        });
+        finder.found_import
       }
+      Err(_) => None,
     }
-    
-    None
   }
 }
 
