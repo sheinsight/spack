@@ -27,11 +27,7 @@ impl Plugin for DeadcodePlugin {
     "spack.DeadcodePlugin"
   }
 
-  fn apply(
-    &self,
-    ctx: PluginContext<&mut ApplyContext>,
-    _options: &CompilerOptions,
-  ) -> rspack_error::Result<()> {
+  fn apply(&self, ctx: PluginContext<&mut ApplyContext>) -> rspack_error::Result<()> {
     ctx
       .context
       .compiler_hooks
