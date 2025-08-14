@@ -1,8 +1,8 @@
 use std::time::Instant;
 
 use rspack_core::{
-  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, EntrypointsStatsOption,
-  ExtendedStatsOptions, Plugin, PluginContext,
+  ApplyContext, Compilation, CompilerAfterEmit, EntrypointsStatsOption,
+  ExtendedStatsOptions, Plugin,
 };
 use rspack_hook::{plugin, plugin_hook};
 
@@ -29,13 +29,8 @@ impl Plugin for DemoPlugin {
     "spack.DemoPlugin"
   }
 
-  fn apply(
-    &self,
-    ctx: PluginContext<&mut ApplyContext>,
-    _options: &CompilerOptions,
-  ) -> rspack_error::Result<()> {
+  fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
     ctx
-      .context
       .compiler_hooks
       .after_emit
       .tap(after_emit::new(self));

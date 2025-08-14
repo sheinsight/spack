@@ -6,7 +6,7 @@ use derive_more::Debug;
 use itertools::Itertools as _;
 use package_json_parser::PackageJsonParser;
 use rspack_core::{
-  ApplyContext, Compilation, CompilerAfterEmit, CompilerOptions, Plugin, PluginContext,
+  ApplyContext, Compilation, CompilerAfterEmit, Plugin,
 };
 use rspack_hook::{plugin, plugin_hook};
 use up_finder::UpFinder;
@@ -33,13 +33,8 @@ impl Plugin for DuplicateDependencyPlugin {
     "spack.DuplicateDependencyPlugin"
   }
 
-  fn apply(
-    &self,
-    ctx: PluginContext<&mut ApplyContext>,
-    _options: &CompilerOptions,
-  ) -> rspack_error::Result<()> {
+  fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
     ctx
-      .context
       .compiler_hooks
       .after_emit
       .tap(after_emit::new(self));

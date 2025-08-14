@@ -5,8 +5,7 @@ use std::{collections::HashSet, path::Path};
 use derive_more::Debug;
 use package_json_parser::PackageJsonParser;
 use rspack_core::{
-  ApplyContext, CompilerOptions, ModuleFactoryCreateData, NormalModuleCreateData, Plugin,
-  PluginContext,
+  ApplyContext, ModuleFactoryCreateData, NormalModuleCreateData, Plugin,
 };
 use rspack_error::Diagnostic;
 use rspack_hook::{plugin, plugin_hook};
@@ -117,13 +116,8 @@ impl Plugin for CaseSensitivePathsPlugin {
     "spack.CaseSensitivePathsPlugin"
   }
 
-  fn apply(
-    &self,
-    ctx: PluginContext<&mut ApplyContext>,
-    _options: &CompilerOptions,
-  ) -> rspack_error::Result<()> {
+  fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
     ctx
-      .context
       .normal_module_factory_hooks
       .after_resolve
       .tap(after_resolve::new(self));
