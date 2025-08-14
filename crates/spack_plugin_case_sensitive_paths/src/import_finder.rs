@@ -1,15 +1,7 @@
-// 保留 import_finder.rs，但简化逻辑
-use swc_core::{
-  common::Spanned,
-  ecma::{
-    ast::{ImportDecl, Str},
-    visit::{Visit, VisitWith},
-  },
-};
-
+// 简化的 import 查找器，避免 swc_core 版本冲突
 pub struct ImportFinder {
-  pub target_request: String,               // 简化：只搜索一个目标
-  pub found_import: Option<(usize, usize)>, // 移除 matched_pattern
+  pub target_request: String,
+  pub found_import: Option<(usize, usize)>,
 }
 
 impl ImportFinder {
@@ -21,26 +13,5 @@ impl ImportFinder {
   }
 }
 
-impl Visit for ImportFinder {
-  fn visit_import_decl(&mut self, node: &ImportDecl) {
-    if self.found_import.is_some() {
-      return; // 已找到，不需要继续
-    }
-
-    let import_source = match &*node.src {
-      Str { value, .. } => value.as_str(),
-    };
-
-    // 简单的字符串匹配
-    if import_source == self.target_request {
-      // 获取字符串字面量的位置，包含引号
-      let span = node.src.span();
-      let start = span.lo.0 as usize - 1; // 包含开引号
-      let length = import_source.len() + 2; // 内容 + 两个引号
-
-      self.found_import = Some((start, length));
-    }
-
-    node.visit_children_with(self);
-  }
-}
+// 简化版本：不使用实际的 AST 解析，因为版本冲突问题
+// 这个结构体保留是为了保持接口兼容性，但实际逻辑已经移到主文件中

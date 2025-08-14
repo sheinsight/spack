@@ -1,0 +1,18 @@
+[package]
+authors.workspace       = true
+categories.workspace    = true
+documentation.workspace = true
+edition.workspace       = true
+homepage.workspace      = true
+license.workspace       = true
+name                    = "spack_loader_demo"
+repository.workspace    = true
+version.workspace       = true
+
+[dependencies]
+async-trait          = { workspace = true }
+rspack_cacheable     = { workspace = true }
+rspack_core          = { workspace = true }
+rspack_error         = { workspace = true }
+rspack_loader_runner = { workspace = true }
+serde_json           = { workspace = true }

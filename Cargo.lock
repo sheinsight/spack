@@ -5237,6 +5237,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9676b89cd56310a87b93dec47b11af744f34d5fc9f367b829474eec0a891350d"
 
 [[package]]
+name = "spack_loader_demo"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "rspack_cacheable",
+ "rspack_core",
+ "rspack_error",
+ "rspack_loader_runner",
+ "serde_json",
+]
+
+[[package]]
 name = "spack_macros"
 version = "0.1.0"
 dependencies = [
