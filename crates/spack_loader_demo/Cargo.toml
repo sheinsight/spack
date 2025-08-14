@@ -9,6 +9,9 @@ name                    = "spack_loader_demo"
 repository.workspace    = true
 version.workspace       = true
 
+[lib]
+test = false
+
 [dependencies]
 async-trait          = { workspace = true }
 rspack_cacheable     = { workspace = true }
