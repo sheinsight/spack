@@ -8,7 +8,7 @@ interface TestCaseConfig {
 }
 
 async function loadFixtureConfig(fixturePath: string): Promise<Partial<Configuration>> {
-  const configPath = path.join(fixturePath, 'rspack.config.mjs');
+  const configPath = path.join(fixturePath, 'rspack.config.mts');
   
   if (fs.existsSync(configPath)) {
     try {

@@ -10,11 +10,9 @@ const DuplicateDependencyPlugin = experiments.createNativePlugin(
 );
 
 test('should report errors when npm alias imports have incorrect case sensitivity', async () => {
-  const { promise, resolve } = Promise.withResolvers();
+  const { promise, resolve } = Promise.withResolvers<binding.JsDuplicateDependencyPluginResp>();
   const plugin = new DuplicateDependencyPlugin({
-    onDetected: (response) => {
-      resolve(response);
-    },
+    onDetected: (response) => resolve(response),
   });
   const result = await runCompiler({
     fixture: 'duplicate_dependency',
@@ -22,5 +20,5 @@ test('should report errors when npm alias imports have incorrect case sensitivit
   });
   expect(result).toMatchSnapshot();
   const response = await promise;
-  expect(response).toMatchSnapshot();
+  expect(response.groups).toMatchSnapshot();
 });
