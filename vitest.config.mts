@@ -4,9 +4,9 @@ export default defineConfig({
   test: {
     include: ['**/*.test.mts'],
     testTimeout: 100_000,
-    setupFiles: ['./setup.mts'],
+    setupFiles: ['./vitest/setup.mts'],
     snapshotSerializers: [
-      './snapshot-serializer.mts'
+      './vitest/serializers/index.mts'
     ],
   },
 });
