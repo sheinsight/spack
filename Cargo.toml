@@ -38,7 +38,7 @@ rustc-hash  = { version = "2.1.1" }
 
 
 package_json_parser = { version = "0.0.15" }
-up_finder           = { version = "0.0.4" }
+up_finder           = { version = "0.0.5" }
 
 binding                           = { path = "crates/binding" }
 spack_macros                      = { path = "crates/spack_macros" }
@@ -52,14 +52,14 @@ tracing            = { version = "0.1.41", features = ["max_level_trace", "relea
 tracing-subscriber = { version = "0.3.19" }
 
 serde      = { version = "1.0.210" }
-serde_json = { version = "1.0.140" }
+serde_json = { version = "1.0.142" }
 
 strum        = { version = "0.27.1" }
 strum_macros = { version = "0.27.1" }
 
-proc-macro2 = { version = "1.0.95" }
+proc-macro2 = { version = "1.0.97" }
 quote       = { version = "1.0.40" }
-syn         = { version = "2.0.104", features = ["full"] }
+syn         = { version = "2.0.105", features = ["full"] }
 
 byte-unit = { version = "5.1" }
 itertools = { version = "0.14.0" }
