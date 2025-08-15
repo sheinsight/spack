@@ -13,10 +13,10 @@ import { generalArraySerializer } from './general-array.mts';
  * 序列化器优先级列表
  * 越前面的优先级越高
  */
-const serializers = [
+const serializers: SnapshotSerializer[] = [
+  pathNormalizerSerializer,  // 路径标准化应该最优先
   duplicateDependencySerializer,
   errorsArraySerializer,
-  pathNormalizerSerializer,
   generalArraySerializer,
 ];
 
@@ -27,20 +27,20 @@ const serializers = [
 const unifiedSerializer: SnapshotSerializer = {
   test: (val: unknown): boolean => {
     // 检查是否有任何序列化器可以处理这个值
-    return serializers.some(serializer => serializer.test(val));
+    return serializers.some((serializer) => serializer.test(val));
   },
-  
+
   serialize: (val: any) => {
     // 按优先级应用序列化逻辑
     for (const serializer of serializers) {
       if (serializer.test(val)) {
-        return serializer.serialize(val);
+        return (serializer as SnapshotSerializer).serialize(val);
       }
     }
-    
+
     // 默认情况，不应该到达这里
     return JSON.stringify(val, null, 2);
-  }
+  },
 };
 
 export default unifiedSerializer;
