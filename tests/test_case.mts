@@ -7,7 +7,7 @@ interface TestCaseConfig {
   plugins: Plugins;
 }
 
-async function loadFixtureConfig(fixturePath: string): Promise<Partial<Configuration>> {
+async function loadFixtureConfig(fixturePath: string): Promise<Configuration> {
   const configPath = path.join(fixturePath, 'rspack.config.mts');
   
   if (fs.existsSync(configPath)) {
@@ -16,34 +16,19 @@ async function loadFixtureConfig(fixturePath: string): Promise<Partial<Configura
       return configModule.default || configModule;
     } catch (error) {
       console.warn(`Failed to load config from ${configPath}:`, error);
+      throw new Error(`Failed to load fixture config from ${configPath}`);
     }
   }
   
-  return {};
+  throw new Error(`No rspack.config.mts found in fixture: ${fixturePath}`);
 }
 
 export async function runCompiler(config: TestCaseConfig) {
   const fixturePath = path.resolve(__dirname, `fixtures/${config.fixture}`);
   const fixtureConfig = await loadFixtureConfig(fixturePath);
   
-  // 默认配置
-  const defaultConfig: Configuration = {
-    entry: {
-      main: path.resolve(fixturePath, 'src/index.ts'),
-    },
-    output: {
-      path: path.resolve(fixturePath, 'dist'),
-      filename: 'bundle.js',
-    },
-    resolve: {
-      extensions: ['.ts', '.tsx', '.js', '.jsx'],
-    },
-    plugins: config.plugins,
-  };
-  
-  // 合并配置（fixture 配置优先级更高）
+  // 将插件添加到 fixture 配置中
   const mergedConfig: Configuration = {
-    ...defaultConfig,
     ...fixtureConfig,
     plugins: [
       ...(fixtureConfig.plugins || []),
