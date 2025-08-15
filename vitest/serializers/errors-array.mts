@@ -18,6 +18,15 @@ export const errorsArraySerializer: SnapshotSerializer = {
     // 先进行深度排序，然后按 moduleId/message 重新排序顶层数组
     const deepSorted = deepSort(val);
     const finalSorted = deepSorted.sort((a: any, b: any) => {
+      // 处理 null/undefined 值
+      if (a === null || a === undefined) {
+        if (b === null || b === undefined) return 0;
+        return 1; // null/undefined 排在后面
+      }
+      if (b === null || b === undefined) {
+        return -1; // 非空值排在前面
+      }
+      
       const keyA = a.moduleId || a.message || '';
       const keyB = b.moduleId || b.message || '';
       return keyA.localeCompare(keyB);

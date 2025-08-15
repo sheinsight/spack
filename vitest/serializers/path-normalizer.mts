@@ -69,7 +69,7 @@ function normalizePathsInValue(val: any): any {
   return val;
 }
 
-function containsAbsolutePaths(val: unknown): boolean {
+function containsAbsolutePaths(val: unknown, visited = new WeakSet()): boolean {
   if (typeof val === 'string') {
     // 检查是否包含当前工作目录或任何绝对路径
     return val.includes(cwdPosix) || 
@@ -78,11 +78,17 @@ function containsAbsolutePaths(val: unknown): boolean {
   }
   
   if (Array.isArray(val)) {
-    return val.some(item => containsAbsolutePaths(item));
+    return val.some(item => containsAbsolutePaths(item, visited));
   }
   
   if (val && typeof val === 'object' && val.constructor === Object) {
-    return Object.values(val).some(value => containsAbsolutePaths(value));
+    // 防止循环引用
+    if (visited.has(val)) {
+      return false;
+    }
+    visited.add(val);
+    
+    return Object.values(val).some(value => containsAbsolutePaths(value, visited));
   }
   
   return false;
