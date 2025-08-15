@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@rspack/core": "catalog:",
     "@shined/spack-binding": "workspace:*"
   }
 }

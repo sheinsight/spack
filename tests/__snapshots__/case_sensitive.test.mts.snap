@@ -3,7 +3,7 @@
 exports[`should report errors when file imports have incorrect case sensitivity 1`] = `
 [
   {
-    "message": "  × Can't resolve \\"./Hello\\" in \\"/Users/10015448/Git/spack/tests/fixtures/case_sensitive_local_file/src/index.ts\\". (case mismatch)\\n   ╭─[/Users/10015448/Git/spack/tests/fixtures/case_sensitive_local_file/src/index.ts:1:22]\\n 1 │ import { hello } from './Hello';\\n   ·                       ────┬────\\n   ·                           ╰── Path case mismatch\\n 2 │ \\n 3 │ hello();\\n   ╰────\\n  help: Fix the case of file paths to ensure consistency in cross-platform builds.\\n        It may work fine on macOS/Windows, but will fail on Linux.\\n",
+    "message": "  × Can't resolve \\"./Hello\\" in \\"/Users/10015448/Git/spack/tests/fixtures/case_sensitive_local_file/src/index.ts\\". (case mismatch)\\n   ╭─[/Users/10015448/Git/spack/tests/fixtures/case_sensitive_local_file/src/index.ts:1:23]\\n 1 │ import { hello } from './Hello';\\n   ·                        ────┬────\\n   ·                            ╰── Path case mismatch\\n 2 │ \\n 3 │ hello();\\n   ╰────\\n  help: Fix the case of file paths to ensure consistency in cross-platform builds.\\n        It may work fine on macOS/Windows, but will fail on Linux.\\n",
     "code": "case mismatch",
     "moduleIdentifier": "/Users/10015448/Git/spack/tests/fixtures/case_sensitive_local_file/src/index.ts",
     "moduleName": "./tests/fixtures/case_sensitive_local_file/src/index.ts",
@@ -16,7 +16,7 @@ exports[`should report errors when file imports have incorrect case sensitivity 
 exports[`should report errors when npm alias imports have incorrect case sensitivity 1`] = `
 [
   {
-    "message": "  × Can't resolve \\"rEact19\\" in \\"/Users/10015448/Git/spack/tests/fixtures/case_sensitive_npm_alias/src/index.ts\\". (case mismatch)\\n   ╭─[/Users/10015448/Git/spack/tests/fixtures/case_sensitive_npm_alias/src/index.ts:1:18]\\n 1 │ import React from 'rEact19';\\n   ·                   ────┬────\\n   ·                       ╰── Path case mismatch\\n 2 │ \\n 3 │ console.log(React.version);\\n   ╰────\\n  help: Fix the case of file paths to ensure consistency in cross-platform builds.\\n        It may work fine on macOS/Windows, but will fail on Linux.\\n",
+    "message": "  × Can't resolve \\"rEact19\\" in \\"/Users/10015448/Git/spack/tests/fixtures/case_sensitive_npm_alias/src/index.ts\\". (case mismatch)\\n   ╭─[/Users/10015448/Git/spack/tests/fixtures/case_sensitive_npm_alias/src/index.ts:1:19]\\n 1 │ import React from 'rEact19';\\n   ·                    ────┬────\\n   ·                        ╰── Path case mismatch\\n 2 │ \\n 3 │ console.log(React.version);\\n   ╰────\\n  help: Fix the case of file paths to ensure consistency in cross-platform builds.\\n        It may work fine on macOS/Windows, but will fail on Linux.\\n",
     "code": "case mismatch",
     "moduleIdentifier": "/Users/10015448/Git/spack/tests/fixtures/case_sensitive_npm_alias/src/index.ts",
     "moduleName": "./tests/fixtures/case_sensitive_npm_alias/src/index.ts",
