@@ -4,7 +4,9 @@ use std::{collections::HashSet, path::Path};
 
 use derive_more::Debug;
 use package_json_parser::PackageJsonParser;
-use rspack_core::{ApplyContext, ModuleFactoryCreateData, NormalModuleCreateData, Plugin};
+use rspack_core::{
+  ApplyContext, Compilation, ModuleFactoryCreateData, NormalModuleCreateData, Plugin,
+};
 use rspack_error::Diagnostic;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_javascript_compiler::JavaScriptCompiler;
@@ -125,7 +127,7 @@ impl Plugin for CaseSensitivePathsPlugin {
   }
 }
 
-#[plugin_hook(rspack_core::NormalModuleFactoryAfterResolve for CaseSensitivePathsPlugin,stage = -100)]
+#[plugin_hook(rspack_core::NormalModuleFactoryAfterResolve for CaseSensitivePathsPlugin,stage = Compilation::PROCESS_ASSETS_STAGE_ADDITIONAL)]
 async fn after_resolve(
   &self,
   data: &mut ModuleFactoryCreateData,
