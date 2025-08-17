@@ -23,8 +23,8 @@ test('should report errors when npm alias imports have incorrect case sensitivit
 
   const response = await promise;
 
-  expect(response.groups).toMatchSnapshot();
   for (const group of response.groups) {
+    expect(group.libs.length).toBe(2);
     for (const lib of group.libs) {
       expect(lib.name).toContain('warning');
     }

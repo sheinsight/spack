@@ -1,4 +1,4 @@
-import { test, expect, assert } from 'vitest';
+import { test, expect } from 'vitest';
 import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
@@ -31,7 +31,6 @@ test('should report errors when file imports have incorrect case sensitivity', a
     fixture: 'case_sensitive_local_file',
     plugins: [plugin],
   });
-  // expect(result).toMatchSnapshot();
   expect(result.length).toBe(1);
   let message = result[0].message;
   expect(message).toContain(`Can't resolve`);
