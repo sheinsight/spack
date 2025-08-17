@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`should report errors when npm alias imports have incorrect case sensitivity 1`] = `
+[
+  {
+    "name": "warning",
+    "libs": [
+      {
+        "file": "./tests/fixtures/duplicate_dependency/node_modules/.pnpm/warning@2.1.0/node_modules/warning/package.json",
+        "name": "warning",
+        "version": "2.1.0"
+      },
+      {
+        "file": "./tests/fixtures/duplicate_dependency/node_modules/.pnpm/warning@4.0.3/node_modules/warning/package.json",
+        "name": "warning",
+        "version": "4.0.3"
+      }
+    ]
+  }
+]
+`;

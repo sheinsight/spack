@@ -9,20 +9,24 @@ const DuplicateDependencyPlugin = experiments.createNativePlugin(
   (opt: binding.RawDuplicateDependencyPluginOpts) => ({ ...opt })
 );
 
-// test('should report errors when npm alias imports have incorrect case sensitivity', async () => {
-//   const { promise, resolve } = Promise.withResolvers<binding.JsDuplicateDependencyPluginResp>();
-//   const plugin = new DuplicateDependencyPlugin({
-//     onDetected: (response) => resolve(response),
-//   });
-//   const result = await runCompiler({
-//     fixture: 'duplicate_dependency',
-//     plugins: [plugin],
-//   });
-//   expect(result).toMatchSnapshot();
-//   const response = await promise;
-//   expect(response.groups).toMatchSnapshot();
-// });
-
 test('should report errors when npm alias imports have incorrect case sensitivity', async () => {
-  expect(true).toBe(true);
+  const { promise, resolve } = Promise.withResolvers<binding.JsDuplicateDependencyPluginResp>();
+
+  const plugin = new DuplicateDependencyPlugin({
+    onDetected: (response) => resolve(response),
+  });
+
+  await runCompiler({
+    fixture: 'duplicate_dependency',
+    plugins: [plugin],
+  });
+
+  const response = await promise;
+
+  expect(response.groups).toMatchSnapshot();
+  for (const group of response.groups) {
+    for (const lib of group.libs) {
+      expect(lib.name).toContain('warning');
+    }
+  }
 });
