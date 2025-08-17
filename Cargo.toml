@@ -55,7 +55,6 @@ binding                           = { path = "crates/binding" }
 spack_macros                      = { path = "crates/spack_macros" }
 spack_plugin_bundle_analyzer      = { path = "crates/spack_plugin_bundle_analyzer" }
 spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
-spack_plugin_deadcode             = { path = "crates/spack_plugin_deadcode" }
 spack_plugin_demo                 = { path = "crates/spack_plugin_demo" }
 spack_plugin_duplicate_dependency = { path = "crates/spack_plugin_duplicate_dependency" }
 
