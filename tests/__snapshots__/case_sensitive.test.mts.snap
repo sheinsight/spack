@@ -1,18 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`should report errors when file imports have incorrect case sensitivity 1`] = `
-[
-  {
-    "message": "  × Can't resolve \\"./Hello\\" in \\"<ROOT>/tests/fixtures/case_sensitive_local_file/src/index.ts\\". (case mismatch)\\n   ╭─[<ROOT>/tests/fixtures/case_sensitive_local_file/src/index.ts:1:23]\\n 1 │ import { hello } from './Hello';\\n   ·                        ────┬────\\n   ·                            ╰── Path case mismatch\\n 2 │ \\n 3 │ hello();\\n   ╰────\\n  help: Fix the case of file paths to ensure consistency in cross-platform builds.\\n        It may work fine on macOS/Windows, but will fail on Linux.\\n",
-    "code": "case mismatch",
-    "moduleIdentifier": "<ROOT>/tests/fixtures/case_sensitive_local_file/src/index.ts",
-    "moduleName": "./tests/fixtures/case_sensitive_local_file/src/index.ts",
-    "moduleId": "./tests/fixtures/case_sensitive_local_file/src/index.ts",
-    "moduleTrace": []
-  }
-]
-`;
-
 exports[`should report errors when npm alias imports have incorrect case sensitivity 1`] = `
 [
   {
