@@ -241,10 +241,9 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
     return Ok(None);
   }
 
-  let error_message = format!(
-    r#"Can't resolve {:?} in {:?}. (case mismatch)"#,
-    &create_data.raw_request, issuer
-  );
+  let raw_request = create_data.raw_request.to_string();
+
+  let error_message = format!(r#"Can't resolve {raw_request} in {issuer}. (case mismatch)"#);
 
   let pos = self.find_import_position(&source, &create_data.raw_request, issuer);
 

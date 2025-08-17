@@ -18,20 +18,22 @@ test('should report errors when npm alias imports have incorrect case sensitivit
     plugins: [plugin],
   });
 
-  // assert(
-  //   result.length > 0,
-  //   'should report errors when npm alias imports have incorrect case sensitivity'
-  // );
-
   expect(result.length).toBe(1);
 
-  expect(result[0].message).toContain(`Can't resolve "rEact19`);
+  let message = result[0].message;
+
+  expect(message).toContain(`Can't resolve`);
+  expect(message).toContain(`rEact19`);
 });
 
-// test('should report errors when file imports have incorrect case sensitivity', async () => {
-//   const result = await runCompiler({
-//     fixture: 'case_sensitive_local_file',
-//     plugins: [plugin],
-//   });
-//   expect(result).toMatchSnapshot();
-// });
+test('should report errors when file imports have incorrect case sensitivity', async () => {
+  const result = await runCompiler({
+    fixture: 'case_sensitive_local_file',
+    plugins: [plugin],
+  });
+  // expect(result).toMatchSnapshot();
+  expect(result.length).toBe(1);
+  let message = result[0].message;
+  expect(message).toContain(`Can't resolve`);
+  expect(message).toContain(`./Hello`);
+});
