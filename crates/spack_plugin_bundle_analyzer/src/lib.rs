@@ -124,10 +124,11 @@ async fn analyze_bundle(compilation: &Compilation) -> BundleAnalysisResult {
     let total_size = chunk_modules
       .iter()
       .filter_map(|id| module_map.get(id))
-      .fold(SizeInfo::default(), |acc, module| SizeInfo {
-        original: acc.original + module.size.original,
-        minified: acc.minified + module.size.minified,
-        gzipped: acc.gzipped + module.size.gzipped,
+      .fold(SizeInfo::default(), |mut acc, module| {
+        acc.original += module.size.original;
+        acc.minified += module.size.minified;
+        acc.gzipped += module.size.gzipped;
+        acc
       });
     
     let chunk_info = ChunkInfo {
@@ -153,10 +154,11 @@ async fn analyze_bundle(compilation: &Compilation) -> BundleAnalysisResult {
   let visualization = generate_visualization_data(&modules, &chunks);
   
   // 计算摘要信息
-  let total_size = modules.iter().fold(SizeInfo::default(), |acc, module| SizeInfo {
-    original: acc.original + module.size.original,
-    minified: acc.minified + module.size.minified,
-    gzipped: acc.gzipped + module.size.gzipped,
+  let total_size = modules.iter().fold(SizeInfo::default(), |mut acc, module| {
+    acc.original += module.size.original;
+    acc.minified += module.size.minified;
+    acc.gzipped += module.size.gzipped;
+    acc
   });
   
   let summary = SummaryInfo {
@@ -200,8 +202,7 @@ fn get_source_type(path: &str) -> String {
 }
 
 fn get_module_size(module: &dyn rspack_core::Module, _compilation: &Compilation) -> u64 {
-  // 简化实现，返回模块标识符长度作为大小
-  // 实际项目中应该获取真实的模块大小
+  // 简化实现，基于模块标识符长度估算大小
   module.identifier().to_string().len() as u64 * 100
 }
 
@@ -262,11 +263,9 @@ fn calculate_statistics(modules: &[ModuleInfo]) -> StatisticsInfo {
       total_size: SizeInfo::default(),
     });
     type_stats.count += 1;
-    type_stats.total_size = SizeInfo {
-      original: type_stats.total_size.original + module.size.original,
-      minified: type_stats.total_size.minified + module.size.minified,
-      gzipped: type_stats.total_size.gzipped + module.size.gzipped,
-    };
+    type_stats.total_size.original += module.size.original;
+    type_stats.total_size.minified += module.size.minified;
+    type_stats.total_size.gzipped += module.size.gzipped;
     
     // 按来源分组
     let source_stats = by_source.entry(module.source.clone()).or_insert(SourceStatistics {
@@ -274,16 +273,14 @@ fn calculate_statistics(modules: &[ModuleInfo]) -> StatisticsInfo {
       total_size: SizeInfo::default(),
     });
     source_stats.count += 1;
-    source_stats.total_size = SizeInfo {
-      original: source_stats.total_size.original + module.size.original,
-      minified: source_stats.total_size.minified + module.size.minified,
-      gzipped: source_stats.total_size.gzipped + module.size.gzipped,
-    };
+    source_stats.total_size.original += module.size.original;
+    source_stats.total_size.minified += module.size.minified;
+    source_stats.total_size.gzipped += module.size.gzipped;
   }
   
-  // 找出最大的模块
+  // 找出最大的10个模块
   let mut largest_modules = modules.to_vec();
-  largest_modules.sort_by(|a, b| b.size.original.cmp(&a.size.original));
+  largest_modules.sort_by_key(|m| std::cmp::Reverse(m.size.original));
   largest_modules.truncate(10);
   
   StatisticsInfo {
@@ -295,24 +292,21 @@ fn calculate_statistics(modules: &[ModuleInfo]) -> StatisticsInfo {
 
 fn generate_visualization_data(modules: &[ModuleInfo], _chunks: &[ChunkInfo]) -> VisualizationData {
   // 生成简化的树形结构数据
-  let mut tree_nodes = Vec::new();
-  
-  for module in modules {
-    let node = TreeNode {
+  let tree_data = modules
+    .iter()
+    .map(|module| TreeNode {
       name: module.name.clone(),
       size: module.size.original,
       children: None,
       path: Some(module.path.clone()),
       module_type: Some(module.module_type.clone()),
-    };
-    tree_nodes.push(node);
-  }
+    })
+    .collect();
   
   // 生成热力图数据
   let heatmap_data = modules
     .iter()
-    .enumerate()
-    .map(|(_i, module)| HeatmapNode {
+    .map(|module| HeatmapNode {
       name: module.name.clone(),
       value: module.size.original,
       path: module.path.clone(),
@@ -321,7 +315,7 @@ fn generate_visualization_data(modules: &[ModuleInfo], _chunks: &[ChunkInfo]) ->
     .collect();
   
   VisualizationData {
-    tree_data: tree_nodes,
+    tree_data,
     heatmap_data,
   }
 }

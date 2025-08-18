@@ -10,6 +10,7 @@
   "scripts": {
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
     "test": "vitest run",
+    "test:ui": "vitest --ui",
     "release": "node --experimental-strip-types --no-warnings release.mts "
   },
   "homepage": "https://github.com/sheinsight/spack",
@@ -26,6 +27,7 @@
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.16.5",
     "@types/semver": "^7.7.0",
+    "@vitest/ui": "3.2.4",
     "chalk": "^5.4.1",
     "consola": "^3.4.2",
     "enquirer": "^2.4.1",
