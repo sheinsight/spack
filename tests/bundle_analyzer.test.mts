@@ -3,6 +3,7 @@ import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
 import type { RawBundleAnalyzerPluginOpts } from '@shined/spack-binding';
+import fs from 'fs';
 
 binding.registerBundleAnalyzerPlugin();
 const BundleAnalyzerPlugin = experiments.createNativePlugin<
@@ -23,6 +24,8 @@ test('should analyze bundle and return structured data', async () => {
   });
 
   const response = await promise;
+
+  fs.writeFileSync('response.json', JSON.stringify(response, null, 2));
 
   // 验证基本结构
   expect(response).toHaveProperty('timestamp');
@@ -89,7 +92,7 @@ test('should analyze bundle and return structured data', async () => {
   expect(response.statistics).toHaveProperty('byFileType');
   expect(response.statistics).toHaveProperty('bySource');
   expect(response.statistics).toHaveProperty('largestModules');
-  
+
   // 验证按文件类型的统计
   expect(response.statistics.byFileType).toHaveProperty('javascript');
   const jsStats = response.statistics.byFileType.javascript;
@@ -127,12 +130,14 @@ test('should identify entry modules correctly', async () => {
   const response = await promise;
 
   // 应该至少有一个入口模块
-  const entryModules = response.modules.filter(module => module.isEntry);
+  const entryModules = response.modules.filter((module) => module.isEntry);
   expect(entryModules.length).toBeGreaterThan(0);
 
   // 验证入口模块包含预期的文件
-  const entryPaths = entryModules.map(module => module.path);
-  expect(entryPaths.some(path => path.includes('index.ts') || path.includes('utils.ts'))).toBe(true);
+  const entryPaths = entryModules.map((module) => module.path);
+  expect(entryPaths.some((path) => path.includes('index.ts') || path.includes('utils.ts'))).toBe(
+    true
+  );
 });
 
 test('should categorize modules by type correctly', async () => {
@@ -156,11 +161,11 @@ test('should categorize modules by type correctly', async () => {
   }
 
   // 我们的测试文件应该都是 JavaScript 类型
-  const jsModules = response.modules.filter(module => module.moduleType === 'javascript');
+  const jsModules = response.modules.filter((module) => module.moduleType === 'javascript');
   expect(jsModules.length).toBeGreaterThan(0);
 
   // 大部分模块应该来自 src 目录
-  const srcModules = response.modules.filter(module => module.source === 'src');
+  const srcModules = response.modules.filter((module) => module.source === 'src');
   expect(srcModules.length).toBeGreaterThan(0);
 });
 
@@ -180,7 +185,7 @@ test('should generate visualization data', async () => {
 
   // 验证树形数据结构
   expect(response.visualization.treeData.length).toBeGreaterThan(0);
-  
+
   const firstTreeNode = response.visualization.treeData[0];
   expect(firstTreeNode).toHaveProperty('name');
   expect(firstTreeNode).toHaveProperty('size');
@@ -188,7 +193,7 @@ test('should generate visualization data', async () => {
 
   // 验证热力图数据
   expect(response.visualization.heatmapData.length).toBeGreaterThan(0);
-  
+
   const firstHeatmapNode = response.visualization.heatmapData[0];
   expect(firstHeatmapNode).toHaveProperty('name');
   expect(firstHeatmapNode).toHaveProperty('value');
@@ -216,17 +221,17 @@ test('should handle multiple entry points', async () => {
   expect(response.chunks.length).toBeGreaterThan(0);
 
   // 应该至少有一个入口代码块
-  const entryChunks = response.chunks.filter(chunk => chunk.isEntry);
+  const entryChunks = response.chunks.filter((chunk) => chunk.isEntry);
   expect(entryChunks.length).toBeGreaterThan(0);
 
   // 验证代码块包含模块
   for (const chunk of response.chunks) {
     expect(Array.isArray(chunk.modules)).toBe(true);
     expect(chunk.modules.length).toBeGreaterThan(0);
-    
+
     // 验证代码块中的每个模块都在模块列表中存在
     for (const moduleId of chunk.modules) {
-      const moduleExists = response.modules.some(module => module.id === moduleId);
+      const moduleExists = response.modules.some((module) => module.id === moduleId);
       expect(moduleExists).toBe(true);
     }
   }

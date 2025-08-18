@@ -1,0 +1,213 @@
+{
+  "timestamp": 1755483440775,
+  "buildTime": 0,
+  "summary": {
+    "totalModules": 3,
+    "totalChunks": 2,
+    "totalSize": {
+      "original": 22300,
+      "minified": 22300,
+      "gzipped": 6690
+    }
+  },
+  "modules": [
+    {
+      "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/index.ts",
+      "name": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+      "path": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+      "size": {
+        "original": 7400,
+        "minified": 7400,
+        "gzipped": 2220
+      },
+      "moduleType": "javascript",
+      "source": "src",
+      "isEntry": true,
+      "dependencies": []
+    },
+    {
+      "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "size": {
+        "original": 7500,
+        "minified": 7500,
+        "gzipped": 2250
+      },
+      "moduleType": "javascript",
+      "source": "src",
+      "isEntry": false,
+      "dependencies": []
+    },
+    {
+      "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
+      "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+      "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+      "size": {
+        "original": 7400,
+        "minified": 7400,
+        "gzipped": 2220
+      },
+      "moduleType": "javascript",
+      "source": "src",
+      "isEntry": true,
+      "dependencies": []
+    }
+  ],
+  "chunks": [
+    {
+      "id": "0",
+      "name": "main",
+      "size": {
+        "original": 22300,
+        "minified": 22300,
+        "gzipped": 6690
+      },
+      "modules": [
+        "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts"
+      ],
+      "isEntry": true,
+      "parents": [],
+      "children": []
+    },
+    {
+      "id": "1",
+      "name": "utils",
+      "size": {
+        "original": 7400,
+        "minified": 7400,
+        "gzipped": 2220
+      },
+      "modules": [
+        "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts"
+      ],
+      "isEntry": true,
+      "parents": [],
+      "children": []
+    }
+  ],
+  "dependencyGraph": [
+    {
+      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/index.ts",
+      "dependencies": []
+    },
+    {
+      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "dependencies": []
+    },
+    {
+      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
+      "dependencies": []
+    }
+  ],
+  "statistics": {
+    "byFileType": {
+      "javascript": {
+        "count": 3,
+        "totalSize": {
+          "original": 22300,
+          "minified": 22300,
+          "gzipped": 6690
+        }
+      }
+    },
+    "bySource": {
+      "src": {
+        "count": 3,
+        "totalSize": {
+          "original": 22300,
+          "minified": 22300,
+          "gzipped": 6690
+        }
+      }
+    },
+    "largestModules": [
+      {
+        "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "size": {
+          "original": 7500,
+          "minified": 7500,
+          "gzipped": 2250
+        },
+        "moduleType": "javascript",
+        "source": "src",
+        "isEntry": false,
+        "dependencies": []
+      },
+      {
+        "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "name": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "path": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "size": {
+          "original": 7400,
+          "minified": 7400,
+          "gzipped": 2220
+        },
+        "moduleType": "javascript",
+        "source": "src",
+        "isEntry": true,
+        "dependencies": []
+      },
+      {
+        "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "size": {
+          "original": 7400,
+          "minified": 7400,
+          "gzipped": 2220
+        },
+        "moduleType": "javascript",
+        "source": "src",
+        "isEntry": true,
+        "dependencies": []
+      }
+    ]
+  },
+  "visualization": {
+    "treeData": [
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "size": 7400,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "moduleType": "javascript"
+      },
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "size": 7500,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "moduleType": "javascript"
+      },
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "size": 7400,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "moduleType": "javascript"
+      }
+    ],
+    "heatmapData": [
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "value": 7400,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/index.ts",
+        "level": 6
+      },
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "value": 7500,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "level": 6
+      },
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "value": 7400,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "level": 6
+      }
+    ]
+  }
+}
