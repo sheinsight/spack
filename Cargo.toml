@@ -14,17 +14,17 @@ repository    = "https://github.com/sheinsight/spack"
 version       = "0.1.0"
 
 [workspace.dependencies]
-rspack_binding_build          = "=0.5.0-beta.0"
-rspack_binding_builder        = "=0.5.0-beta.0"
-rspack_binding_builder_macros = "=0.5.0-beta.0"
-rspack_cacheable              = "=0.5.0-beta.0"
-rspack_collections            = "=0.5.0-beta.0"
-rspack_core                   = "=0.5.0-beta.0"
-rspack_error                  = "=0.5.0-beta.0"
-rspack_hook                   = "=0.5.0-beta.0"
-rspack_javascript_compiler    = "=0.5.0-beta.0"
-rspack_loader_runner          = "=0.5.0-beta.0"
-rspack_napi                   = "=0.5.0-beta.0"
+rspack_binding_build          = "=0.5.1"
+rspack_binding_builder        = "=0.5.1"
+rspack_binding_builder_macros = "=0.5.1"
+rspack_cacheable              = "=0.5.1"
+rspack_collections            = "=0.5.1"
+rspack_core                   = "=0.5.1"
+rspack_error                  = "=0.5.1"
+rspack_hook                   = "=0.5.1"
+rspack_javascript_compiler    = "=0.5.1"
+rspack_loader_runner          = "=0.5.1"
+rspack_napi                   = "=0.5.1"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "0.6.0", default-features = false }
 
@@ -33,7 +33,7 @@ napi-build          = { version = "=2.2.3" }
 napi-derive         = { version = "=3.2.3", features = ["compat-mode"] }
 napi-derive-backend = { version = "=2.1.3" }
 
-swc_core = { version = "=35.0.0", default-features = false, features = [
+swc_core = { version = "=38.0.0", default-features = false, features = [
   "parallel_rayon",
   "__base",
   "__ecma",
