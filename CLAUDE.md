@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - @.claude/docs/development.md - 开发指南和常用命令
 - @.claude/docs/tech-stack.md - 技术栈和依赖信息
 - @.claude/docs/snapshot-serializers.md - 快照序列化器架构
+- @.claude/docs/README.md - rspack 文档
 
 ## 重要指令
 
