@@ -10,6 +10,10 @@ pub struct SimpleLoader;
 #[cacheable_dyn]
 #[async_trait]
 impl Loader<RunnerContext> for SimpleLoader {
+  fn identifier(&self) -> Identifier {
+    SIMPLE_LOADER_IDENTIFIER.into()
+  }
+
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     let Some(content) = loader_context.take_content() else {
       return Ok(());
