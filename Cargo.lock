@@ -5319,6 +5319,7 @@ dependencies = [
  "rspack_core",
  "rspack_error",
  "rspack_hook",
+ "spack_loader_demo",
  "tracing",
  "tracing-subscriber",
 ]

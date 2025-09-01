@@ -19,3 +19,5 @@ rspack_hook  = { workspace = true }
 
 tracing            = { workspace = true }
 tracing-subscriber = { workspace = true }
+
+spack_loader_demo = { workspace = true }
