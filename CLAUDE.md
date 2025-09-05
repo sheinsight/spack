@@ -22,3 +22,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 请始终使用中文回答
 - 遵循项目现有的代码风格和架构模式
 - 修改代码前先理解现有实现的设计思路
+- 所有牵扯到 rust 的代码变更，改完之后都要使用 `build:dev` 命令检查一下编译能不能通过

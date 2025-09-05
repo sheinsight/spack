@@ -1,12 +1,11 @@
-use std::{sync::Arc, time::Instant};
+use std::sync::Arc;
 
 use rspack_core::{
-  ApplyContext, BoxLoader, Compilation, CompilerAfterEmit, Context, EntrypointsStatsOption,
-  ExtendedStatsOptions, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin, Resolver,
+  ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin,
+  Resolver,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
-use spack_loader_demo::SimpleLoader;
 
 // #[derive(Debug, Clone)]
 // pub struct DemoPluginOpts {
@@ -166,8 +165,14 @@ use spack_loader_demo::SimpleLoader;
 //   Ok(())
 // }
 
+#[derive(Debug)]
+pub struct JsLoaderRspackPluginOpts {}
+
 #[plugin]
-pub(crate) struct JsLoaderRspackPlugin {
+#[derive(Debug)]
+pub struct JsLoaderRspackPlugin {
+  #[allow(unused)]
+  options: JsLoaderRspackPluginOpts,
   // compiler_id: once_cell::sync::OnceCell<CompilerId>,
   // pub(crate) runner_getter: JsLoaderRunnerGetter,
   // /// This complex data structure is used to avoid deadlock when running loaders which contain `importModule`
@@ -176,13 +181,31 @@ pub(crate) struct JsLoaderRspackPlugin {
   // pub(crate) loaders_without_pitch: RwLock<FxHashSet<String>>,
 }
 
-impl JsLoaderRspackPlugin {}
+impl JsLoaderRspackPlugin {
+  pub fn new(options: JsLoaderRspackPluginOpts) -> Self {
+    Self::new_inner(options)
+  }
+}
+
+impl Plugin for JsLoaderRspackPlugin {
+  fn name(&self) -> &'static str {
+    "spack.JsLoaderRspackPlugin"
+  }
+
+  fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
+    ctx
+      .normal_module_factory_hooks
+      .resolve_loader
+      .tap(resolve_loader::new(self));
+    Ok(())
+  }
+}
 
 #[plugin_hook(NormalModuleFactoryResolveLoader for JsLoaderRspackPlugin,tracing=false)]
 pub(crate) async fn resolve_loader(
   &self,
-  context: &Context,
-  resolver: &Resolver,
+  _context: &Context,
+  _resolver: &Resolver,
   l: &ModuleRuleUseLoader,
 ) -> Result<Option<BoxLoader>> {
   let loader_request = &l.loader;
