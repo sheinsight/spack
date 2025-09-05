@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use rspack_core::{
-  ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin,
-  Resolver,
+  ApplyContext, BoxLoader, Compilation, Context, ModuleRuleUseLoader,
+  NormalModuleFactoryResolveLoader, Plugin, Resolver,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -193,22 +193,29 @@ impl Plugin for JsLoaderRspackPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
+    println!("apply start >>>>");
+
     ctx
       .normal_module_factory_hooks
       .resolve_loader
       .tap(resolve_loader::new(self));
+
+    println!("apply end >>>>");
     Ok(())
   }
 }
 
-#[plugin_hook(NormalModuleFactoryResolveLoader for JsLoaderRspackPlugin,tracing=false)]
+// #[plugin_hook(NormalModuleFactoryResolveLoader for JsLoaderRspackPlugin,stage = Compilation::OPTIMIZE_CHUNKS_STAGE_ADVANCED)]
+#[plugin_hook(NormalModuleFactoryResolveLoader for JsLoaderRspackPlugin,stage = -1)]
 pub(crate) async fn resolve_loader(
   &self,
   _context: &Context,
   _resolver: &Resolver,
   l: &ModuleRuleUseLoader,
 ) -> Result<Option<BoxLoader>> {
+  // println!("----->");
   let loader_request = &l.loader;
+  // println!("resolve_loader >>>> {}", loader_request);
   if loader_request.starts_with("builtin:test") {
     return Ok(get_builtin_test_loader(loader_request));
   }
@@ -231,6 +238,7 @@ pub fn get_builtin_test_loader(builtin: &str) -> Option<BoxLoader> {
   // if builtin.starts_with(rspack_loader_testing::NO_PASS_THROUGH_LOADER_IDENTIFIER) {
   //   return Some(Arc::new(rspack_loader_testing::NoPassthroughLoader));
   // }
+  // println!("get_builtin_test_loader>>>> {}", builtin);
   if builtin.starts_with(spack_loader_demo::SIMPLE_LOADER_IDENTIFIER) {
     return Some(Arc::new(spack_loader_demo::SimpleLoader));
   }

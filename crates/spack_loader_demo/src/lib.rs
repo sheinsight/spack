@@ -3,7 +3,6 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::Result;
 use rspack_loader_runner::{Identifiable, Identifier};
-use serde_json::json;
 
 #[cacheable]
 pub struct SimpleLoader;
@@ -15,11 +14,22 @@ impl Loader<RunnerContext> for SimpleLoader {
   }
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    // println!("loader start >>>>");
+
     let Some(content) = loader_context.take_content() else {
       return Ok(());
     };
-    let export = format!("{}-simple", content.try_into_string()?);
-    loader_context.finish_with(format!("module.exports = {}", json!(export)));
+    let mut source = content.try_into_string()?;
+    source += r#"
+    function hello(){
+      console.error("hello");
+    }
+    "#;
+    let sm = loader_context.take_source_map();
+    loader_context.finish_with((source, sm));
+
+    // loader_context.finish_with_empty();
+    // println!("loader end >>>>");
     Ok(())
   }
 }
