@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use rspack_core::{
-  ApplyContext, BoxLoader, Compilation, Context, ModuleRuleUseLoader,
-  NormalModuleFactoryResolveLoader, Plugin, Resolver,
+  ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin,
+  Resolver,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -239,8 +239,8 @@ pub fn get_builtin_test_loader(builtin: &str) -> Option<BoxLoader> {
   //   return Some(Arc::new(rspack_loader_testing::NoPassthroughLoader));
   // }
   // println!("get_builtin_test_loader>>>> {}", builtin);
-  if builtin.starts_with(spack_loader_demo::SIMPLE_LOADER_IDENTIFIER) {
-    return Some(Arc::new(spack_loader_demo::SimpleLoader));
+  if builtin.starts_with(spack_loader_demo::SIMPLE_DEMO_LOADER_IDENTIFIER) {
+    return Some(Arc::new(spack_loader_demo::DemoLoader));
   }
   None
 }
