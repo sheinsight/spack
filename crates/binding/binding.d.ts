@@ -2,7 +2,8 @@ export declare enum CustomPluginNames {
   DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
   CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   BundleAnalyzerPlugin = 'BundleAnalyzerPlugin',
-  DemoPlugin = 'DemoPlugin'
+  DemoPlugin = 'DemoPlugin',
+  DemoLoaderPlugin = 'DemoLoaderPlugin'
 }
 
 export interface JsBundleAnalyzerPluginResp {
@@ -120,6 +121,10 @@ export interface RawCaseSensitivePathsPluginOpts {
 
 }
 
+export interface RawDemoLoaderPluginOpts {
+
+}
+
 export interface RawDemoPluginOpts {
 
 }
@@ -131,6 +136,8 @@ export interface RawDuplicateDependencyPluginOpts {
 export declare function registerBundleAnalyzerPlugin(): void
 
 export declare function registerCaseSensitivePathsPlugin(): void
+
+export declare function registerDemoLoaderPlugin(): void
 
 export declare function registerDemoPlugin(): void
 
