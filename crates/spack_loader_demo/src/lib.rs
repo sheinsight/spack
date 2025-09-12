@@ -98,13 +98,15 @@ impl Loader<RunnerContext> for DemoLoader {
       css_resource_path, &resource_path
     );
 
-    let insert_type = self.options.insert.clone();
-    
     // 判断 insert 是否为绝对路径
-    let insert_value = if PathBuf::from(&insert_type).is_absolute() {
-      "module-path"
+    let selector_fn_module = if PathBuf::from(&self.options.insert).is_absolute() {
+      let module_path = contextify(root_context, &self.options.insert);
+      loader_context
+        .build_dependencies
+        .insert(module_path.clone().into());
+      module_path
     } else {
-      "selector"
+      format!(r##"!{relative_path_insert_by_selector}"##)
     };
 
     let source = format!(
@@ -112,7 +114,7 @@ impl Loader<RunnerContext> for DemoLoader {
       import API from "!{relative_path}";
       import domAPI from "!{relative_path_dom}";
       import insertStyleElement from "!{relative_path_insert}";
-      import insertFn from "!{relative_path_insert_by_selector}";
+      import insertFn from "{selector_fn_module}";
       import content, * as namedExport from "!!{css_resource_path}";
     "#,
     );

@@ -8,6 +8,12 @@ use spack_loader_demo::{DemoLoaderPlugin, DemoLoaderPluginOpts, InjectType};
 pub struct RawDemoLoaderPluginOpts {
   #[napi(js_name = "injectType")]
   pub inject_type: String,
+  #[napi(js_name = "esModule")]
+  pub es_module: bool,
+  #[napi(js_name = "insert")]
+  pub insert: String,
+  #[napi(js_name = "output")]
+  pub output: String,
 }
 
 impl From<RawDemoLoaderPluginOpts> for DemoLoaderPluginOpts {
@@ -16,7 +22,12 @@ impl From<RawDemoLoaderPluginOpts> for DemoLoaderPluginOpts {
       "style-tag" => InjectType::StyleTag,
       _ => InjectType::StyleTag, // 默认值
     };
-    Self { inject_type }
+    Self {
+      inject_type: inject_type,
+      es_module: false,
+      insert: value.insert,
+      output: value.output,
+    }
   }
 }
 

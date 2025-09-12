@@ -239,8 +239,14 @@ pub fn get_builtin_test_loader(builtin: &str) -> Option<BoxLoader> {
   //   return Some(Arc::new(rspack_loader_testing::NoPassthroughLoader));
   // }
   // println!("get_builtin_test_loader>>>> {}", builtin);
-  if builtin.starts_with(spack_loader_demo::SIMPLE_DEMO_LOADER_IDENTIFIER) {
-    return Some(Arc::new(spack_loader_demo::DemoLoader));
-  }
+  // if builtin.starts_with(spack_loader_demo::SIMPLE_DEMO_LOADER_IDENTIFIER) {
+  //   return Some(Arc::new(spack_loader_demo::DemoLoader {
+  //     options: spack_loader_demo::DemoLoaderPluginOpts {
+  //       injectType: spack_loader_demo::InjectType::StyleTag,
+  //       esModule: false,
+  //       insert: "head".to_string(),
+  //     },
+  //   }));
+  // }
   None
 }

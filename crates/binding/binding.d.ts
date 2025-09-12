@@ -122,7 +122,10 @@ export interface RawCaseSensitivePathsPluginOpts {
 }
 
 export interface RawDemoLoaderPluginOpts {
-
+  injectType: string
+  esModule: boolean
+  insert: string
+  output: string
 }
 
 export interface RawDemoPluginOpts {
