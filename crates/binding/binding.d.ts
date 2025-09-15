@@ -126,6 +126,7 @@ export interface RawDemoLoaderPluginOpts {
   esModule: boolean
   insert: string
   output: string
+  attributes?: Record<string, string>
 }
 
 export interface RawDemoPluginOpts {

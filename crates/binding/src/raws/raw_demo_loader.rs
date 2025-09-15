@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
@@ -14,6 +16,8 @@ pub struct RawDemoLoaderPluginOpts {
   pub insert: String,
   #[napi(js_name = "output")]
   pub output: String,
+  #[napi(js_name = "attributes")]
+  pub attributes: Option<HashMap<String, String>>, // 使用 Option 让字段可选
 }
 
 impl From<RawDemoLoaderPluginOpts> for DemoLoaderPluginOpts {
@@ -27,6 +31,7 @@ impl From<RawDemoLoaderPluginOpts> for DemoLoaderPluginOpts {
       es_module: false,
       insert: value.insert,
       output: value.output,
+      attributes: value.attributes,
     }
   }
 }

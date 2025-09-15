@@ -19,6 +19,8 @@ rspack_core          = { workspace = true }
 rspack_error         = { workspace = true }
 rspack_hook          = { workspace = true }
 rspack_loader_runner = { workspace = true }
+rspack_paths         = { workspace = true }
+serde                = { workspace = true }
 serde_json           = { workspace = true }
 
 tracing            = { workspace = true }

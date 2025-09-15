@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::sync::Arc;
+use std::{collections::HashMap, path::PathBuf};
 
 use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
@@ -10,6 +10,8 @@ use rspack_core::{
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_loader_runner::{Identifiable, Identifier};
+use rspack_paths::Utf8PathBuf;
+use serde::Serialize;
 
 #[cacheable]
 pub struct DemoLoader {
@@ -109,13 +111,38 @@ impl Loader<RunnerContext> for DemoLoader {
       format!(r##"!{relative_path_insert_by_selector}"##)
     };
 
+    let attributes = if let Some(attributes) = &self.options.attributes {
+      if attributes.contains_key("nonce") {
+        Utf8PathBuf::from(self.options.output.clone())
+          .join("setAttributesWithAttributesAndNonce.js")
+          .to_string()
+      } else {
+        Utf8PathBuf::from(self.options.output.clone())
+          .join("setAttributesWithAttributes.js")
+          .to_string()
+      }
+    } else {
+      Utf8PathBuf::from(self.options.output.clone())
+        .join("setAttributesWithoutAttributes.js")
+        .to_string()
+    };
+
+    let opts = serde_json::to_string_pretty(&self.options).unwrap();
+
     let source = format!(
       r#"
-      import API from "!{relative_path}";
-      import domAPI from "!{relative_path_dom}";
-      import insertStyleElement from "!{relative_path_insert}";
-      import insertFn from "{selector_fn_module}";
-      import content, * as namedExport from "!!{css_resource_path}";
+import API from "!{relative_path}";
+import domAPI from "!{relative_path_dom}";
+import insertStyleElement from "!{relative_path_insert}";
+import insertFn from "{selector_fn_module}";
+import setAttributes from "{attributes}";
+import content, * as namedExport from "!!{css_resource_path}";
+
+var options = {opts};
+
+options.setAttributes = setAttributes;
+options.insertStyleElement = insertStyleElement;
+var update = API(content, options);
     "#,
     );
     let sm = loader_context.take_source_map();
@@ -148,19 +175,20 @@ impl Identifiable for DemoLoader {
 }
 pub const SIMPLE_DEMO_LOADER_IDENTIFIER: &str = "builtin:test-demo-loader";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 #[cacheable]
 pub enum InjectType {
   StyleTag,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 #[cacheable]
 pub struct DemoLoaderPluginOpts {
   pub inject_type: InjectType,
   pub es_module: bool,
   pub insert: String,
   pub output: String,
+  pub attributes: Option<HashMap<String, String>>,
 }
 
 #[plugin]

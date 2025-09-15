@@ -5257,6 +5257,8 @@ dependencies = [
  "rspack_error",
  "rspack_hook",
  "rspack_loader_runner",
+ "rspack_paths",
+ "serde",
  "serde_json",
  "tracing",
  "tracing-subscriber",
