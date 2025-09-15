@@ -1,3 +1,4 @@
+use std::ops::Not;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
@@ -19,40 +20,34 @@ pub struct DemoLoader {
 }
 
 impl DemoLoader {
+  fn write_runtime_file(&self, context: &Context, runtime_content: &str, filename: &str) -> Result<String> {
+    let dir = context.as_path().join(self.options.output.clone());
+    let file = dir.join(filename);
+    if file.exists().not() {
+      std::fs::create_dir_all(dir).unwrap();
+      std::fs::write(&file, runtime_content).unwrap();
+    }
+    Ok(file.to_string())
+  }
+
   fn write_inject_styles_into_style_tag(&self, context: &Context) -> Result<String> {
     let runtime_context = include_str!("./runtimes/injectStylesIntoStyleTag.js");
-    let dir = context.as_path().join(self.options.output.clone());
-    let file = dir.join("injectStylesIntoStyleTag.js");
-    std::fs::create_dir_all(dir).unwrap();
-    std::fs::write(&file, runtime_context).unwrap();
-    Ok(file.to_string())
+    self.write_runtime_file(context, runtime_context, "injectStylesIntoStyleTag.js")
   }
 
   fn write_style_dom_api(&self, context: &Context) -> Result<String> {
     let runtime_context = include_str!("./runtimes/styleDomAPI.js");
-    let dir = context.as_path().join(self.options.output.clone());
-    let file = dir.join("styleDomAPI.js");
-    std::fs::create_dir_all(dir).unwrap();
-    std::fs::write(&file, runtime_context).unwrap();
-    Ok(file.to_string())
+    self.write_runtime_file(context, runtime_context, "styleDomAPI.js")
   }
 
   fn write_insert_style_element(&self, context: &Context) -> Result<String> {
     let runtime_context = include_str!("./runtimes/insertStyleElement.js");
-    let dir = context.as_path().join(self.options.output.clone());
-    let file = dir.join("insertStyleElement.js");
-    std::fs::create_dir_all(dir).unwrap();
-    std::fs::write(&file, runtime_context).unwrap();
-    Ok(file.to_string())
+    self.write_runtime_file(context, runtime_context, "insertStyleElement.js")
   }
 
   fn write_insert_by_selector(&self, context: &Context) -> Result<String> {
     let runtime_context = include_str!("./runtimes/insertBySelector.js");
-    let dir = context.as_path().join(self.options.output.clone());
-    let file = dir.join("insertBySelector.js");
-    std::fs::create_dir_all(dir).unwrap();
-    std::fs::write(&file, runtime_context).unwrap();
-    Ok(file.to_string())
+    self.write_runtime_file(context, runtime_context, "insertBySelector.js")
   }
 }
 
@@ -221,6 +216,8 @@ impl Plugin for DemoLoaderPlugin {
     Ok(())
   }
 }
+
+// pub(crate) async fn
 
 #[plugin_hook(NormalModuleFactoryResolveLoader for DemoLoaderPlugin)]
 pub(crate) async fn resolve_loader(
