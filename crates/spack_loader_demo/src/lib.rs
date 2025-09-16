@@ -84,13 +84,15 @@ impl DemoLoader {
         }
       }
       _ => {
-        let runtime_context = include_str!("./runtimes/insertBySelector.js");
-        let abs = self.write_runtime_file(context, runtime_context, "insertBySelector.js")?;
-        let p = contextify(context, &abs);
+        // let runtime_context = include_str!("./runtimes/insertBySelector.js");
+        // let abs = self.write_runtime_file(context, runtime_context, "insertBySelector.js")?;
+        // let p = contextify(context, &abs);
         if self.options.es_module.unwrap_or(false) {
-          format!(r##"import insertFn from "{p}""##)
+          // format!(r##"import insertFn from "{p}""##)
+          format!(r##"import insertFn from "virtualModules:insertBySelector.js""##)
         } else {
-          format!(r##"var insertFn = require("{p}")"##)
+          // format!(r##"var insertFn = require("{p}")"##)
+          format!(r##"var insertFn = require("virtualModules:insertBySelector.js")"##)
         }
       }
     };
@@ -146,7 +148,12 @@ impl DemoLoader {
     loader_context: &mut LoaderContext<RunnerContext>,
   ) -> Result<String> {
     let context = &loader_context.context.options.context;
-    let query = loader_context.resource_query().unwrap_or_default();
+
+    // let query = loader_context.resource_query().unwrap_or_default();
+    let query = loader_context
+      .resource_path()
+      .map(|p| p.to_string())
+      .unwrap_or_default();
     let module_path = contextify(context, &format!("!!{query}"));
     let code = if self.options.es_module.unwrap_or(false) {
       format!(r##"import content from "{module_path}""##)

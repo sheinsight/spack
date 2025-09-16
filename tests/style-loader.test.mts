@@ -4,6 +4,14 @@ import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
 import type { RawDemoLoaderPluginOpts } from '@shined/spack-binding';
 
+let virtualModulesPlugin = new experiments.VirtualModulesPlugin({
+  'virtualModules:injectStylesIntoLinkTag.js': 'console.log("injectStylesIntoLinkTag")',
+  'virtualModules:injectStylesIntoStyleTag.js': 'console.log("injectStylesIntoStyleTag")',
+  'virtualModules:insertStyleElement.js': 'console.log("insertStyleElement")',
+  'virtualModules:insertBySelector.js': 'console.log("insertBySelector")',
+  'virtualModules:setAttributesWithAttributes.js': 'console.log("setAttributesWithAttributes")',
+});
+
 binding.registerDemoLoaderPlugin();
 const CaseDemoLoaderPluginOpts = experiments.createNativePlugin<
   [RawDemoLoaderPluginOpts],
@@ -19,7 +27,7 @@ const plugin = new CaseDemoLoaderPluginOpts({
 test('test style-loader', async () => {
   const result = await runCompiler({
     fixture: 'style-loader',
-    plugins: [plugin],
+    plugins: [plugin, virtualModulesPlugin],
   });
 
   console.log(result);
