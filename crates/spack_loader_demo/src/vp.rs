@@ -4,13 +4,17 @@ use std::{
 };
 
 // 重新导出现有的 virtual_modules API
-pub use rspack_binding_api::virtual_modules::{
-  TrieVirtualFileStore, VirtualFileStore, VirtualFileSystem,
+// pub use rspack_binding_api::virtual_modules::{
+//   TrieVirtualFileStore, VirtualFileStore, VirtualFileSystem,
+// };
+use rspack_core::{
+  ApplyContext, Compilation, CompilationParams, Compiler, CompilerCompilation, Plugin,
 };
-use rspack_core::{ApplyContext, Compilation, CompilationParams, CompilerCompilation, Plugin};
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
+
+use crate::virtual_modules::{TrieVirtualFileStore, VirtualFileStore, VirtualFileSystem};
 
 #[derive(Debug)]
 pub struct VirtualModulesPluginOptions {
@@ -74,6 +78,9 @@ async fn compilation(
   for (file_path, content) in &self.options.modules {
     let full_path = if file_path.starts_with('/') {
       Utf8PathBuf::from(file_path)
+    } else if file_path.starts_with("virtualModules:") {
+      // 特殊处理 virtualModules:: 协议
+      Utf8PathBuf::from("/").join(file_path)
     } else {
       // 确保路径以 / 开头以避免 trie_store 中的问题
       let relative_path = context.as_path().join(file_path);
@@ -92,13 +99,37 @@ async fn compilation(
   Ok(())
 }
 
+// #[plugin_hook(CompilerEnvironment for VirtualModulesPlugin)]
+// async fn after_environment(&self, _compiler: &Compiler) -> Result<()> {
+//   // 在 afterEnvironment hook 中写入虚拟模块
+//   for (file_path, content) in &self.options.modules {
+//     let full_path = if file_path.starts_with('/') {
+//       file_path.clone()
+//     } else {
+//       format!("/{}", file_path)
+//     };
+
+//     if let Ok(mut store) = self.virtual_file_store.write() {
+//       store.write_file(&Utf8PathBuf::from(full_path), content.as_bytes().to_vec());
+//     }
+//   }
+//   Ok(())
+// }
+
 impl Plugin for VirtualModulesPlugin {
   fn name(&self) -> &'static str {
     "rspack.VirtualModulesPlugin"
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> Result<()> {
+    // ctx.compiler_hooks.compilation.tap(compilation::new(self));
+
     ctx.compiler_hooks.compilation.tap(compilation::new(self));
+    // ctx
+    //   .compiler_hooks
+    //   .after_environment
+    //   .tap(after_environment::new(self));
+
     Ok(())
   }
 }

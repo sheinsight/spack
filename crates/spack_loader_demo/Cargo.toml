@@ -18,6 +18,7 @@ rspack_binding_api   = { workspace = true }
 rspack_cacheable     = { workspace = true }
 rspack_core          = { workspace = true }
 rspack_error         = { workspace = true }
+rspack_fs            = { workspace = true }
 rspack_hook          = { workspace = true }
 rspack_loader_runner = { workspace = true }
 rspack_paths         = { workspace = true }
@@ -29,3 +30,5 @@ tracing-subscriber = { workspace = true }
 
 strum        = { workspace = true }
 strum_macros = { workspace = true }
+
+ustr = { workspace = true }

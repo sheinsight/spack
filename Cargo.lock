@@ -5253,6 +5253,7 @@ dependencies = [
  "rspack_cacheable",
  "rspack_core",
  "rspack_error",
+ "rspack_fs",
  "rspack_hook",
  "rspack_loader_runner",
  "rspack_paths",
@@ -5262,6 +5263,7 @@ dependencies = [
  "strum_macros",
  "tracing",
  "tracing-subscriber",
+ "ustr-fxhash",
 ]
 
 [[package]]

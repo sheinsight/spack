@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 use std::ops::Not;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
@@ -5,8 +7,9 @@ use std::{collections::HashMap, path::PathBuf};
 use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{
-  contextify, ApplyContext, BoxLoader, Context, Loader, LoaderContext, ModuleRuleUseLoader,
-  ModuleType, NormalModuleFactoryResolveLoader, Plugin, Resolver, RunnerContext,
+  contextify, ApplyContext, BoxLoader, Context, Loader, LoaderContext, ModuleFactoryCreateData,
+  ModuleRuleUseLoader, ModuleType, NormalModuleFactoryBeforeResolve,
+  NormalModuleFactoryResolveLoader, Plugin, Resolver, RunnerContext,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -15,6 +18,7 @@ use rspack_paths::Utf8PathBuf;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
+mod virtual_modules;
 mod vp;
 
 pub use vp::VirtualModulesPlugin;
@@ -106,14 +110,14 @@ impl DemoLoader {
     &self,
     loader_context: &mut LoaderContext<RunnerContext>,
   ) -> Result<String> {
-    let context = &loader_context.context.options.context;
-    let runtime_context = include_str!("./runtimes/injectStylesIntoLinkTag.js");
-    let abs = self.write_runtime_file(context, runtime_context, "injectStylesIntoLinkTag.js")?;
-    let p = contextify(context, &abs);
+    // let context = &loader_context.context.options.context;
+    // let runtime_context = include_str!("./runtimes/injectStylesIntoLinkTag.js");
+    // let abs = self.write_runtime_file(context, runtime_context, "injectStylesIntoLinkTag.js")?;
+    // let p = contextify(context, &abs);
     let code = if self.options.es_module.unwrap_or(false) {
-      format!(r##"import API from "virtualModules::injectStylesIntoLinkTag.js""##)
+      format!(r##"import API from "virtualModules:injectStylesIntoLinkTag.js""##)
     } else {
-      format!(r##"var API = require("virtualModules::injectStylesIntoLinkTag.js")"##)
+      format!(r##"var API = require("virtualModules:injectStylesIntoLinkTag.js")"##)
     };
     Ok(code)
   }
@@ -439,39 +443,49 @@ impl Plugin for DemoLoaderPlugin {
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
     let mut modules = HashMap::new();
     modules.insert(
-      "virtualModules::injectStylesIntoLinkTag.js".to_string(),
+      "virtualModules:injectStylesIntoLinkTag.js".to_string(),
       include_str!("./runtimes/injectStylesIntoLinkTag.js"),
     );
     modules.insert(
-      "virtualModules::injectStylesIntoStyleTag.js".to_string(),
+      "virtualModules:injectStylesIntoStyleTag.js".to_string(),
       include_str!("./runtimes/injectStylesIntoStyleTag.js"),
     );
     modules.insert(
-      "virtualModules::insertStyleElement.js".to_string(),
+      "virtualModules:insertStyleElement.js".to_string(),
       include_str!("./runtimes/insertStyleElement.js"),
     );
     modules.insert(
-      "virtualModules::insertBySelector.js".to_string(),
+      "virtualModules:insertBySelector.js".to_string(),
       include_str!("./runtimes/insertBySelector.js"),
     );
     modules.insert(
-      "virtualModules::setAttributesWithAttributes.js".to_string(),
+      "virtualModules:setAttributesWithAttributes.js".to_string(),
       include_str!("./runtimes/setAttributesWithAttributes.js"),
     );
     modules.insert(
-      "virtualModules::setAttributesWithAttributesAndNonce.js".to_string(),
+      "virtualModules:setAttributesWithAttributesAndNonce.js".to_string(),
       include_str!("./runtimes/setAttributesWithAttributesAndNonce.js"),
     );
     modules.insert(
-      "virtualModules::setAttributesWithoutAttributes.js".to_string(),
+      "virtualModules:setAttributesWithoutAttributes.js".to_string(),
       include_str!("./runtimes/setAttributesWithoutAttributes.js"),
     );
 
-    let v = VirtualModulesPluginOptions { modules };
+    let v = VirtualModulesPluginOptions {
+      modules: modules
+        .into_iter()
+        .map(|(k, v)| (k, v.to_string()))
+        .collect(),
+    };
 
     let v = VirtualModulesPlugin::new(v);
 
-    v.apply(ctx);
+    v.apply(ctx)?;
+
+    ctx
+      .normal_module_factory_hooks
+      .before_resolve
+      .tap(before_resolve::new(self));
 
     ctx
       .normal_module_factory_hooks
@@ -480,6 +494,21 @@ impl Plugin for DemoLoaderPlugin {
 
     Ok(())
   }
+}
+
+#[plugin_hook(NormalModuleFactoryBeforeResolve for DemoLoaderPlugin)]
+async fn before_resolve(&self, data: &mut ModuleFactoryCreateData) -> Result<Option<bool>> {
+  if data.request.starts_with("virtualModules:") {
+    // 添加前导斜杠以匹配存储的路径
+    let virtual_path = format!("/{}", data.request);
+    println!(
+      "Resolving virtual module: {} -> {}",
+      data.request, virtual_path
+    );
+    data.request = virtual_path;
+    return Ok(Some(true));
+  }
+  Ok(None)
 }
 
 #[plugin_hook(NormalModuleFactoryResolveLoader for DemoLoaderPlugin)]

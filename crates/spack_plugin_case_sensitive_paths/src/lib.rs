@@ -217,18 +217,26 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
     );
 
     if let Some(pos) = self.find_import_position(&source, &data.request, issuer) {
-      let rewrite_label = miette::LabeledSpan::at(pos, "Path case mismatch");
+      // let rewrite_label = miette::LabeledSpan::at(pos, "Path case mismatch");
 
-      let diagnostic = miette::MietteDiagnostic::new(error_message)
-        .with_code(code)
-        .with_label(rewrite_label)
-        .with_severity(miette::Severity::Error)
-        .with_help(help);
+      // let diagnostic = miette::MietteDiagnostic::new(error_message)
+      //   .with_code(code)
+      //   .with_label(rewrite_label)
+      //   .with_severity(miette::Severity::Error)
+      //   .with_help(help);
 
-      let named_source = miette::NamedSource::new(issuer, source.to_string());
-      let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+      let x = rspack_error::Error::from_string(
+        Some(source.to_string()),
+        pos.0,
+        pos.1,
+        "Path case mismatch".to_string(),
+        error_message,
+      );
 
-      let diagnostic = Diagnostic::from(report);
+      // let named_source = miette::NamedSource::new(issuer, source.to_string());
+      // let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+
+      let diagnostic = Diagnostic::from(x);
       data.diagnostics.push(diagnostic);
       return Ok(None);
     }
@@ -249,17 +257,26 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
   let pos = self.find_import_position(&source, &create_data.raw_request, issuer);
 
   if let Some(pos) = pos {
-    let rewrite_label = miette::LabeledSpan::at(pos, format!("Path case mismatch"));
+    // let rewrite_label = miette::LabeledSpan::at(pos, format!("Path case mismatch"));
 
-    let diagnostic = miette::MietteDiagnostic::new(error_message)
-      .with_code(code)
-      .with_label(rewrite_label)
-      .with_severity(miette::Severity::Error)
-      .with_help(help);
+    // let diagnostic = miette::MietteDiagnostic::new(error_message)
+    //   .with_code(code)
+    //   .with_label(rewrite_label)
+    //   .with_severity(miette::Severity::Error)
+    //   .with_help(help);
 
-    let named_source = miette::NamedSource::new(issuer, source.to_string());
-    let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
-    let diagnostic = Diagnostic::from(report);
+    // let named_source = miette::NamedSource::new(issuer, source.to_string());
+    // let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+
+    let error = rspack_error::Error::from_string(
+      Some(source.to_string()),
+      pos.0,
+      pos.1,
+      "Path case mismatch".to_string(),
+      error_message,
+    );
+
+    let diagnostic = Diagnostic::from(error);
     data.diagnostics.push(diagnostic);
     return Ok(None);
   }
