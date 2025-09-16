@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
@@ -8,12 +8,14 @@ use spack_loader_demo::{DemoLoaderPlugin, DemoLoaderPluginOpts, InjectType};
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawDemoLoaderPluginOpts {
+  #[napi(js_name = "base")]
+  pub base: Option<i64>,
   #[napi(js_name = "injectType")]
-  pub inject_type: String,
+  pub inject_type: Option<String>,
   #[napi(js_name = "esModule")]
-  pub es_module: bool,
+  pub es_module: Option<bool>,
   #[napi(js_name = "insert")]
-  pub insert: String,
+  pub insert: Option<String>,
   #[napi(js_name = "output")]
   pub output: String,
   #[napi(js_name = "attributes")]
@@ -22,13 +24,10 @@ pub struct RawDemoLoaderPluginOpts {
 
 impl From<RawDemoLoaderPluginOpts> for DemoLoaderPluginOpts {
   fn from(value: RawDemoLoaderPluginOpts) -> Self {
-    let inject_type = match value.inject_type.as_str() {
-      "style-tag" => InjectType::StyleTag,
-      _ => InjectType::StyleTag, // 默认值
-    };
     Self {
-      inject_type: inject_type,
-      es_module: false,
+      base: value.base,
+      inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
+      es_module: value.es_module,
       insert: value.insert,
       output: value.output,
       attributes: value.attributes,

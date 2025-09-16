@@ -140,7 +140,7 @@ async fn after_resolve(
     return Ok(None);
   }
 
-  let resource_str = &create_data.resource_resolve_data.resource;
+  let resource_str = create_data.resource_resolve_data.resource();
 
   let resource_path = Path::new(resource_str);
 
@@ -227,6 +227,7 @@ It may work fine on macOS/Windows, but will fail on Linux."#;
 
       let named_source = miette::NamedSource::new(issuer, source.to_string());
       let report = miette::Report::new(diagnostic.to_owned()).with_source_code(named_source);
+
       let diagnostic = Diagnostic::from(report);
       data.diagnostics.push(diagnostic);
       return Ok(None);
