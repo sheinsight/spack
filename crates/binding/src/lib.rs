@@ -16,6 +16,6 @@ pub enum CustomPluginNames {
   BundleAnalyzerPlugin,
   #[register(raws::raw_demo::binding)]
   DemoPlugin,
-  #[register(raws::raw_demo_loader::binding)]
+  #[register(raws::raw_style_loader::binding)]
   StyleLoaderPlugin,
 }
