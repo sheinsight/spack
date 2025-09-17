@@ -47,10 +47,16 @@ impl Loader<RunnerContext> for StyleLoader {
     STYLE_LOADER_IDENTIFIER.into()
   }
   async fn pitch(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    let source = "".to_string();
+    let sm = loader_context.take_source_map();
+    loader_context.finish_with((source, sm));
     Ok(())
   }
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    let source = "".to_string();
+    let sm = loader_context.take_source_map();
+    loader_context.finish_with((source, sm));
     Ok(())
   }
 }
