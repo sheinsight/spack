@@ -1,25 +1,15 @@
 use rspack_collections::Identifier;
-use rspack_core::{impl_runtime_module, Compilation, RuntimeGlobals, RuntimeModule};
+use rspack_core::{impl_runtime_module, Compilation, RuntimeModule};
 
 #[impl_runtime_module]
 #[derive(Debug)]
 pub struct StyleLoaderRuntimeModule {
   id: Identifier,
-  runtime_function: RuntimeGlobals,
-  runtime_handlers: RuntimeGlobals,
 }
 
 impl StyleLoaderRuntimeModule {
-  pub fn new(
-    child_type: &str,
-    runtime_function: RuntimeGlobals,
-    runtime_handlers: RuntimeGlobals,
-  ) -> Self {
-    Self::with_default(
-      Identifier::from(format!("webpack/runtime/link_tag/{child_type}")),
-      runtime_function,
-      runtime_handlers,
-    )
+  pub fn new() -> Self {
+    Self::with_default(Identifier::from(format!("webpack/runtime/link_tag")))
   }
 }
 
@@ -40,8 +30,8 @@ impl RuntimeModule for StyleLoaderRuntimeModule {
     let source = compilation.runtime_template.render(
       &self.id,
       Some(serde_json::json!({
-        "RUNTIME_HANDLERS":  &self.runtime_handlers.to_string(),
-        "RUNTIME_FUNCTION": &self.runtime_function.to_string(),
+        "RUNTIME_HANDLERS":  "&self.runtime_handlers.to_string()".to_string(),
+        "RUNTIME_FUNCTION": "&self.runtime_function.to_string()".to_string(),
       })),
     )?;
 

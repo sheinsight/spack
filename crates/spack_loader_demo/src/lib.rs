@@ -6,8 +6,10 @@ use std::{collections::HashMap, path::PathBuf};
 use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{
-  contextify, ApplyContext, BoxLoader, Context, Loader, LoaderContext, ModuleRuleUseLoader,
-  NormalModuleFactoryResolveLoader, Plugin, Resolver, RunnerContext,
+  contextify, ApplyContext, BoxLoader, ChunkUkey, Compilation,
+  CompilationAdditionalTreeRuntimeRequirements, Context, Loader, LoaderContext,
+  ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin, Resolver, RunnerContext,
+  RuntimeGlobals,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -20,6 +22,8 @@ mod virtual_modules;
 mod vp;
 
 pub use vp::VirtualModulesPlugin;
+
+use crate::runtime_module::StyleLoaderRuntimeModule;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RuntimeOptions {
@@ -569,6 +573,21 @@ impl Plugin for DemoLoaderPlugin {
   }
 
   fn clear_cache(&self, _id: rspack_core::CompilationId) {}
+}
+
+#[plugin_hook(CompilationAdditionalTreeRuntimeRequirements for DemoLoaderPlugin)]
+async fn additional_tree_runtime_requirements(
+  &self,
+  compilation: &mut Compilation,
+  chunk_ukey: &ChunkUkey, // ✅ 这里有 chunk_ukey
+  runtime_requirements: &mut RuntimeGlobals,
+) -> Result<()> {
+  // runtime_requirements.insert(RuntimeGlobals::MODULE);
+
+  // ✅ 这里可以添加 RuntimeModule
+  compilation.add_runtime_module(chunk_ukey, Box::new(StyleLoaderRuntimeModule::new()))?;
+
+  Ok(())
 }
 
 // impl Default for DemoLoaderPlugin {
