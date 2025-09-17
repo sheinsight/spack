@@ -23,11 +23,13 @@ rspack_collections            = "=0.5.4"
 rspack_core                   = "=0.5.4"
 rspack_error                  = "=0.5.4"
 rspack_fs                     = "=0.5.4"
+rspack_hash                   = "=0.5.4"
 rspack_hook                   = "=0.5.4"
 rspack_javascript_compiler    = "=0.5.4"
 rspack_loader_runner          = "=0.5.4"
 rspack_napi                   = "=0.5.4"
 rspack_paths                  = "=0.5.4"
+rspack_util                   = "=0.5.4"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "0.6.0", default-features = false }
 
@@ -71,6 +73,8 @@ serde_json = { version = "1.0.142" }
 
 strum        = { version = "0.27.1" }
 strum_macros = { version = "0.27.1" }
+
+tokio = { version = "1.42.0", default-features = false, features = ["rt", "rt-multi-thread"] }
 
 proc-macro2 = { version = "1.0.97" }
 quote       = { version = "1.0.40" }

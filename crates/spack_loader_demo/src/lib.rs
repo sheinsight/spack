@@ -1,29 +1,25 @@
 #![feature(let_chains)]
 
-use std::ops::Not;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 
 use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{
-  contextify, ApplyContext, BoxLoader, Context, Loader, LoaderContext, ModuleFactoryCreateData,
-  ModuleRuleUseLoader, ModuleType, NormalModuleFactoryBeforeResolve,
+  contextify, ApplyContext, BoxLoader, Context, Loader, LoaderContext, ModuleRuleUseLoader,
   NormalModuleFactoryResolveLoader, Plugin, Resolver, RunnerContext,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_loader_runner::{Identifiable, Identifier};
-use rspack_paths::Utf8PathBuf;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
+mod runtime_module;
 mod virtual_modules;
 mod vp;
 
 pub use vp::VirtualModulesPlugin;
-
-use crate::vp::VirtualModulesPluginOptions;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RuntimeOptions {
@@ -37,38 +33,6 @@ pub struct DemoLoader {
 }
 
 impl DemoLoader {
-  fn write_runtime_file(
-    &self,
-    context: &Context,
-    runtime_content: &str,
-    filename: &str,
-  ) -> Result<String> {
-    let dir = context.as_path().join(self.options.output.clone());
-    if dir.exists().not() {
-      std::fs::create_dir_all(&dir).unwrap();
-    }
-    let file = dir.join(filename);
-    if file.exists().not() {
-      std::fs::write(&file, runtime_content).unwrap();
-    }
-    Ok(file.to_string())
-  }
-
-  fn write_inject_styles_into_style_tag(&self, context: &Context) -> Result<String> {
-    let runtime_context = include_str!("./runtimes/injectStylesIntoStyleTag.js");
-    self.write_runtime_file(context, runtime_context, "injectStylesIntoStyleTag.js")
-  }
-
-  fn write_style_dom_api(&self, context: &Context) -> Result<String> {
-    let runtime_context = include_str!("./runtimes/styleDomAPI.js");
-    self.write_runtime_file(context, runtime_context, "styleDomAPI.js")
-  }
-
-  fn write_insert_style_element(&self, context: &Context) -> Result<String> {
-    let runtime_context = include_str!("./runtimes/insertStyleElement.js");
-    self.write_runtime_file(context, runtime_context, "insertStyleElement.js")
-  }
-
   fn get_import_insert_by_selector_code(
     &self,
     loader_context: &mut LoaderContext<RunnerContext>,
@@ -84,28 +48,14 @@ impl DemoLoader {
         }
       }
       _ => {
-        // let runtime_context = include_str!("./runtimes/insertBySelector.js");
-        // let abs = self.write_runtime_file(context, runtime_context, "insertBySelector.js")?;
-        // let p = contextify(context, &abs);
         if self.options.es_module.unwrap_or(false) {
-          // format!(r##"import insertFn from "{p}""##)
           format!(r##"import insertFn from "virtualModules:insertBySelector.js""##)
         } else {
-          // format!(r##"var insertFn = require("{p}")"##)
           format!(r##"var insertFn = require("virtualModules:insertBySelector.js")"##)
         }
       }
     };
     Ok(code)
-  }
-
-  fn write_set_attributes_with_attributes_and_nonce(&self, context: &Context) -> Result<String> {
-    let runtime_context = include_str!("./runtimes/setAttributesWithAttributesAndNonce.js");
-    self.write_runtime_file(
-      context,
-      runtime_context,
-      "setAttributesWithAttributesAndNonce.js",
-    )
   }
 
   fn get_import_link_api_code(
@@ -128,7 +78,6 @@ impl DemoLoader {
     &self,
     loader_context: &mut LoaderContext<RunnerContext>,
   ) -> Result<String> {
-    let context = &loader_context.context.options.context;
     let code = match &self.options.insert {
       Some(insert) if PathBuf::from(insert).is_absolute() => {
         "options.insert = insertFn;".to_string()
@@ -148,8 +97,6 @@ impl DemoLoader {
     loader_context: &mut LoaderContext<RunnerContext>,
   ) -> Result<String> {
     let context = &loader_context.context.options.context;
-
-    // let query = loader_context.resource_query().unwrap_or_default();
     let query = loader_context
       .resource_path()
       .map(|p| p.to_string())
@@ -163,26 +110,10 @@ impl DemoLoader {
     Ok(code)
   }
 
-  fn write_set_attributes_with_attributes(&self, context: &Context) -> Result<String> {
-    let runtime_context = include_str!("./runtimes/setAttributesWithAttributes.js");
-    self.write_runtime_file(context, runtime_context, "setAttributesWithAttributes.js")
-  }
-
-  fn write_set_attributes_without_attributes(&self, context: &Context) -> Result<String> {
-    let runtime_context = include_str!("./runtimes/setAttributesWithoutAttributes.js");
-    self.write_runtime_file(
-      context,
-      runtime_context,
-      "setAttributesWithoutAttributes.js",
-    )
-  }
-
   fn get_link_hmr_code(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<String> {
     if !loader_context.hot {
       return Ok(String::new());
     }
-
-    let context = &loader_context.context.options.context;
 
     let update_code = if self.options.es_module.unwrap_or(false) {
       "update(content);"
@@ -194,10 +125,10 @@ update(content);
 "##
     };
 
-    if let Some(query) = loader_context.resource_query() {
-      let module_path = contextify(context, &format!("!!{query}"));
-      let code = format!(
-        r##"
+    let module_path = self.get_resource_query(loader_context)?;
+
+    let code = format!(
+      r##"
 if (module.hot) {{
   module.hot.accept(
       {module_path},
@@ -209,10 +140,116 @@ if (module.hot) {{
     update();
   }});
 }}"##
-      );
-      return Ok(code);
+    );
+    return Ok(code);
+  }
+
+  fn get_resource_query(&self, loader_context: &LoaderContext<RunnerContext>) -> Result<String> {
+    if let Some(query) = loader_context.resource_query() {
+      return Ok(format!("!!{query}"));
     }
-    Ok(String::new())
+    Ok("".to_string())
+  }
+
+  fn get_style_hmr_code(&self, loader_context: &LoaderContext<RunnerContext>) -> Result<String> {
+    if !loader_context.hot {
+      return Ok(String::new());
+    }
+
+    let es_module = self.options.es_module.unwrap_or(false);
+
+    let module_path = self.get_resource_query(loader_context)?;
+
+    let code = format!(
+      r##"
+if (module.hot) {{
+if (!content.locals || module.hot.invalidate) {{
+  var isEqualLocals = {is_equal_locals};
+  var isNamedExport = {is_named_export};
+  var oldLocals = isNamedExport ? namedExport : content.locals;
+
+  module.hot.accept(
+    {module_path},
+    function () {{
+      {inner_code}
+    }}
+  );
+}}
+
+module.hot.dispose(function() {{
+  if (update) {{
+    update();
+  }}
+}})
+}}
+"##,
+      module_path = module_path,
+      is_equal_locals = r##"
+function isEqualLocals(a, b, isNamedExport) {
+if ((!a && b) || (a && !b)) {
+  return false;
+}
+
+let property;
+
+for (property in a) {
+  if (isNamedExport && property === "default") {
+    continue;
+  }
+
+  if (a[property] !== b[property]) {
+    return false;
+  }
+}
+
+for (property in b) {
+  if (isNamedExport && property === "default") {
+    continue;
+  }
+
+  if (!a[property]) {
+    return false;
+  }
+}
+
+return true;
+}"##,
+      is_named_export = if es_module {
+        "!content.locals"
+      } else {
+        "false"
+      },
+      inner_code = if es_module {
+        format!(
+          r##"
+if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
+  module.hot.invalidate();
+  return;
+}}
+oldLocals = isNamedExport ? namedExport : content.locals;
+if (update && refs > 0) {{
+  update(content);
+}}
+        "##
+        )
+      } else {
+        format!(
+          r##"
+content = require({module_path});
+content = content.__esModule ? content.default : content;
+if (!isEqualLocals(oldLocals, content.locals)) {{
+  module.hot.invalidate();
+  return;
+}}
+oldLocals = content.locals;
+if (update && refs > 0) {{
+  update(content);
+}}
+        "##
+        )
+      }
+    );
+    return Ok(code);
   }
 }
 
@@ -248,7 +285,11 @@ impl Loader<RunnerContext> for DemoLoader {
       _ => "selector",
     };
 
-    // let context = &loader_context.context.options.context;
+    let context = &loader_context.context.options.context;
+
+    let module_path = self.get_resource_query(loader_context)?;
+
+    let runtime_code = serde_json::to_string_pretty(&runtimeOptions).unwrap();
 
     let source = match inject_type {
       InjectType::LinkTag => {
@@ -264,11 +305,9 @@ impl Loader<RunnerContext> for DemoLoader {
           format!(r##"content = content.__esModule ? content.default : content;"##)
         };
 
-        let runtime_code = serde_json::to_string_pretty(&runtimeOptions).unwrap();
-
         let insert_option_code = self.get_insert_option_code(loader_context)?;
 
-        let export_code = if self.options.es_module.unwrap_or(false) {
+        let export_code = if es_module {
           format!(r##"export default {{}}"##)
         } else {
           format!(r##""##)
@@ -292,12 +331,158 @@ var update = API(content, options);
         "#
         )
       }
-      InjectType::StyleTag => todo!(),
-      InjectType::SingletonStyleTag => todo!(),
-      InjectType::AutoStyleTag => todo!(),
-      InjectType::LazyStyleTag => todo!(),
-      InjectType::LazySingletonStyleTag => todo!(),
-      InjectType::LazyAutoStyleTag => todo!(),
+
+      InjectType::LazyStyleTag
+      | InjectType::LazySingletonStyleTag
+      | InjectType::LazyAutoStyleTag => {
+        let is_singleton = match inject_type {
+          InjectType::LazySingletonStyleTag => true,
+          _ => false,
+        };
+
+        let is_auto = match inject_type {
+          InjectType::LazyAutoStyleTag => true,
+          _ => false,
+        };
+
+        let hmr_code = self.get_style_hmr_code(loader_context)?;
+
+        let api_code = if es_module {
+          format!(r##"import API from "virtualModules:injectStylesIntoStyleTag.js""##)
+        } else {
+          format!(r##"var API = require("virtualModules:injectStylesIntoStyleTag.js")"##)
+        };
+
+        let dom_api_code = match (is_auto, es_module, is_singleton) {
+          (true, true, _) => format!(
+            r##"
+import domAPI from "virtualModules:styleDomAPI.js";
+import domAPISingleton from "virtualModules:singletonStyleDomAPI.js";
+"##
+          ),
+          (true, false, _) => format!(
+            r##"
+var domAPI = require("virtualModules:styleDomAPI.js");
+var domAPISingleton = require("virtualModules:singletonStyleDomAPI.js");
+"##
+          ),
+          (false, true, true) => {
+            format!(r##"import domAPI from "virtualModules:singletonStyleDomAPI.js";"##)
+          }
+          (false, true, false) => {
+            format!(r##"import domAPI from "virtualModules:styleDomAPI.js";"##)
+          }
+          (false, false, true) => {
+            format!(r##"var domAPI = require("virtualModules:singletonStyleDomAPI.js");"##)
+          }
+          (false, false, false) => {
+            format!(r##"var domAPI = require("virtualModules:styleDomAPI.js");"##)
+          }
+        };
+
+        let insert_fn_code = match &self.options.insert {
+          Some(insert) if PathBuf::from(insert).is_absolute() => {
+            let insert_path = contextify(context, &insert);
+            loader_context
+              .build_dependencies
+              .insert(insert_path.clone().into());
+            format!(r##"import insertFn from "{insert_path}""##)
+          }
+          _ => {
+            format!(r##"import insertFn from "virtualModules:insertStyleElement.js""##)
+          }
+        };
+
+        let attributes_module = match (&self.options.attributes) {
+          Some(attributes) if attributes.contains_key("nonce") => {
+            "virtualModules:setAttributesWithAttributesAndNonce.js"
+          }
+          Some(_) => "virtualModules:setAttributesWithAttributes.js",
+          None => "virtualModules:setAttributesWithoutAttributes.js",
+        };
+
+        let set_attributes_code = if es_module {
+          format!(r##"import setAttributes from "{attributes_module}""##)
+        } else {
+          format!(r##"var setAttributes = require("{attributes_module}")"##)
+        };
+
+        let insert_style_element_code = if es_module {
+          format!(r##"import insertStyleElement from "virtualModules:insertStyleElement.js""##)
+        } else {
+          format!(r##"var insertStyleElement = require("virtualModules:insertStyleElement.js")"##)
+        };
+
+        // let style_tag_transform_fn_code = match (is_singleton) {};
+
+        // let content_code = if es_module {
+        //   format!(r##"import content from "virtualModules:injectStylesIntoStyleTag.js""##)
+        // } else {
+        //   format!(r##"var content = require("virtualModules:injectStylesIntoStyleTag.js")"##)
+        // };
+
+        let content_code = if es_module {
+          format!(r##"import content from "{module_path}""##)
+        } else {
+          format!(r##"var content = require("{module_path}")"##)
+        };
+
+        let is_old_ie_code = match (is_auto, es_module) {
+          (true, true) => format!(r##"import isOldIE from "virtualModules:isOldIE.js""##),
+          (true, false) => format!(r##"var isOldIE = require("virtualModules:isOldIE.js")"##),
+          _ => "".to_string(),
+        };
+
+        let locals = if es_module {
+          format!(
+            r##"
+if (content && content.locals) {{
+  exported.locals = content.locals;
+}}"##
+          )
+        } else {
+          format!(
+            r##"
+content = content.__esModule ? content.default : content;
+exported.locals = content.locals || {{}};
+"##
+          )
+        };
+
+        let transform_fn = if is_singleton {
+          format!(r##""##)
+        } else {
+          format!(r##"options.styleTagTransform = styleTagTransformFn"##)
+        };
+
+        format!(
+          r##"
+var exported = {{}};
+
+{api_code}
+{dom_api_code}
+{insert_fn_code}
+{set_attributes_code}
+{insert_style_element_code}
+{content_code}
+{is_old_ie_code}
+{locals}
+
+var refs = 0;
+var update;
+
+var options = {runtime_code};
+
+{transform_fn}
+options.setAttributes = setAttributes;
+
+{hmr_code}"##
+        )
+      }
+
+      InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
+        format!(r##""##)
+      }
     };
 
     let sm = loader_context.take_source_map();
@@ -305,79 +490,6 @@ var update = API(content, options);
     println!("---> {}", source);
 
     loader_context.finish_with((source, sm));
-
-    ////////
-
-    //     let resource_path = loader_context
-    //       .resource_path()
-    //       .map(|p| p.to_string())
-    //       .unwrap_or_default();
-
-    //     let root_context = &loader_context.context.options.context;
-
-    //     let abs = self.write_inject_styles_into_style_tag(&loader_context.context.options.context)?;
-
-    //     let abs_dom = self.write_style_dom_api(&loader_context.context.options.context)?;
-
-    //     let abs_insert = self.write_insert_style_element(&loader_context.context.options.context)?;
-
-    //     let abs_insert_by_selector =
-    //       self.write_insert_by_selector(&loader_context.context.options.context)?;
-
-    //     let relative_path = contextify(&resource_path, &abs);
-    //     let relative_path_insert = contextify(&resource_path, &abs_insert);
-    //     let relative_path_dom = contextify(&resource_path, &abs_dom);
-    //     let relative_path_insert_by_selector = contextify(&resource_path, &abs_insert_by_selector);
-
-    //     let css_resource_path = contextify(&resource_path, &resource_path);
-
-    //     println!(
-    //       "---> css_resource_path: {:#?} , {:?}",
-    //       css_resource_path, &resource_path
-    //     );
-
-    //     // 判断 insert 是否为绝对路径
-    //     let selector_fn_module = if PathBuf::from(&self.options.insert).is_absolute() {
-    //       let module_path = contextify(root_context, &self.options.insert);
-    //       loader_context
-    //         .build_dependencies
-    //         .insert(module_path.clone().into());
-    //       module_path
-    //     } else {
-    //       format!(r##"!{relative_path_insert_by_selector}"##)
-    //     };
-
-    //     let attributes_fn = match &self.options.attributes {
-    //       Some(attributes) if attributes.contains_key("nonce") => {
-    //         Self::write_set_attributes_with_attributes_and_nonce
-    //       }
-    //       Some(_) => Self::write_set_attributes_with_attributes,
-    //       None => Self::write_set_attributes_without_attributes,
-    //     };
-
-    //     let attributes = attributes_fn(self, &loader_context.context.options.context)?;
-
-    //     let opts = serde_json::to_string_pretty(&runtimeOptions).unwrap();
-
-    //     let source = format!(
-    //       r#"
-    // import API from "!{relative_path}";
-    // import domAPI from "!{relative_path_dom}";
-    // import insertStyleElement from "!{relative_path_insert}";
-    // import insertFn from "{selector_fn_module}";
-    // import setAttributes from "{attributes}";
-    // import content, * as namedExport from "!!{css_resource_path}";
-
-    // var options = {opts};
-
-    // options.setAttributes = setAttributes;
-    // options.insertStyleElement = insertStyleElement;
-    // var update = API(content, options);
-    //     "#,
-    //     );
-    // let sm = loader_context.take_source_map();
-    // println!("---> {}", source);
-    // loader_context.finish_with((source, sm));
 
     Ok(())
   }
@@ -448,52 +560,6 @@ impl Plugin for DemoLoaderPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
-    let mut modules = HashMap::new();
-    modules.insert(
-      "virtualModules:injectStylesIntoLinkTag.js".to_string(),
-      include_str!("./runtimes/injectStylesIntoLinkTag.js"),
-    );
-    modules.insert(
-      "virtualModules:injectStylesIntoStyleTag.js".to_string(),
-      include_str!("./runtimes/injectStylesIntoStyleTag.js"),
-    );
-    modules.insert(
-      "virtualModules:insertStyleElement.js".to_string(),
-      include_str!("./runtimes/insertStyleElement.js"),
-    );
-    modules.insert(
-      "virtualModules:insertBySelector.js".to_string(),
-      include_str!("./runtimes/insertBySelector.js"),
-    );
-    modules.insert(
-      "virtualModules:setAttributesWithAttributes.js".to_string(),
-      include_str!("./runtimes/setAttributesWithAttributes.js"),
-    );
-    modules.insert(
-      "virtualModules:setAttributesWithAttributesAndNonce.js".to_string(),
-      include_str!("./runtimes/setAttributesWithAttributesAndNonce.js"),
-    );
-    modules.insert(
-      "virtualModules:setAttributesWithoutAttributes.js".to_string(),
-      include_str!("./runtimes/setAttributesWithoutAttributes.js"),
-    );
-
-    let v = VirtualModulesPluginOptions {
-      modules: modules
-        .into_iter()
-        .map(|(k, v)| (k, v.to_string()))
-        .collect(),
-    };
-
-    let v = VirtualModulesPlugin::new(v);
-
-    v.apply(ctx)?;
-
-    ctx
-      .normal_module_factory_hooks
-      .before_resolve
-      .tap(before_resolve::new(self));
-
     ctx
       .normal_module_factory_hooks
       .resolve_loader
@@ -501,22 +567,29 @@ impl Plugin for DemoLoaderPlugin {
 
     Ok(())
   }
+
+  fn clear_cache(&self, _id: rspack_core::CompilationId) {}
 }
 
-#[plugin_hook(NormalModuleFactoryBeforeResolve for DemoLoaderPlugin)]
-async fn before_resolve(&self, data: &mut ModuleFactoryCreateData) -> Result<Option<bool>> {
-  if data.request.starts_with("virtualModules:") {
-    // 添加前导斜杠以匹配存储的路径
-    let virtual_path = format!("/{}", data.request);
-    println!(
-      "Resolving virtual module: {} -> {}",
-      data.request, virtual_path
-    );
-    data.request = virtual_path;
-    return Ok(Some(true));
-  }
-  Ok(None)
-}
+// impl Default for DemoLoaderPlugin {
+//   fn default() -> Self {
+//     Self::with_default(Identifier::from("webpack/runtime/css_loading"), None)
+//   }
+// }
+
+// #[plugin_hook(CompilationRuntimeRequirementInTree for DemoLoaderPlugin)]
+// async fn runtime_requirements_in_tree(
+//   &self,
+//   compilation: &mut Compilation,
+//   chunk_ukey: &ChunkUkey,
+//   _all_runtime_requirements: &RuntimeGlobals,
+//   runtime_requirements: &RuntimeGlobals,
+//   runtime_requirements_mut: &mut RuntimeGlobals,
+// ) -> Result<Option<()>> {
+//   compilation.add_runtime_module(chunk_ukey, Box::<StyleLoaderRuntimeModule>::default())?;
+
+//   Ok(None)
+// }
 
 #[plugin_hook(NormalModuleFactoryResolveLoader for DemoLoaderPlugin)]
 pub(crate) async fn resolve_loader(
