@@ -14,8 +14,8 @@ pub enum CustomPluginNames {
   CaseSensitivePathsPlugin,
   #[register(raws::raw_bundle_analyzer::binding)]
   BundleAnalyzerPlugin,
-  #[register(raws::raw_demo::binding)]
-  DemoPlugin,
+  // #[register(raws::raw_demo::binding)]
+  // DemoPlugin,
   #[register(raws::raw_style_loader::binding)]
   StyleLoaderPlugin,
 }

@@ -258,11 +258,10 @@ dependencies = [
  "rspack_napi",
  "rustc-hash",
  "serde",
- "spack_loader_demo",
+ "spack_loader_style",
  "spack_macros",
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
- "spack_plugin_demo",
  "spack_plugin_duplicate_dependency",
  "swc_core 38.0.0",
 ]
@@ -5245,7 +5244,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9676b89cd56310a87b93dec47b11af744f34d5fc9f367b829474eec0a891350d"
 
 [[package]]
-name = "spack_loader_demo"
+name = "spack_loader_style"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -5330,7 +5329,7 @@ dependencies = [
  "rspack_core",
  "rspack_error",
  "rspack_hook",
- "spack_loader_demo",
+ "spack_loader_style",
  "tracing",
  "tracing-subscriber",
 ]

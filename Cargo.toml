@@ -58,7 +58,7 @@ package_json_parser = { version = "0.0.15" }
 up_finder           = { version = "0.0.5" }
 
 binding                           = { path = "crates/binding" }
-spack_loader_demo                 = { path = "crates/spack_loader_demo" }
+spack_loader_style                = { path = "crates/spack_loader_style" }
 spack_macros                      = { path = "crates/spack_macros" }
 spack_plugin_bundle_analyzer      = { path = "crates/spack_plugin_bundle_analyzer" }
 spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
@@ -67,6 +67,8 @@ spack_plugin_duplicate_dependency = { path = "crates/spack_plugin_duplicate_depe
 
 tracing            = { version = "0.1.41", features = ["max_level_trace", "release_max_level_trace"] }
 tracing-subscriber = { version = "0.3.19" }
+
+# lightningcss = { version = "=1.0.0-alpha.67", default-features = false, features = ["serde"] }
 
 serde      = { version = "1.0.210" }
 serde_json = { version = "1.0.142" }

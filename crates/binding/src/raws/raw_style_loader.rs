@@ -3,7 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
-use spack_loader_demo::{InjectType, StyleLoaderOpts, StyleLoaderPlugin};
+use spack_loader_style::{InjectType, StyleLoaderOpts, StyleLoaderPlugin};
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]

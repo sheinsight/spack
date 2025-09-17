@@ -15,10 +15,10 @@ test       = false
 plugin = ["rspack_binding_builder/plugin"]
 
 [dependencies]
+spack_loader_style                = { workspace = true }
 spack_macros                      = { workspace = true }
 spack_plugin_bundle_analyzer      = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
-spack_plugin_demo                 = { workspace = true }
 spack_plugin_duplicate_dependency = { workspace = true }
 
 # Enable SWC plugin feature for targets that support it
@@ -32,7 +32,7 @@ rspack_core                = { workspace = true }
 rspack_error               = { workspace = true }
 rspack_javascript_compiler = { workspace = true }
 rspack_napi                = { workspace = true }
-spack_loader_demo          = { workspace = true }
+
 
 napi                = { workspace = true }
 napi-build          = { workspace = true }
