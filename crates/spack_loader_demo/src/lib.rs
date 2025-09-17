@@ -569,6 +569,11 @@ impl Plugin for DemoLoaderPlugin {
       .resolve_loader
       .tap(resolve_loader::new(self));
 
+    ctx
+      .compilation_hooks
+      .additional_tree_runtime_requirements
+      .tap(additional_tree_runtime_requirements::new(self));
+
     Ok(())
   }
 
@@ -580,7 +585,7 @@ async fn additional_tree_runtime_requirements(
   &self,
   compilation: &mut Compilation,
   chunk_ukey: &ChunkUkey, // ✅ 这里有 chunk_ukey
-  runtime_requirements: &mut RuntimeGlobals,
+  _runtime_requirements: &mut RuntimeGlobals,
 ) -> Result<()> {
   // runtime_requirements.insert(RuntimeGlobals::MODULE);
 
