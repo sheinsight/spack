@@ -2,7 +2,7 @@ import { test, expect } from 'vitest';
 import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
-import type { RawDemoLoaderPluginOpts } from '@shined/spack-binding';
+import type { RawStyleLoaderPluginOpts } from '@shined/spack-binding';
 
 let virtualModulesPlugin = new experiments.VirtualModulesPlugin({
   'virtualModules:injectStylesIntoLinkTag.js': `
@@ -250,13 +250,13 @@ module.exports = setAttributesWithoutAttributes;
   'virtualModules:isOldIE.js': ``,
 });
 
-binding.registerDemoLoaderPlugin();
-const CaseDemoLoaderPluginOpts = experiments.createNativePlugin<
-  [RawDemoLoaderPluginOpts],
-  RawDemoLoaderPluginOpts
->(binding.CustomPluginNames.DemoLoaderPlugin, (opt) => ({ ...opt }));
+binding.registerStyleLoaderPlugin();
+const StyleLoaderPluginOpts = experiments.createNativePlugin<
+  [RawStyleLoaderPluginOpts],
+  RawStyleLoaderPluginOpts
+>(binding.CustomPluginNames.StyleLoaderPlugin, (opt) => ({ ...opt }));
 
-const plugin = new CaseDemoLoaderPluginOpts({
+const plugin = new StyleLoaderPluginOpts({
   output: './src/runtimes',
   esModule: true,
   injectType: 'lazyStyleTag',
