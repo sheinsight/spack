@@ -57,9 +57,14 @@ async fn additional_tree_runtime_requirements(
   _runtime_requirements: &mut RuntimeGlobals,
 ) -> Result<()> {
   // runtime_requirements.insert(RuntimeGlobals::MODULE);
-
   // ✅ 这里可以添加 RuntimeModule
-  compilation.add_runtime_module(chunk_ukey, Box::new(StyleLoaderRuntimeModule::new()))?;
+
+  let es_module = self.options.es_module.unwrap_or(false);
+
+  compilation.add_runtime_module(
+    chunk_ukey,
+    Box::new(StyleLoaderRuntimeModule::new(Some(*chunk_ukey), es_module)),
+  )?;
 
   Ok(())
 }
