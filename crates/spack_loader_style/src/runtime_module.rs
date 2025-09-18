@@ -1,5 +1,7 @@
+use rspack_cacheable::cacheable;
 use rspack_collections::Identifier;
 use rspack_core::{impl_runtime_module, ChunkUkey, Compilation, RuntimeModule};
+use strum_macros::{Display, EnumString};
 
 #[impl_runtime_module]
 #[derive(Debug)]
@@ -9,14 +11,28 @@ pub struct StyleLoaderRuntimeModule {
   es_module: bool,
 }
 
+// #[cacheable]
+// #[derive(Debug, Clone, EnumString, Display)]
+// pub enum StyleLoaderTemplateType {
+//   LinkTag,
+//   LinkHmrCode,
+// }
+
 impl StyleLoaderRuntimeModule {
   pub fn new(chunk: Option<ChunkUkey>, es_module: bool) -> Self {
     Self::with_default(
-      Identifier::from(format!("webpack/runtime/link_tag")),
+      Identifier::from(format!("style_loader/runtime")),
       chunk,
       es_module,
     )
   }
+
+  // fn get_template_id(&self, mode: &StyleLoaderTemplateType) -> String {
+  //   match mode {
+  //     StyleLoaderTemplateType::LinkTag => format!("{}_{}", &self.id, mode.to_string()),
+  //     StyleLoaderTemplateType::LinkHmrCode => format!("{}_{}", &self.id, mode.to_string()),
+  //   }
+  // }
 }
 
 #[async_trait::async_trait]
@@ -31,25 +47,32 @@ impl RuntimeModule for StyleLoaderRuntimeModule {
 
   fn template(&self) -> Vec<(String, String)> {
     vec![
-      // (
-      //   self.id.to_string(),
-      //   include_str!("runtime/link_tag.ejs").to_string(),
-      // ),
       (
-        self.id.to_string(),
+        "link_tag".to_string(),
+        include_str!("runtime/link_tag.ejs").to_string(),
+      ),
+      (
+        "link_hmr_code".to_string(),
         include_str!("runtime/link_hmr_code.ejs").to_string(),
       ),
     ]
   }
 
   async fn generate(&self, compilation: &Compilation) -> rspack_error::Result<String> {
-    let source = compilation.runtime_template.render(
-      &self.id,
-      Some(serde_json::json!({
-        "esModule":  self.es_module
-      })),
-    )?;
+    let template_params = serde_json::json!({
+      "esModule":  self.es_module
+    });
 
-    Ok(source)
+    let mut sources = Vec::new();
+
+    for (template_id, _) in self.template() {
+      let source = compilation
+        .runtime_template
+        .render(&template_id, Some(template_params.clone()))?;
+
+      sources.push(source);
+    }
+
+    Ok(sources.join("\n"))
   }
 }

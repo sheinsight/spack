@@ -8,5 +8,8 @@
   "license": "ISC",
   "dependencies": {
     "@shined/spack-binding": "workspace:*"
+  },
+  "devDependencies": {
+    "css-loader": "catalog:"
   }
 }

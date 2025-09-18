@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(trivial_bounds)]
 
 mod loader;
 mod plugin;

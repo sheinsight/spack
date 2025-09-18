@@ -47,22 +47,56 @@ impl Loader<RunnerContext> for StyleLoader {
     STYLE_LOADER_IDENTIFIER.into()
   }
   async fn pitch(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
-    let source = "".to_string();
+    // let source = "".to_string();
+    let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
+    let request = loader_context.request();
+    println!(
+      r##"
+  ======================= pitch ========================
+
+  request:
+  {:#?}
+  source:
+  {:#?}
+  sm:
+  {:#?}
+  ======================= pitch ========================
+  "##,
+      request, source, sm
+    );
     loader_context.finish_with((source, sm));
     Ok(())
   }
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
-    let source = "".to_string();
+    // let source = "".to_string();
+    let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
+    let request = loader_context.request();
+    println!(
+      r##"
+======================= run ========================
+
+request: 
+{:#?}
+source:
+{:#?}
+sm:
+{:#?}
+======================= run ========================
+"##,
+      request,
+      source.clone(),
+      sm.clone()
+    );
     loader_context.finish_with((source, sm));
     Ok(())
   }
 }
 
-impl Identifiable for StyleLoader {
-  fn identifier(&self) -> Identifier {
-    STYLE_LOADER_IDENTIFIER.into()
-  }
-}
+// impl Identifiable for StyleLoader {
+//   fn identifier(&self) -> Identifier {
+//     STYLE_LOADER_IDENTIFIER.into()
+//   }
+// }

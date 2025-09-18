@@ -11,6 +11,7 @@
     "npmjs",
     "pathdiff",
     "premajor",
+    "rkyv",
     "rustc",
     "serde",
     "softprops",

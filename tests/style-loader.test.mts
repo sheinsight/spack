@@ -258,7 +258,7 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 
 const plugin = new StyleLoaderPluginOpts({
   output: './src/runtimes',
-  esModule: false,
+  esModule: true,
   injectType: 'lazyStyleTag',
 });
 
