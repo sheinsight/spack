@@ -66,7 +66,6 @@ impl Loader<RunnerContext> for StyleLoader {
     let request = contextify(context, request.as_str());
 
     let ctx = crate::hello::LinkHmrCodeTemplate {
-      name: "request".to_string(),
       modulePath: format!("!!{}", request),
       esModule: true,
     };
