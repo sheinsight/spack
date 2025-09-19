@@ -9,6 +9,8 @@ use rspack_loader_runner::Identifiable;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
+use crate::template;
+
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct StyleLoaderOpts {
@@ -49,13 +51,16 @@ impl Loader<RunnerContext> for StyleLoader {
   async fn pitch(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     // let source = "".to_string();
 
-    if let Some(data) = loader_context.additional_data() {
-      data.insert("value");
-    }
-
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
-    let request = loader_context.request();
+    let request = loader_context.resource_query();
+
+    let ctx = template::LinkHmrCodeTemplate {
+      name: request.unwrap_or_default().to_string(),
+    };
+
+    println!("{}", ctx.render_once().unwrap());
+
     println!(
       r##"
   ======================= pitch ========================
