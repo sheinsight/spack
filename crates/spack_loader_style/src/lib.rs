@@ -6,7 +6,7 @@ mod loader;
 mod plugin;
 mod runtime_module;
 
-pub mod temp;
+pub mod hello;
 // mod virtual_modules;
 // mod vp;
 

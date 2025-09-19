@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
-use rspack_core::{Loader, LoaderContext, RunnerContext};
+use rspack_core::{Loader, LoaderContext, RunnerContext, contextify};
 use rspack_error::Result;
-use rspack_loader_runner::Identifiable;
+use rspack_loader_runner::{DisplayWithSuffix, Identifiable};
+use sailfish::TemplateSimple;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
@@ -53,32 +54,31 @@ impl Loader<RunnerContext> for StyleLoader {
 
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
-    let request = loader_context.resource_query();
 
-    let ctx = crate::temp::LinkHmrCodeTemplate {
-      name: request.unwrap_or_default().to_string(),
+    let resource = loader_context.resource();
+
+    let request = loader_context.remaining_request();
+
+    let request = request.display_with_suffix(resource);
+
+    let context = &loader_context.context.options.context;
+
+    let request = contextify(context, request.as_str());
+
+    let ctx = crate::hello::LinkHmrCodeTemplate {
+      name: "request".to_string(),
+      modulePath: format!("!!{}", request),
+      esModule: true,
     };
 
-    println!("{}", sailfish::TemplateSimple::render_once(&ctx).unwrap());
+    println!("{}", ctx.render_once().unwrap());
 
     println!(
       r##"
   ======================= pitch ========================
-
-  request:
-  
-  {:#?}
-  
-  
-  
-  source:
-  
-  {:#?}
-  
-  
-  sm:
-  
-  {:#?}
+  request: {:#?}
+  source : {:#?}
+  sourcem: {:#?}
   ======================= pitch ========================
   "##,
       request,
@@ -93,7 +93,7 @@ impl Loader<RunnerContext> for StyleLoader {
     // let source = "".to_string();
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
-    let request = loader_context.request();
+    let request = loader_context.resource_query();
     println!(
       r##"
 ======================= run ========================

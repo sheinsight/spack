@@ -1,8 +1,8 @@
 if (module.hot) {
   module.hot.accept(
-    "<%=modulePath %>",
+    <%= modulePath %>,
     function() {
-      <% if (esModule) { %>
+      <% if esModule { %>
         update(content);
       <% } else { %>
         content = require(<%= modulePath %>);
@@ -15,5 +15,3 @@ if (module.hot) {
     update();
   });
 }
-
-
