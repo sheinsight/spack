@@ -9,7 +9,7 @@ use rspack_loader_runner::Identifiable;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
-use crate::template;
+// use crate::template;
 
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
@@ -55,11 +55,11 @@ impl Loader<RunnerContext> for StyleLoader {
     let sm = loader_context.take_source_map();
     let request = loader_context.resource_query();
 
-    let ctx = template::LinkHmrCodeTemplate {
+    let ctx = crate::temp::LinkHmrCodeTemplate {
       name: request.unwrap_or_default().to_string(),
     };
 
-    println!("{}", ctx.render_once().unwrap());
+    println!("{}", sailfish::TemplateSimple::render_once(&ctx).unwrap());
 
     println!(
       r##"
