@@ -48,6 +48,11 @@ impl Loader<RunnerContext> for StyleLoader {
   }
   async fn pitch(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     // let source = "".to_string();
+
+    if let Some(data) = loader_context.additional_data() {
+      data.insert("value");
+    }
+
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
     let request = loader_context.request();
@@ -56,14 +61,24 @@ impl Loader<RunnerContext> for StyleLoader {
   ======================= pitch ========================
 
   request:
+  
   {:#?}
+  
+  
+  
   source:
+  
   {:#?}
+  
+  
   sm:
+  
   {:#?}
   ======================= pitch ========================
   "##,
-      request, source, sm
+      request,
+      source.clone().map(|s| s.try_into_string()),
+      sm.clone()
     );
     loader_context.finish_with((source, sm));
     Ok(())
@@ -79,16 +94,23 @@ impl Loader<RunnerContext> for StyleLoader {
 ======================= run ========================
 
 request: 
+
 {:#?}
+
+
 source:
+
 {:#?}
+
+
 sm:
+
 {:#?}
 ======================= run ========================
 "##,
       request,
-      source.clone(),
-      sm.clone()
+      source.clone().map(|s| s.try_into_string()),
+      sm.clone(),
     );
     loader_context.finish_with((source, sm));
     Ok(())
