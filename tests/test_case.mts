@@ -30,7 +30,7 @@ export async function runCompiler(config: TestCaseConfig): Promise<StatsError[]>
   // 将插件添加到 fixture 配置中
   const mergedConfig: Configuration = {
     ...fixtureConfig,
-    plugins: [...config.plugins, ...(fixtureConfig.plugins || [])],
+    plugins: [...(fixtureConfig.plugins || []), ...config.plugins],
   };
 
   const compiler = rspack(mergedConfig);
