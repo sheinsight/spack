@@ -27,10 +27,12 @@ export async function runCompiler(config: TestCaseConfig): Promise<StatsError[]>
   const fixturePath = path.resolve(__dirname, `fixtures/${config.fixture}`);
   const fixtureConfig = await loadFixtureConfig(fixturePath);
 
+  const allPlugins = [...(fixtureConfig.plugins || []), ...config.plugins];
+
   // 将插件添加到 fixture 配置中
   const mergedConfig: Configuration = {
     ...fixtureConfig,
-    plugins: [...(fixtureConfig.plugins || []), ...config.plugins],
+    plugins: allPlugins,
   };
 
   const compiler = rspack(mergedConfig);

@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { experiments, rspack } from '@rspack/core';
+import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
 import type { RawStyleLoaderPluginOpts } from '@shined/spack-binding';
