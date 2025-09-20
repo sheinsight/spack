@@ -43,4 +43,4 @@ strum_macros = { workspace = true }
 ustr = { workspace = true }
 
 [package.metadata.sailfish]
-template_dir = "src/templates"
+template_dir = "templates"

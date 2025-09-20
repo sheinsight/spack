@@ -1,6 +1,6 @@
 use rspack_cacheable::cacheable;
 use rspack_collections::Identifier;
-use rspack_core::{impl_runtime_module, ChunkUkey, Compilation, RuntimeModule};
+use rspack_core::{ChunkUkey, Compilation, RuntimeModule, impl_runtime_module};
 use strum_macros::{Display, EnumString};
 
 #[impl_runtime_module]
@@ -47,14 +47,14 @@ impl RuntimeModule for StyleLoaderRuntimeModule {
 
   fn template(&self) -> Vec<(String, String)> {
     vec![
-      (
-        "link_tag".to_string(),
-        include_str!("runtime/link_tag.ejs").to_string(),
-      ),
-      (
-        "link_hmr_code".to_string(),
-        include_str!("runtime/link_hmr_code.ejs").to_string(),
-      ),
+      // (
+      //   "link_tag".to_string(),
+      //   include_str!("runtime/link_tag.ejs").to_string(),
+      // ),
+      // (
+      //   "link_hmr_code".to_string(),
+      //   include_str!("runtime/link_hmr_code.ejs").to_string(),
+      // ),
     ]
   }
 

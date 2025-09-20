@@ -1,10 +1,12 @@
 import { test, expect } from 'vitest';
-import { experiments } from '@rspack/core';
+import { experiments, rspack } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
 import type { RawStyleLoaderPluginOpts } from '@shined/spack-binding';
 
-let virtualModulesPlugin = new experiments.VirtualModulesPlugin({
+rspack.experiments.VirtualModulesPlugin;
+
+let virtualModulesPlugin = new rspack.experiments.VirtualModulesPlugin({
   'virtualModules:injectStylesIntoLinkTag.js': `
 /* global document, __webpack_nonce__ */
 module.exports = (url, options) => {
@@ -258,14 +260,18 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 
 const plugin = new StyleLoaderPluginOpts({
   output: './src/runtimes',
-  esModule: true,
-  injectType: 'lazyStyleTag',
+  esModule: false,
+  // injectType: 'styleTag',
+  attributes: {
+    nonce: '123',
+    custom: '456',
+  },
 });
 
 test('test style-loader', async () => {
   const result = await runCompiler({
     fixture: 'style-loader',
-    plugins: [plugin, virtualModulesPlugin],
+    plugins: [virtualModulesPlugin, plugin],
   });
 
   console.log(result);
