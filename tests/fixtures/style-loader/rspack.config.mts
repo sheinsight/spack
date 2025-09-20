@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { rspack } from '@rspack/core';
+import { Compiler, rspack } from '@rspack/core';
 
 let vmPlugin = new rspack.experiments.VirtualModulesPlugin();
 
@@ -16,18 +16,39 @@ export default {
   plugins: [
     vmPlugin,
     {
-      apply: (compiler) => {
+      apply: (compiler: Compiler) => {
         compiler.hooks.thisCompilation.tap('thisCompilation', () => {
-          vmPlugin.writeModule('@/vm/injectStylesIntoLinkTag.js', ``);
-          vmPlugin.writeModule('@/vm/injectStylesIntoStyleTag.js', ``);
-          vmPlugin.writeModule('@/vm/insertStyleElement.js', ``);
-          vmPlugin.writeModule('@/vm/insertBySelector.js', ``);
-          vmPlugin.writeModule('@/vm/setAttributesWithAttributes.js', ``);
-          vmPlugin.writeModule('@/vm/setAttributesWithAttributesAndNonce.js', ``);
-          vmPlugin.writeModule('@/vm/setAttributesWithoutAttributes.js', ``);
-          vmPlugin.writeModule('@/vm/styleDomAPI.js', ``);
-          vmPlugin.writeModule('@/vm/singletonStyleDomAPI.js', ``);
-          vmPlugin.writeModule('@/vm/isOldIE.js', ``);
+          vmPlugin.writeModule(
+            '@/vm/injectStylesIntoLinkTag.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule(
+            '@/vm/injectStylesIntoStyleTag.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule(
+            '@/vm/insertStyleElement.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule('@/vm/insertBySelector.js', `export default { version: "1.0.0" };`);
+          vmPlugin.writeModule(
+            '@/vm/setAttributesWithAttributes.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule(
+            '@/vm/setAttributesWithAttributesAndNonce.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule(
+            '@/vm/setAttributesWithoutAttributes.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule('@/vm/styleDomAPI.js', `export default { version: "1.0.0" };`);
+          vmPlugin.writeModule(
+            '@/vm/singletonStyleDomAPI.js',
+            `export default { version: "1.0.0" };`
+          );
+          vmPlugin.writeModule('@/vm/isOldIE.js', `export default { version: "1.0.0" };`);
         });
       },
     },
