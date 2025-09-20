@@ -74,13 +74,13 @@ if (module.hot) {{
     if es_module {
       format!(
         r##"
-import API from "virtualModules:injectStylesIntoLinkTag.js";
+import API from "@/vm/injectStylesIntoLinkTag.js";
 "##
       )
     } else {
       format!(
         r##"
-var API = require("virtualModules:injectStylesIntoLinkTag.js");
+var API = require("@/vm/injectStylesIntoLinkTag.js");
 "##
       )
     }
@@ -107,9 +107,9 @@ var API = require("virtualModules:injectStylesIntoLinkTag.js");
       }
       Some(_) => {
         if es_module {
-          format!(r##"import insertFn from "!virtualModules:insertBySelector.js";"##)
+          format!(r##"import insertFn from "!@/vm/insertBySelector.js";"##)
         } else {
-          format!(r##"var insertFn = require("!virtualModules:insertBySelector.js");"##)
+          format!(r##"var insertFn = require("!@/vm/insertBySelector.js");"##)
         }
       }
       None => "".to_string(),
@@ -142,9 +142,9 @@ content = content.__esModule ? content.default : content;"##
 
   pub fn get_import_style_api_code(&self, es_module: bool) -> String {
     if es_module {
-      format!(r##"import API from "!virtualModules:injectStylesIntoStyleTag.js";"##)
+      format!(r##"import API from "!@/vm/injectStylesIntoStyleTag.js";"##)
     } else {
-      format!(r##"var API = require("!virtualModules:injectStylesIntoStyleTag.js");"##)
+      format!(r##"var API = require("!@/vm/injectStylesIntoStyleTag.js");"##)
     }
   }
 
@@ -302,9 +302,9 @@ if (module.hot) {{
 
   pub fn get_import_insert_style_element_code(&self, es_module: bool) -> String {
     if es_module {
-      format!(r##"import insertStyleElement from "!virtualModules:insertStyleElement.js";"##)
+      format!(r##"import insertStyleElement from "!@/vm/insertStyleElement.js";"##)
     } else {
-      format!(r##"var insertStyleElement = require("!virtualModules:insertStyleElement.js");"##)
+      format!(r##"var insertStyleElement = require("!@/vm/insertStyleElement.js");"##)
     }
   }
 
@@ -316,9 +316,9 @@ if (module.hot) {{
   pub fn get_import_is_old_ie_code(&self, es_module: bool, is_auto: bool) -> String {
     if is_auto {
       if es_module {
-        format!(r##"import isOldIE from "!virtualModules:isOldIE.js";"##)
+        format!(r##"import isOldIE from "!@/vm/isOldIE.js";"##)
       } else {
-        format!(r##"var isOldIE = require("!virtualModules:isOldIE.js");"##)
+        format!(r##"var isOldIE = require("!@/vm/isOldIE.js");"##)
       }
     } else {
       format!("")
@@ -353,12 +353,12 @@ if (module.hot) {{
     let es_module = loader_options.es_module.unwrap_or(false);
     let modules = match &loader_options.attributes {
       Some(attributes) if attributes.contains_key("nonce") => {
-        format!(r##"!virtualModules:setAttributesWithAttributesAndNonce"##)
+        format!(r##"!@/vm/setAttributesWithAttributesAndNonce"##)
       }
       Some(_) => {
-        format!(r##"!virtualModules:setAttributesWithAttributes"##)
+        format!(r##"!@/vm/setAttributesWithAttributes"##)
       }
-      None => format!(r##"!virtualModules:setAttributesWithoutAttributes"##),
+      None => format!(r##"!@/vm/setAttributesWithoutAttributes"##),
     };
 
     if es_module {
@@ -418,29 +418,29 @@ impl InjectType {
       if es_module {
         return format!(
           r##"
-        import domAPI from "!virtualModules:styleDomAPI.js";
-        import domAPISingleton from "!virtualModules:singletonStyleDomAPI.js";"##
+        import domAPI from "!@/vm/styleDomAPI.js";
+        import domAPISingleton from "!@/vm/singletonStyleDomAPI.js";"##
         );
       } else {
         return format!(
           r##"
-        var domAPI = require("!virtualModules:styleDomAPI.js");
-        var domAPISingleton = require("!virtualModules:singletonStyleDomAPI.js");"##
+        var domAPI = require("!@/vm/styleDomAPI.js");
+        var domAPISingleton = require("!@/vm/singletonStyleDomAPI.js");"##
         );
       }
     }
 
     if es_module {
       if is_singleton {
-        return format!(r##"import domAPI from "!virtualModules:singletonStyleDomAPI.js";"##);
+        return format!(r##"import domAPI from "!@/vm/singletonStyleDomAPI.js";"##);
       } else {
-        return format!(r##"import domAPI from "!virtualModules:styleDomAPI.js";"##);
+        return format!(r##"import domAPI from "!@/vm/styleDomAPI.js";"##);
       }
     } else {
       if is_singleton {
-        return format!(r##"var domAPI = require("!virtualModules:singletonStyleDomAPI.js");"##);
+        return format!(r##"var domAPI = require("!@/vm/singletonStyleDomAPI.js");"##);
       } else {
-        return format!(r##"var domAPI = require("!virtualModules:styleDomAPI.js");"##);
+        return format!(r##"var domAPI = require("!@/vm/styleDomAPI.js");"##);
       }
     }
   }

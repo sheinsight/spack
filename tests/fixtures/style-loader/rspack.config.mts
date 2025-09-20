@@ -2,7 +2,7 @@ import path from 'node:path';
 import { experiments } from '@rspack/core';
 
 let vmPlugin = new experiments.VirtualModulesPlugin({
-  'virtualModules:injectStylesIntoLinkTag.js': `
+  '@/vm/injectStylesIntoLinkTag.js': `
 /* global document, __webpack_nonce__ */
 module.exports = (url, options) => {
   if (typeof document === 'undefined') {
@@ -40,7 +40,7 @@ module.exports = (url, options) => {
   };
 };  
 `,
-  'virtualModules:injectStylesIntoStyleTag.js': `
+  '@/vm/injectStylesIntoStyleTag.js': `
 const stylesInDOM = [];
 
 function getIndexByIdentifier(identifier) {
@@ -158,7 +158,7 @@ module.exports = (list, options) => {
 };
 
 `,
-  'virtualModules:insertStyleElement.js': `
+  '@/vm/insertStyleElement.js': `
 /* global document */
 /* istanbul ignore next  */
 function insertStyleElement(options) {
@@ -173,7 +173,7 @@ function insertStyleElement(options) {
 module.exports = insertStyleElement;
   
 `,
-  'virtualModules:insertBySelector.js': `
+  '@/vm/insertBySelector.js': `
 /* global document, window */
 /* eslint-disable unicorn/prefer-global-this */
 
@@ -221,7 +221,7 @@ function insertBySelector(insert, style) {
 module.exports = insertBySelector;
   
 `,
-  'virtualModules:setAttributesWithAttributes.js': `
+  '@/vm/setAttributesWithAttributes.js': `
 /* global __webpack_nonce__ */
 /* istanbul ignore next  */
 function setAttributesWithoutAttributes(styleElement, attributes) {
@@ -240,11 +240,11 @@ function setAttributesWithoutAttributes(styleElement, attributes) {
 module.exports = setAttributesWithoutAttributes;
   
 `,
-  'virtualModules:setAttributesWithAttributesAndNonce.js': ``,
-  'virtualModules:setAttributesWithoutAttributes.js': ``,
-  'virtualModules:styleDomAPI.js': ``,
-  'virtualModules:singletonStyleDomAPI.js': ``,
-  'virtualModules:isOldIE.js': ``,
+  '@/vm/setAttributesWithAttributesAndNonce.js': ``,
+  '@/vm/setAttributesWithoutAttributes.js': ``,
+  '@/vm/styleDomAPI.js': ``,
+  '@/vm/singletonStyleDomAPI.js': ``,
+  '@/vm/isOldIE.js': ``,
 });
 
 export default {
@@ -264,8 +264,8 @@ export default {
       {
         test: /\.css$/,
         exclude: /node_modules/,
-        // use: ['builtin:style-loader', 'css-loader'],
-        use: ['builtin:style-loader'],
+        use: ['builtin:style-loader', 'css-loader'],
+        // use: ['builtin:style-loader'],
       },
     ],
   },
