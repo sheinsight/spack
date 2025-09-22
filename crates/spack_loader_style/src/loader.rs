@@ -338,12 +338,12 @@ if (module.hot) {{
     let es_module = loader_options.es_module.unwrap_or(false);
     let modules = match &loader_options.attributes {
       Some(attributes) if attributes.contains_key("nonce") => {
-        format!(r##"!@/.lego/runtime/setAttributesWithAttributesAndNonce"##)
+        format!(r##"!@/.lego/runtime/setAttributesWithAttributesAndNonce.js"##)
       }
       Some(_) => {
-        format!(r##"!@/.lego/runtime/setAttributesWithAttributes"##)
+        format!(r##"!@/.lego/runtime/setAttributesWithAttributes.js"##)
       }
-      None => format!(r##"!@/.lego/runtime/setAttributesWithoutAttributes"##),
+      None => format!(r##"!@/.lego/runtime/setAttributesWithoutAttributes.js"##),
     };
 
     if es_module {
@@ -671,6 +671,8 @@ impl Loader<RunnerContext> for StyleLoader {
         source
       }
     };
+
+    println!("source: {}", source.clone());
 
     loader_context.finish_with((source, source_map));
 
