@@ -78,9 +78,6 @@ pub(crate) async fn resolve_loader(
 ) -> Result<Option<BoxLoader>> {
   let loader_request = &l.loader;
 
-  let module_graph = compilation.get_module_graph();
-  let issuer = module_graph.get_issuer(&module.identifier());
-
   if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
     return Ok(Some(Arc::new(StyleLoader {
       options: self.options.clone(),
