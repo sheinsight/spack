@@ -1,6 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
-use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
+use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use spack_loader_style::{InjectType, StyleLoaderOpts, StyleLoaderPlugin};
@@ -12,8 +12,6 @@ pub struct RawStyleLoaderPluginOpts {
   pub base: Option<i64>,
   #[napi(js_name = "injectType")]
   pub inject_type: Option<String>,
-  #[napi(js_name = "esModule")]
-  pub es_module: Option<bool>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
   #[napi(js_name = "output")]
@@ -27,7 +25,6 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
     Self {
       base: value.base,
       inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
-      es_module: value.es_module,
       insert: value.insert,
       output: value.output,
       attributes: value.attributes,

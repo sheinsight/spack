@@ -127,7 +127,6 @@ export interface RawDuplicateDependencyPluginOpts {
 export interface RawStyleLoaderPluginOpts {
   base?: number
   injectType?: string
-  esModule?: boolean
   insert?: string
   output: string
   attributes?: Record<string, string>

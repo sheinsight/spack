@@ -18,7 +18,6 @@ use crate::code_template::CodeTemplate;
 pub struct StyleLoaderOpts {
   pub base: Option<i64>,
   pub inject_type: Option<InjectType>,
-  pub es_module: Option<bool>,
   pub insert: Option<String>,
   pub output: String,
   pub attributes: Option<HashMap<String, String>>,
@@ -38,30 +37,14 @@ pub enum InjectType {
 }
 
 impl InjectType {
-  pub fn get_link_hmr_code(&self, request: &str, es_module: bool) -> String {
-    let content = if es_module {
-      format!(
-        r##"
-update(content);
-"##
-      )
-    } else {
-      format!(
-        r##"
-content = require("!!{request}");
-content = content.__esModule ? content.default : content;
-update(content);
-"##
-      )
-    };
-
+  pub fn get_link_hmr_code(&self, request: &str) -> String {
     return format!(
       r##"
 if (module.hot) {{
   module.hot.accept(
   "!!{request}",
   function(){{
-    {content}
+    update(content);
   }}
   )
   module.hot.dispose(function() {{
@@ -74,7 +57,6 @@ if (module.hot) {{
   pub fn get_import_insert_by_selector_code(
     &self,
     loader_context: &mut LoaderContext<RunnerContext>,
-    es_module: bool,
     insert: &Option<String>,
   ) -> String {
     let context = &loader_context.context.options.context;
@@ -84,33 +66,17 @@ if (module.hot) {{
         loader_context
           .build_dependencies
           .insert(PathBuf::from(insert));
-        if es_module {
-          format!(r##"import insertFn from "{path}";"##)
-        } else {
-          format!(r##"var insertFn = require("{path}");"##)
-        }
+        format!(r##"import insertFn from "{path}";"##)
       }
       Some(_) => {
-        if es_module {
-          format!(r##"import insertFn from "!@/.lego/runtime/insertBySelector.js";"##)
-        } else {
-          format!(r##"var insertFn = require("!@/.lego/runtime/insertBySelector.js");"##)
-        }
+        format!(r##"import insertFn from "!@/.lego/runtime/insertBySelector.js";"##)
       }
       None => "".to_string(),
     }
   }
 
-  pub fn get_import_link_content_code(&self, request: &str, es_module: bool) -> String {
-    if es_module {
-      format!(r##"import content from "!!{request}";"##)
-    } else {
-      format!(
-        r##"
-var content = require("!!{request}");
-content = content.__esModule ? content.default : content;"##
-      )
-    }
+  pub fn get_import_link_content_code(&self, request: &str) -> String {
+    format!(r##"import content from "!!{request}";"##)
   }
 
   pub fn get_insert_option_code(&self, insert: &Option<String>) -> String {
@@ -125,49 +91,29 @@ content = content.__esModule ? content.default : content;"##
     }
   }
 
-  pub fn get_import_style_api_code(&self, es_module: bool) -> String {
-    if es_module {
-      format!(r##"import API from "!@/.lego/runtime/injectStylesIntoStyleTag.js";"##)
-    } else {
-      format!(r##"var API = require("!@/.lego/runtime/injectStylesIntoStyleTag.js");"##)
-    }
+  pub fn get_import_style_api_code(&self) -> String {
+    format!(r##"import API from "!@/.lego/runtime/injectStylesIntoStyleTag.js";"##)
   }
 
-  pub fn get_export_lazy_style_code(&self, es_module: bool, request: &str) -> String {
-    if es_module {
-      format!(
-        r##"
+  pub fn get_export_lazy_style_code(&self, request: &str) -> String {
+    format!(
+      r##"
 export * from "!!{request}";
 export default exported;
 "##
-      )
-    } else {
-      format!(
-        r##"
-module.exports = exported;
-"##
-      )
-    }
+    )
   }
 
-  pub fn get_export_style_code(&self, es_module: bool, request: &str) -> String {
-    if es_module {
-      format!(
-        r##"
-      export * from "!!{request}";
-      export default content && content.locals ? content.locals : undefined;"##
-      )
-    } else {
-      format!(r##"module.exports = content && content.locals || {{}};"##)
-    }
+  pub fn get_export_style_code(&self, request: &str) -> String {
+    format!(
+      r##"
+    export * from "!!{request}";
+    export default content && content.locals ? content.locals : undefined;"##
+    )
   }
 
-  pub fn get_style_hmr_code(&self, es_module: bool, request: &str, lazy: bool) -> String {
-    let is_named_export = if es_module {
-      "!content.locals"
-    } else {
-      "false"
-    };
+  pub fn get_style_hmr_code(&self, request: &str, lazy: bool) -> String {
+    let is_named_export = "!content.locals";
 
     let dispose_content = if lazy {
       format!(
@@ -180,8 +126,8 @@ module.exports = exported;
       format!(r##"update();"##)
     };
 
-    let hmr_code = match (es_module, lazy) {
-      (true, true) => format!(
+    let hmr_code = match lazy {
+      true => format!(
         r##"
         if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
           module.hot.invalidate();
@@ -192,7 +138,7 @@ module.exports = exported;
           update(content);
         }}"##
       ),
-      (true, false) => format!(
+      false => format!(
         r##"
         if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
           module.hot.invalidate();
@@ -200,34 +146,6 @@ module.exports = exported;
         }}
         oldLocals = isNamedExport ? namedExport : content.locals;
         update(content);"##
-      ),
-      (false, true) => format!(
-        r##"
-        content = require("!!{request}");
-        content = content.__esModule ? content.default : content;
-        if (!isEqualLocals(oldLocals, content.locals)) {{
-            module.hot.invalidate();
-            return;
-        }}
-        oldLocals = content.locals;
-        if (update && refs > 0) {{
-          update(content);
-        }}"##
-      ),
-      (false, false) => format!(
-        r##"
-        content = require("!!{request}");
-        content = content.__esModule ? content.default : content;
-        if (typeof content === 'string') {{
-          content = [[module.id, content, '']];
-        }}
-        if (!isEqualLocals(oldLocals, content.locals)) {{
-            module.hot.invalidate();
-            return;
-        }}
-        oldLocals = content.locals;
-        update(content);
-      "##
       ),
     };
 
@@ -285,12 +203,8 @@ if (module.hot) {{
     )
   }
 
-  pub fn get_import_insert_style_element_code(&self, es_module: bool) -> String {
-    if es_module {
-      format!(r##"import insertStyleElement from "!@/.lego/runtime/insertStyleElement.js";"##)
-    } else {
-      format!(r##"var insertStyleElement = require("!@/.lego/runtime/insertStyleElement.js");"##)
-    }
+  pub fn get_import_insert_style_element_code(&self) -> String {
+    format!(r##"import insertStyleElement from "!@/.lego/runtime/insertStyleElement.js";"##)
   }
 
   // TODO
@@ -298,24 +212,16 @@ if (module.hot) {{
     format!("")
   }
 
-  pub fn get_import_is_old_ie_code(&self, es_module: bool, is_auto: bool) -> String {
+  pub fn get_import_is_old_ie_code(&self, is_auto: bool) -> String {
     if is_auto {
-      if es_module {
-        format!(r##"import isOldIE from "!@/.lego/runtime/isOldIE.js";"##)
-      } else {
-        format!(r##"var isOldIE = require("!@/.lego/runtime/isOldIE.js");"##)
-      }
+      format!(r##"import isOldIE from "!@/.lego/runtime/isOldIE.js";"##)
     } else {
       format!("")
     }
   }
 
-  pub fn get_import_style_content_code(&self, request: &str, es_module: bool) -> String {
-    if es_module {
-      format!(r##"import content, * as namedExport from "!!{request}";"##)
-    } else {
-      format!(r##"var content = require("!!{request}");"##)
-    }
+  pub fn get_import_style_content_code(&self, request: &str) -> String {
+    format!(r##"import content, * as namedExport from "!!{request}";"##)
   }
 
   pub fn get_dom_api(&self, is_auto: bool) -> String {
@@ -335,7 +241,6 @@ if (module.hot) {{
   }
 
   pub fn get_set_attributes_code(&self, loader_options: &StyleLoaderOpts) -> String {
-    let es_module = loader_options.es_module.unwrap_or(false);
     let modules = match &loader_options.attributes {
       Some(attributes) if attributes.contains_key("nonce") => {
         format!(r##"!@/.lego/runtime/setAttributesWithAttributesAndNonce.js"##)
@@ -346,11 +251,7 @@ if (module.hot) {{
       None => format!(r##"!@/.lego/runtime/setAttributesWithoutAttributes.js"##),
     };
 
-    if es_module {
-      format!(r##"import setAttributes from "{modules}";"##)
-    } else {
-      format!(r##"var setAttributes = require("{modules}");"##)
-    }
+    format!(r##"import setAttributes from "{modules}";"##)
   }
 }
 
@@ -362,24 +263,14 @@ impl InjectType {
     loader_options: &StyleLoaderOpts,
     runtime_options: &str,
   ) -> String {
-    let es_module = loader_options.es_module.unwrap_or(false);
+    let import_link_api_code = r#"import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";"#;
 
-    let import_link_api_code = CodeTemplate::new(
-      r#"import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";"#,
-      r#"var API = require("@/.lego/runtime/injectStylesIntoLinkTag.js");"#,
-    )
-    .of_es_module(es_module);
-
-    let hmr_code = self.get_link_hmr_code(&request, es_module);
+    let hmr_code = self.get_link_hmr_code(&request);
     let import_insert_by_selector_code =
-      self.get_import_insert_by_selector_code(loader_context, es_module, &loader_options.insert);
-    let import_link_content_code = self.get_import_link_content_code(&request, es_module);
+      self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
+    let import_link_content_code = self.get_import_link_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
-    let export_code = if es_module {
-      format!(r##"export default {{}};"##)
-    } else {
-      format!(r##""##)
-    };
+    let export_code = format!(r##"export default {{}};"##);
 
     let source = format!(
       r##"
@@ -398,40 +289,19 @@ impl InjectType {
     source
   }
 
-  pub fn get_import_style_dom_api_code(
-    &self,
-    es_module: bool,
-    is_auto: bool,
-    is_singleton: bool,
-  ) -> String {
+  pub fn get_import_style_dom_api_code(&self, is_auto: bool, is_singleton: bool) -> String {
     if is_auto {
-      if es_module {
-        return format!(
-          r##"
-        import domAPI from "!@/.lego/runtime/styleDomAPI.js";
-        import domAPISingleton from "!@/.lego/runtime/singletonStyleDomAPI.js";"##
-        );
-      } else {
-        return format!(
-          r##"
-        var domAPI = require("!@/.lego/runtime/styleDomAPI.js");
-        var domAPISingleton = require("!@/.lego/runtime/singletonStyleDomAPI.js");"##
-        );
-      }
+      return format!(
+        r##"
+      import domAPI from "!@/.lego/runtime/styleDomAPI.js";
+      import domAPISingleton from "!@/.lego/runtime/singletonStyleDomAPI.js";"##
+      );
     }
 
-    if es_module {
-      if is_singleton {
-        return format!(r##"import domAPI from "!@/.lego/runtime/singletonStyleDomAPI.js";"##);
-      } else {
-        return format!(r##"import domAPI from "!@/.lego/runtime/styleDomAPI.js";"##);
-      }
+    if is_singleton {
+      return format!(r##"import domAPI from "!@/.lego/runtime/singletonStyleDomAPI.js";"##);
     } else {
-      if is_singleton {
-        return format!(r##"var domAPI = require("!@/.lego/runtime/singletonStyleDomAPI.js");"##);
-      } else {
-        return format!(r##"var domAPI = require("!@/.lego/runtime/styleDomAPI.js");"##);
-      }
+      return format!(r##"import domAPI from "!@/.lego/runtime/styleDomAPI.js";"##);
     }
   }
 
@@ -444,38 +314,30 @@ impl InjectType {
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
-    let es_module = loader_options.es_module.unwrap_or(false);
-
-    let style_api_code = self.get_import_style_api_code(es_module);
-    let style_dom_api_code = self.get_import_style_dom_api_code(es_module, is_auto, is_singleton);
+    let style_api_code = self.get_import_style_api_code();
+    let style_dom_api_code = self.get_import_style_dom_api_code(is_auto, is_singleton);
     let insert_by_selector_code =
-      self.get_import_insert_by_selector_code(loader_context, es_module, &loader_options.insert);
+      self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
-    let insert_style_element_code = self.get_import_insert_style_element_code(es_module);
+    let insert_style_element_code = self.get_import_insert_style_element_code();
     let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code();
-    let import_style_content_code = self.get_import_style_content_code(&request, es_module);
+    let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
-    let is_old_ie_code = self.get_import_is_old_ie_code(es_module, is_auto);
+    let is_old_ie_code = self.get_import_is_old_ie_code(is_auto);
 
-    let exported = CodeTemplate::new(
-      r##"
+    let exported = r##"
       if (content && content.locals) {{
         exported.locals = content.locals;
-      }}"##,
-      r##"
-      content = content.__esModule ? content.default : content;
-      exported.locals = content.locals || {{}};"##,
-    )
-    .of_es_module(es_module);
+      }}"##;
 
     let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
 
     let dom_api = self.get_dom_api(is_auto);
 
-    let hmr_code = self.get_style_hmr_code(es_module, &request, true);
+    let hmr_code = self.get_style_hmr_code(&request, true);
 
-    let export_code = self.get_export_lazy_style_code(es_module, &request);
+    let export_code = self.get_export_lazy_style_code(&request);
 
     let source = format!(
       r##"
@@ -538,35 +400,27 @@ exported.unuse = function() {{
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
-    println!("request: {}", request.clone());
-
-    let es_module = loader_options.es_module.unwrap_or(false);
-
-    let style_api_code = self.get_import_style_api_code(es_module);
-    let style_dom_api_code = self.get_import_style_dom_api_code(es_module, is_auto, is_singleton);
+    let style_api_code = self.get_import_style_api_code();
+    let style_dom_api_code = self.get_import_style_dom_api_code(is_auto, is_singleton);
     let insert_by_selector_code =
-      self.get_import_insert_by_selector_code(loader_context, es_module, &loader_options.insert);
+      self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
-    let insert_style_element_code = self.get_import_insert_style_element_code(es_module);
+    let insert_style_element_code = self.get_import_insert_style_element_code();
     let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code();
-    let import_style_content_code = self.get_import_style_content_code(&request, es_module);
+    let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
-    let is_old_ie_code = self.get_import_is_old_ie_code(es_module, is_auto);
+    let is_old_ie_code = self.get_import_is_old_ie_code(is_auto);
 
-    let exported = CodeTemplate::new(
-      r##""##,
-      r##"content = content.__esModule ? content.default : content;"##,
-    )
-    .of_es_module(es_module);
+    let exported = r##""##;
 
     let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
 
     let dom_api = self.get_dom_api(is_auto);
 
-    let hmr_code = self.get_style_hmr_code(es_module, &request, false);
+    let hmr_code = self.get_style_hmr_code(&request, false);
 
-    let export_code = self.get_export_style_code(es_module, &request);
+    let export_code = self.get_export_style_code(&request);
 
     let source = format!(
       r##"

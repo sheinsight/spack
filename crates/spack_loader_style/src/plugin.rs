@@ -128,12 +128,12 @@ async fn additional_tree_runtime_requirements(
   // runtime_requirements.insert(RuntimeGlobals::MODULE);
   // ✅ 这里可以添加 RuntimeModule
 
-  let es_module = self.options.es_module.unwrap_or(false);
+  // let es_module = self.options.es_module.unwrap_or(false);
 
-  compilation.add_runtime_module(
-    chunk_ukey,
-    Box::new(StyleLoaderRuntimeModule::new(Some(*chunk_ukey), es_module)),
-  )?;
+  // compilation.add_runtime_module(
+  //   chunk_ukey,
+  //   Box::new(StyleLoaderRuntimeModule::new(Some(*chunk_ukey), es_module)),
+  // )?;
 
   Ok(())
 }
