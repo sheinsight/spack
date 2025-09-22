@@ -640,11 +640,11 @@ impl Loader<RunnerContext> for StyleLoader {
 
     let is_auto = matches!(inject_type, InjectType::AutoStyleTag);
 
-    match inject_type {
+    let source = match inject_type {
       InjectType::LinkTag => {
         let source =
           inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options);
-        loader_context.finish_with((source, source_map));
+        source
       }
       InjectType::LazyStyleTag
       | InjectType::LazySingletonStyleTag
@@ -657,7 +657,7 @@ impl Loader<RunnerContext> for StyleLoader {
           is_lazy_singleton,
           is_lazy_auto,
         );
-        loader_context.finish_with((source, source_map));
+        source
       }
       InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
         let source = inject_type.get_style_tag_code(
@@ -668,9 +668,11 @@ impl Loader<RunnerContext> for StyleLoader {
           is_singleton,
           is_auto,
         );
-        loader_context.finish_with((source, source_map));
+        source
       }
-    }
+    };
+
+    loader_context.finish_with((source, source_map));
 
     Ok(())
   }
