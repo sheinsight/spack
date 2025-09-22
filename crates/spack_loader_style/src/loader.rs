@@ -48,7 +48,7 @@ update(content);
     } else {
       format!(
         r##"
-content = require("{request}");
+content = require("!!{request}");
 content = content.__esModule ? content.default : content;
 update(content);
 "##
@@ -59,7 +59,7 @@ update(content);
       r##"
 if (module.hot) {{
   module.hot.accept(
-  "{request}",
+  "!!{request}",
   function(){{
     {content}
   }}
@@ -137,7 +137,7 @@ content = content.__esModule ? content.default : content;"##
     if es_module {
       format!(
         r##"
-export * from "{request}";
+export * from "!!{request}";
 export default exported;
 "##
       )
@@ -154,7 +154,7 @@ module.exports = exported;
     if es_module {
       format!(
         r##"
-      export * from "{request}";
+      export * from "!!{request}";
       export default content && content.locals ? content.locals : undefined;"##
       )
     } else {
@@ -203,7 +203,7 @@ module.exports = exported;
       ),
       (false, true) => format!(
         r##"
-        content = require("{request}");
+        content = require("!!{request}");
         content = content.__esModule ? content.default : content;
         if (!isEqualLocals(oldLocals, content.locals)) {{
             module.hot.invalidate();
@@ -216,7 +216,7 @@ module.exports = exported;
       ),
       (false, false) => format!(
         r##"
-        content = require("{request}");
+        content = require("!!{request}");
         content = content.__esModule ? content.default : content;
         if (typeof content === 'string') {{
           content = [[module.id, content, '']];
@@ -270,7 +270,7 @@ if (module.hot) {{
 
 
       module.hot.accept(
-        "{request}",
+        "!!{request}",
         function() {{
           {hmr_code}
         }}
@@ -538,6 +538,8 @@ exported.unuse = function() {{
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
+    println!("request: {}", request.clone());
+
     let es_module = loader_options.es_module.unwrap_or(false);
 
     let style_api_code = self.get_import_style_api_code(es_module);
@@ -672,7 +674,7 @@ impl Loader<RunnerContext> for StyleLoader {
       }
     };
 
-    println!("source: {}", source.clone());
+    // println!("source: {}", source.clone());
 
     loader_context.finish_with((source, source_map));
 
