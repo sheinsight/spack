@@ -5,8 +5,7 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext, contextify};
 use rspack_error::Result;
-use rspack_loader_runner::{DisplayWithSuffix, Identifiable};
-use sailfish::TemplateSimple;
+use rspack_loader_runner::DisplayWithSuffix;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
@@ -665,9 +664,7 @@ impl Loader<RunnerContext> for StyleLoader {
     STYLE_LOADER_IDENTIFIER.into()
   }
   async fn pitch(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
-    // let source = "".to_string();
-
-    let source = loader_context.take_content();
+    // let source = loader_context.take_content();
     let source_map = loader_context.take_source_map();
 
     let resource = loader_context.resource();
@@ -676,9 +673,7 @@ impl Loader<RunnerContext> for StyleLoader {
 
     let request = request.display_with_suffix(resource);
 
-    // let request = contextify(context, request.as_str());
-
-    let context = &loader_context.context.options.context;
+    // let context = &loader_context.context.options.context;
 
     let inject_type = self.options.inject_type.unwrap_or(InjectType::StyleTag);
 
@@ -692,11 +687,16 @@ impl Loader<RunnerContext> for StyleLoader {
     }
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
+    let current_module = unsafe { loader_context.context.module.as_ref() };
+    let module_id = current_module.identifier();
+
+    println!("module_path: {:?}", module_id);
+
     match inject_type {
       InjectType::LinkTag => {
         let source =
           inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options);
-        println!("source: {}", source.clone());
+        // println!("source: {}", source.clone());
         loader_context.finish_with((source, source_map));
       }
       InjectType::LazyStyleTag
@@ -708,13 +708,13 @@ impl Loader<RunnerContext> for StyleLoader {
           &self.options,
           &runtime_options,
         );
-        println!("source: {}", source.clone());
+        // println!("source: {}", source.clone());
         loader_context.finish_with((source, source_map));
       }
       InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
         let source =
           inject_type.get_style_tag_code(&request, loader_context, &self.options, &runtime_options);
-        println!("source: {}", source.clone());
+        // println!("source: {}", source.clone());
         loader_context.finish_with((source, source_map));
       }
     }

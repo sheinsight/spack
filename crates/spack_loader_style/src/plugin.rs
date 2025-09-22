@@ -8,7 +8,7 @@ use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 
 use crate::{
-  loader::{StyleLoader, StyleLoaderOpts, STYLE_LOADER_IDENTIFIER},
+  loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
   runtime_module::StyleLoaderRuntimeModule,
 };
 
@@ -77,6 +77,9 @@ pub(crate) async fn resolve_loader(
   l: &ModuleRuleUseLoader,
 ) -> Result<Option<BoxLoader>> {
   let loader_request = &l.loader;
+
+  let module_graph = compilation.get_module_graph();
+  let issuer = module_graph.get_issuer(&module.identifier());
 
   if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
     return Ok(Some(Arc::new(StyleLoader {
