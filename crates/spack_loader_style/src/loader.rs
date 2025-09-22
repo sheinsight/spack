@@ -9,6 +9,8 @@ use rspack_loader_runner::DisplayWithSuffix;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
+use crate::code_template::CodeTemplate;
+
 // use crate::template;
 
 #[cacheable]
@@ -69,21 +71,21 @@ if (module.hot) {{
     );
   }
 
-  pub fn get_import_link_api_code(&self, es_module: bool) -> String {
-    if es_module {
-      format!(
-        r##"
-import API from "@/vm/injectStylesIntoLinkTag.js";
-"##
-      )
-    } else {
-      format!(
-        r##"
-var API = require("@/vm/injectStylesIntoLinkTag.js");
-"##
-      )
-    }
-  }
+  //   pub fn get_import_link_api_code(&self, es_module: bool) -> String {
+  //     if es_module {
+  //       format!(
+  //         r##"
+  // import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";
+  // "##
+  //       )
+  //     } else {
+  //       format!(
+  //         r##"
+  // var API = require("@/.lego/runtime/injectStylesIntoLinkTag.js");
+  // "##
+  //       )
+  //     }
+  //   }
 
   pub fn get_import_insert_by_selector_code(
     &self,
@@ -106,9 +108,9 @@ var API = require("@/vm/injectStylesIntoLinkTag.js");
       }
       Some(_) => {
         if es_module {
-          format!(r##"import insertFn from "!@/vm/insertBySelector.js";"##)
+          format!(r##"import insertFn from "!@/.lego/runtime/insertBySelector.js";"##)
         } else {
-          format!(r##"var insertFn = require("!@/vm/insertBySelector.js");"##)
+          format!(r##"var insertFn = require("!@/.lego/runtime/insertBySelector.js");"##)
         }
       }
       None => "".to_string(),
@@ -141,9 +143,9 @@ content = content.__esModule ? content.default : content;"##
 
   pub fn get_import_style_api_code(&self, es_module: bool) -> String {
     if es_module {
-      format!(r##"import API from "!@/vm/injectStylesIntoStyleTag.js";"##)
+      format!(r##"import API from "!@/.lego/runtime/injectStylesIntoStyleTag.js";"##)
     } else {
-      format!(r##"var API = require("!@/vm/injectStylesIntoStyleTag.js");"##)
+      format!(r##"var API = require("!@/.lego/runtime/injectStylesIntoStyleTag.js");"##)
     }
   }
 
@@ -301,9 +303,9 @@ if (module.hot) {{
 
   pub fn get_import_insert_style_element_code(&self, es_module: bool) -> String {
     if es_module {
-      format!(r##"import insertStyleElement from "!@/vm/insertStyleElement.js";"##)
+      format!(r##"import insertStyleElement from "!@/.lego/runtime/insertStyleElement.js";"##)
     } else {
-      format!(r##"var insertStyleElement = require("!@/vm/insertStyleElement.js");"##)
+      format!(r##"var insertStyleElement = require("!@/.lego/runtime/insertStyleElement.js");"##)
     }
   }
 
@@ -315,9 +317,9 @@ if (module.hot) {{
   pub fn get_import_is_old_ie_code(&self, es_module: bool, is_auto: bool) -> String {
     if is_auto {
       if es_module {
-        format!(r##"import isOldIE from "!@/vm/isOldIE.js";"##)
+        format!(r##"import isOldIE from "!@/.lego/runtime/isOldIE.js";"##)
       } else {
-        format!(r##"var isOldIE = require("!@/vm/isOldIE.js");"##)
+        format!(r##"var isOldIE = require("!@/.lego/runtime/isOldIE.js");"##)
       }
     } else {
       format!("")
@@ -352,12 +354,12 @@ if (module.hot) {{
     let es_module = loader_options.es_module.unwrap_or(false);
     let modules = match &loader_options.attributes {
       Some(attributes) if attributes.contains_key("nonce") => {
-        format!(r##"!@/vm/setAttributesWithAttributesAndNonce"##)
+        format!(r##"!@/.lego/runtime/setAttributesWithAttributesAndNonce"##)
       }
       Some(_) => {
-        format!(r##"!@/vm/setAttributesWithAttributes"##)
+        format!(r##"!@/.lego/runtime/setAttributesWithAttributes"##)
       }
-      None => format!(r##"!@/vm/setAttributesWithoutAttributes"##),
+      None => format!(r##"!@/.lego/runtime/setAttributesWithoutAttributes"##),
     };
 
     if es_module {
@@ -378,8 +380,13 @@ impl InjectType {
   ) -> String {
     let es_module = loader_options.es_module.unwrap_or(false);
 
+    let link_api_template = CodeTemplate::new(
+      r#"import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";"#,
+      r#"var API = require("@/.lego/runtime/injectStylesIntoLinkTag.js");"#,
+    );
+
     let hmr_code = self.get_link_hmr_code(&request, es_module);
-    let import_link_api_code = self.get_import_link_api_code(es_module);
+    let import_link_api_code = link_api_template.code(es_module);
     let import_insert_by_selector_code =
       self.get_import_insert_by_selector_code(loader_context, es_module, &loader_options.insert);
     let import_link_content_code = self.get_import_link_content_code(&request, es_module);
@@ -417,29 +424,29 @@ impl InjectType {
       if es_module {
         return format!(
           r##"
-        import domAPI from "!@/vm/styleDomAPI.js";
-        import domAPISingleton from "!@/vm/singletonStyleDomAPI.js";"##
+        import domAPI from "!@/.lego/runtime/styleDomAPI.js";
+        import domAPISingleton from "!@/.lego/runtime/singletonStyleDomAPI.js";"##
         );
       } else {
         return format!(
           r##"
-        var domAPI = require("!@/vm/styleDomAPI.js");
-        var domAPISingleton = require("!@/vm/singletonStyleDomAPI.js");"##
+        var domAPI = require("!@/.lego/runtime/styleDomAPI.js");
+        var domAPISingleton = require("!@/.lego/runtime/singletonStyleDomAPI.js");"##
         );
       }
     }
 
     if es_module {
       if is_singleton {
-        return format!(r##"import domAPI from "!@/vm/singletonStyleDomAPI.js";"##);
+        return format!(r##"import domAPI from "!@/.lego/runtime/singletonStyleDomAPI.js";"##);
       } else {
-        return format!(r##"import domAPI from "!@/vm/styleDomAPI.js";"##);
+        return format!(r##"import domAPI from "!@/.lego/runtime/styleDomAPI.js";"##);
       }
     } else {
       if is_singleton {
-        return format!(r##"var domAPI = require("!@/vm/singletonStyleDomAPI.js");"##);
+        return format!(r##"var domAPI = require("!@/.lego/runtime/singletonStyleDomAPI.js");"##);
       } else {
-        return format!(r##"var domAPI = require("!@/vm/styleDomAPI.js");"##);
+        return format!(r##"var domAPI = require("!@/.lego/runtime/styleDomAPI.js");"##);
       }
     }
   }
@@ -450,29 +457,10 @@ impl InjectType {
     loader_context: &mut LoaderContext<RunnerContext>,
     loader_options: &StyleLoaderOpts,
     runtime_options: &str,
+    is_singleton: bool,
+    is_auto: bool,
   ) -> String {
-    // let source = self.get_link_tag_code(request, loader_context, loader_options);
     let es_module = loader_options.es_module.unwrap_or(false);
-
-    let is_singleton = match self {
-      InjectType::LazySingletonStyleTag => true,
-      InjectType::StyleTag
-      | InjectType::SingletonStyleTag
-      | InjectType::AutoStyleTag
-      | InjectType::LazyStyleTag
-      | InjectType::LazyAutoStyleTag
-      | InjectType::LinkTag => false,
-    };
-
-    let is_auto = match self {
-      InjectType::LazyAutoStyleTag => true,
-      InjectType::StyleTag
-      | InjectType::SingletonStyleTag
-      | InjectType::AutoStyleTag
-      | InjectType::LazyStyleTag
-      | InjectType::LazySingletonStyleTag
-      | InjectType::LinkTag => false,
-    };
 
     let style_api_code = self.get_import_style_api_code(es_module);
     let style_dom_api_code = self.get_import_style_dom_api_code(es_module, is_auto, is_singleton);
@@ -486,21 +474,17 @@ impl InjectType {
 
     let is_old_ie_code = self.get_import_is_old_ie_code(es_module, is_auto);
 
-    let exported = if es_module {
-      format!(
-        r##"
+    let exported = CodeTemplate::new(
+      r##"
       if (content && content.locals) {{
         exported.locals = content.locals;
-      }}"##
-      )
-    } else {
-      format!(
-        r##"
+      }}"##,
+      r##"
       content = content.__esModule ? content.default : content;
-      exported.locals = content.locals || {{}};
-      "##
-      )
-    };
+      exported.locals = content.locals || {{}};"##,
+    );
+
+    let exported = exported.code(es_module);
 
     let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
 
@@ -568,28 +552,10 @@ exported.unuse = function() {{
     loader_context: &mut LoaderContext<RunnerContext>,
     loader_options: &StyleLoaderOpts,
     runtime_options: &str,
+    is_singleton: bool,
+    is_auto: bool,
   ) -> String {
     let es_module = loader_options.es_module.unwrap_or(false);
-
-    let is_singleton = match self {
-      InjectType::SingletonStyleTag => true,
-      InjectType::StyleTag
-      | InjectType::LazySingletonStyleTag
-      | InjectType::AutoStyleTag
-      | InjectType::LazyStyleTag
-      | InjectType::LazyAutoStyleTag
-      | InjectType::LinkTag => false,
-    };
-
-    let is_auto = match self {
-      InjectType::AutoStyleTag => true,
-      InjectType::StyleTag
-      | InjectType::SingletonStyleTag
-      | InjectType::LazyAutoStyleTag
-      | InjectType::LazyStyleTag
-      | InjectType::LazySingletonStyleTag
-      | InjectType::LinkTag => false,
-    };
 
     let style_api_code = self.get_import_style_api_code(es_module);
     let style_dom_api_code = self.get_import_style_dom_api_code(es_module, is_auto, is_singleton);
@@ -599,16 +565,16 @@ exported.unuse = function() {{
     let insert_style_element_code = self.get_import_insert_style_element_code(es_module);
     let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code();
     let import_style_content_code = self.get_import_style_content_code(&request, es_module);
-
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
     let is_old_ie_code = self.get_import_is_old_ie_code(es_module, is_auto);
 
-    let exported = if es_module {
-      format!(r##""##)
-    } else {
-      format!(r##"content = content.__esModule ? content.default : content;"##)
-    };
+    let exported = CodeTemplate::new(
+      r##""##,
+      r##"content = content.__esModule ? content.default : content;"##,
+    );
+
+    let exported = exported.code(es_module);
 
     let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
 
@@ -664,7 +630,6 @@ impl Loader<RunnerContext> for StyleLoader {
     STYLE_LOADER_IDENTIFIER.into()
   }
   async fn pitch(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
-    // let source = loader_context.take_content();
     let source_map = loader_context.take_source_map();
 
     let resource = loader_context.resource();
@@ -672,8 +637,6 @@ impl Loader<RunnerContext> for StyleLoader {
     let request = loader_context.remaining_request();
 
     let request = request.display_with_suffix(resource);
-
-    // let context = &loader_context.context.options.context;
 
     let inject_type = self.options.inject_type.unwrap_or(InjectType::StyleTag);
 
@@ -687,11 +650,18 @@ impl Loader<RunnerContext> for StyleLoader {
     }
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
+    let is_lazy_singleton = matches!(inject_type, InjectType::LazySingletonStyleTag);
+
+    let is_lazy_auto = matches!(inject_type, InjectType::LazyAutoStyleTag);
+
+    let is_singleton = matches!(inject_type, InjectType::SingletonStyleTag);
+
+    let is_auto = matches!(inject_type, InjectType::AutoStyleTag);
+
     match inject_type {
       InjectType::LinkTag => {
         let source =
           inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options);
-        // println!("source: {}", source.clone());
         loader_context.finish_with((source, source_map));
       }
       InjectType::LazyStyleTag
@@ -702,14 +672,20 @@ impl Loader<RunnerContext> for StyleLoader {
           loader_context,
           &self.options,
           &runtime_options,
+          is_lazy_singleton,
+          is_lazy_auto,
         );
-        // println!("source: {}", source.clone());
         loader_context.finish_with((source, source_map));
       }
       InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
-        let source =
-          inject_type.get_style_tag_code(&request, loader_context, &self.options, &runtime_options);
-        // println!("source: {}", source.clone());
+        let source = inject_type.get_style_tag_code(
+          &request,
+          loader_context,
+          &self.options,
+          &runtime_options,
+          is_singleton,
+          is_auto,
+        );
         loader_context.finish_with((source, source_map));
       }
     }
