@@ -71,22 +71,6 @@ if (module.hot) {{
     );
   }
 
-  //   pub fn get_import_link_api_code(&self, es_module: bool) -> String {
-  //     if es_module {
-  //       format!(
-  //         r##"
-  // import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";
-  // "##
-  //       )
-  //     } else {
-  //       format!(
-  //         r##"
-  // var API = require("@/.lego/runtime/injectStylesIntoLinkTag.js");
-  // "##
-  //       )
-  //     }
-  //   }
-
   pub fn get_import_insert_by_selector_code(
     &self,
     loader_context: &mut LoaderContext<RunnerContext>,
@@ -380,13 +364,13 @@ impl InjectType {
   ) -> String {
     let es_module = loader_options.es_module.unwrap_or(false);
 
-    let link_api_template = CodeTemplate::new(
+    let import_link_api_code = CodeTemplate::new(
       r#"import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";"#,
       r#"var API = require("@/.lego/runtime/injectStylesIntoLinkTag.js");"#,
-    );
+    )
+    .of_es_module(es_module);
 
     let hmr_code = self.get_link_hmr_code(&request, es_module);
-    let import_link_api_code = link_api_template.code(es_module);
     let import_insert_by_selector_code =
       self.get_import_insert_by_selector_code(loader_context, es_module, &loader_options.insert);
     let import_link_content_code = self.get_import_link_content_code(&request, es_module);
@@ -482,9 +466,8 @@ impl InjectType {
       r##"
       content = content.__esModule ? content.default : content;
       exported.locals = content.locals || {{}};"##,
-    );
-
-    let exported = exported.code(es_module);
+    )
+    .of_es_module(es_module);
 
     let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
 
@@ -572,9 +555,8 @@ exported.unuse = function() {{
     let exported = CodeTemplate::new(
       r##""##,
       r##"content = content.__esModule ? content.default : content;"##,
-    );
-
-    let exported = exported.code(es_module);
+    )
+    .of_es_module(es_module);
 
     let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
 
