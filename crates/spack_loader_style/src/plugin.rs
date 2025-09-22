@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Not, sync::Arc};
 
 use rspack_core::{
   ApplyContext, BoxLoader, ChunkUkey, Compilation, CompilationAdditionalTreeRuntimeRequirements,
@@ -6,6 +6,7 @@ use rspack_core::{
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
+use rspack_paths::Utf8PathBuf;
 
 use crate::{
   loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
@@ -25,6 +26,63 @@ impl StyleLoaderPlugin {
   pub fn new(options: StyleLoaderOpts) -> Self {
     Self::new_inner(options)
   }
+
+  pub fn write_runtime(output: &Utf8PathBuf) -> Result<()> {
+    if output.exists().not() {
+      std::fs::create_dir_all(output)?;
+    }
+
+    let runtimes = vec![
+      (
+        "injectStylesIntoLinkTag.js",
+        include_str!("runtime/injectStylesIntoLinkTag.js").to_string(),
+      ),
+      (
+        "injectStylesIntoStyleTag.js",
+        include_str!("runtime/injectStylesIntoStyleTag.js").to_string(),
+      ),
+      (
+        "insertStyleElement.js",
+        include_str!("runtime/insertStyleElement.js").to_string(),
+      ),
+      (
+        "insertBySelector.js",
+        include_str!("runtime/insertBySelector.js").to_string(),
+      ),
+      (
+        "setAttributesWithoutAttributes.js",
+        include_str!("runtime/setAttributesWithoutAttributes.js").to_string(),
+      ),
+      (
+        "setAttributesWithAttributes.js",
+        include_str!("runtime/setAttributesWithAttributes.js").to_string(),
+      ),
+      (
+        "setAttributesWithAttributesAndNonce.js",
+        include_str!("runtime/setAttributesWithAttributesAndNonce.js").to_string(),
+      ),
+      (
+        "setAttributesWithAttributesAndNonce.js",
+        include_str!("runtime/setAttributesWithAttributesAndNonce.js").to_string(),
+      ),
+      (
+        "styleDomAPI.js",
+        include_str!("runtime/styleDomAPI.js").to_string(),
+      ),
+      (
+        "singletonStyleDomAPI.js",
+        include_str!("runtime/singletonStyleDomAPI.js").to_string(),
+      ),
+      ("isOldIE.js", include_str!("runtime/isOldIE.js").to_string()),
+    ];
+
+    for (file_name, runtime) in runtimes {
+      let path = output.join(file_name);
+      std::fs::write(path, runtime)?;
+    }
+
+    Ok(())
+  }
 }
 
 impl Plugin for StyleLoaderPlugin {
@@ -33,6 +91,17 @@ impl Plugin for StyleLoaderPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
+    let dir = ctx
+      .compiler_options
+      .context
+      .as_path()
+      .join(self.options.output.clone());
+
+    if dir.exists().not() {
+      std::fs::create_dir_all(&dir)?;
+    }
+    Self::write_runtime(&dir)?;
+
     ctx
       .compilation_hooks
       .additional_tree_runtime_requirements

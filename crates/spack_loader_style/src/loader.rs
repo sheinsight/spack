@@ -687,11 +687,6 @@ impl Loader<RunnerContext> for StyleLoader {
     }
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
-    let current_module = unsafe { loader_context.context.module.as_ref() };
-    let module_id = current_module.identifier();
-
-    println!("module_path: {:?}", module_id);
-
     match inject_type {
       InjectType::LinkTag => {
         let source =

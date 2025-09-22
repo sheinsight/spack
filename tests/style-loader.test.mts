@@ -11,7 +11,7 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 >(binding.CustomPluginNames.StyleLoaderPlugin, (opt) => ({ ...opt }));
 
 const plugin = new StyleLoaderPluginOpts({
-  output: './src/runtimes',
+  output: './src/.lego/runtimes',
   // esModule: false,
   // injectType: 'styleTag',
   attributes: {
