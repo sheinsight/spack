@@ -154,7 +154,7 @@ module.exports = exported;
     if es_module {
       format!(
         r##"
-      export * from {request};
+      export * from "{request}";
       export default content && content.locals ? content.locals : undefined;"##
       )
     } else {
