@@ -1,7 +1,5 @@
-use rspack_cacheable::cacheable;
 use rspack_collections::Identifier;
 use rspack_core::{ChunkUkey, Compilation, RuntimeModule, impl_runtime_module};
-use strum_macros::{Display, EnumString};
 
 #[impl_runtime_module]
 #[derive(Debug)]
