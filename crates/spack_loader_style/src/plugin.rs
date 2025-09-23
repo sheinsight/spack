@@ -8,10 +8,7 @@ use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
 
-use crate::{
-  loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
-  runtime_module::StyleLoaderRuntimeModule,
-};
+use crate::loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts};
 
 pub const STYLE_LOADER_PLUGIN_IDENTIFIER: &str = "spack.StyleLoaderPlugin";
 
@@ -121,8 +118,8 @@ impl Plugin for StyleLoaderPlugin {
 #[plugin_hook(CompilationAdditionalTreeRuntimeRequirements for StyleLoaderPlugin)]
 async fn additional_tree_runtime_requirements(
   &self,
-  compilation: &mut Compilation,
-  chunk_ukey: &ChunkUkey, // ✅ 这里有 chunk_ukey
+  _compilation: &mut Compilation,
+  _chunk_ukey: &ChunkUkey, // ✅ 这里有 chunk_ukey
   _runtime_requirements: &mut RuntimeGlobals,
 ) -> Result<()> {
   // runtime_requirements.insert(RuntimeGlobals::MODULE);

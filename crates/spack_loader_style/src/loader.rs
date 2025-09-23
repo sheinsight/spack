@@ -533,7 +533,7 @@ impl Loader<RunnerContext> for StyleLoader {
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
-    let request = loader_context.resource_query();
+    // let request = loader_context.resource_query();
 
     loader_context.finish_with((source, sm));
     Ok(())

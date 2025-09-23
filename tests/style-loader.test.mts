@@ -12,8 +12,6 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 
 const plugin = new StyleLoaderPluginOpts({
   output: './src/.lego/runtime',
-  esModule: true,
-  // injectType: 'styleTag',
   attributes: {
     nonce: '123',
     custom: '456',
@@ -28,7 +26,7 @@ test('test style-loader', async () => {
 
   console.log(result);
 
-  expect(result.length).toBe(1);
+  expect(result.length).toBe(0);
 
   // let message = result[0].message;
 

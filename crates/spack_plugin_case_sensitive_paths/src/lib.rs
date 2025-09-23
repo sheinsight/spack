@@ -148,10 +148,10 @@ async fn after_resolve(
     return Ok(None);
   };
 
-  let code = "case mismatch";
+  //   let code = "case mismatch";
 
-  let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
-It may work fine on macOS/Windows, but will fail on Linux."#;
+  //   let help = r#"Fix the case of file paths to ensure consistency in cross-platform builds.
+  // It may work fine on macOS/Windows, but will fail on Linux."#;
 
   // 如果 resource 包含 node_modules 的话, 说明是在引用三方包, 要考虑 npm alias 的情况
   // 但是如果是 / 开头的, 说明是绝对路径, 不做三方包相关的验证，直接跳到下面做路径匹配
