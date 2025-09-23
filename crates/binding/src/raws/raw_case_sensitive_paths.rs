@@ -1,4 +1,4 @@
-use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
+use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};

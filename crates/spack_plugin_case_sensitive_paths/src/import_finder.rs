@@ -37,7 +37,7 @@ impl Visit for ImportFinder {
       let span = node.src.span();
       let start = span.lo.0 as usize;
       let end = span.hi.0 as usize;
-      
+
       self.found_import = Some((start, end - start));
     }
 

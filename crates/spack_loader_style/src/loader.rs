@@ -516,45 +516,77 @@ impl Loader<RunnerContext> for StyleLoader {
     }
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
-    let is_lazy_singleton = matches!(inject_type, InjectType::LazySingletonStyleTag);
+    // let is_lazy_singleton = matches!(inject_type, InjectType::LazySingletonStyleTag);
 
-    let is_lazy_auto = matches!(inject_type, InjectType::LazyAutoStyleTag);
+    // let is_lazy_auto = matches!(inject_type, InjectType::LazyAutoStyleTag);
 
-    let is_singleton = matches!(inject_type, InjectType::SingletonStyleTag);
+    // let is_singleton = matches!(inject_type, InjectType::SingletonStyleTag);
 
-    let is_auto = matches!(inject_type, InjectType::AutoStyleTag);
+    // let is_auto = matches!(inject_type, InjectType::AutoStyleTag);
 
-    let source = match inject_type {
+    let source = match inject_type.clone() {
       InjectType::LinkTag => {
-        let source =
-          inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options);
-        source
+        inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options)
       }
-      InjectType::LazyStyleTag
-      | InjectType::LazySingletonStyleTag
-      | InjectType::LazyAutoStyleTag => {
-        let source = inject_type.get_lazy_style_tag_code(
-          &request,
-          loader_context,
-          &self.options,
-          &runtime_options,
-          is_lazy_singleton,
-          is_lazy_auto,
-        );
-        source
-      }
-      InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
-        let source = inject_type.get_style_tag_code(
+      style @ (InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag) => {
+        let is_singleton = matches!(style, InjectType::SingletonStyleTag);
+        let is_auto = matches!(style, InjectType::AutoStyleTag);
+        style.get_style_tag_code(
           &request,
           loader_context,
           &self.options,
           &runtime_options,
           is_singleton,
           is_auto,
-        );
-        source
+        )
+      }
+      lazy @ (InjectType::LazyStyleTag
+      | InjectType::LazySingletonStyleTag
+      | InjectType::LazyAutoStyleTag) => {
+        let is_singleton = matches!(lazy, InjectType::LazySingletonStyleTag);
+        let is_auto = matches!(lazy, InjectType::LazyAutoStyleTag);
+        lazy.get_lazy_style_tag_code(
+          &request,
+          loader_context,
+          &self.options,
+          &runtime_options,
+          is_singleton,
+          is_auto,
+        )
       }
     };
+
+    // let source = match inject_type {
+    //   InjectType::LinkTag => {
+    //     let source =
+    //       inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options);
+    //     source
+    //   }
+    //   InjectType::LazyStyleTag
+    //   | InjectType::LazySingletonStyleTag
+    //   | InjectType::LazyAutoStyleTag => {
+    //     let source = inject_type.get_lazy_style_tag_code(
+    //       &request,
+    //       loader_context,
+    //       &self.options,
+    //       &runtime_options,
+    //       is_lazy_singleton,
+    //       is_lazy_auto,
+    //     );
+    //     source
+    //   }
+    //   InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
+    //     let source = inject_type.get_style_tag_code(
+    //       &request,
+    //       loader_context,
+    //       &self.options,
+    //       &runtime_options,
+    //       is_singleton,
+    //       is_auto,
+    //     );
+    //     source
+    //   }
+    // };
 
     loader_context.finish_with((source, source_map));
     Ok(())

@@ -1,6 +1,7 @@
+use std::collections::HashMap;
+
 use derive_more::Debug;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SizeInfo {

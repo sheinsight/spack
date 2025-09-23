@@ -1,16 +1,16 @@
+use std::collections::HashMap;
+
 use derive_more::Debug;
-use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
+use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
-  BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, BundleAnalysisResult, 
-  ModuleInfo, ChunkInfo, SizeInfo, SummaryInfo, StatisticsInfo, 
-  TypeStatistics, SourceStatistics, DependencyNode, DependencyEdge,
-  TreeNode, HeatmapNode, VisualizationData
+  BundleAnalysisResult, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, ChunkInfo, DependencyEdge,
+  DependencyNode, HeatmapNode, ModuleInfo, SizeInfo, SourceStatistics, StatisticsInfo, SummaryInfo,
+  TreeNode, TypeStatistics, VisualizationData,
 };
-use std::collections::HashMap;
 
 #[derive(Debug, ThreadsafeCallback)]
 #[napi(object, object_to_js = false)]
@@ -205,9 +205,9 @@ impl From<TreeNode> for JsTreeNode {
     Self {
       name: value.name,
       size: value.size as f64,
-      children: value.children.map(|children| {
-        children.into_iter().map(Into::into).collect()
-      }),
+      children: value
+        .children
+        .map(|children| children.into_iter().map(Into::into).collect()),
       path: value.path,
       module_type: value.module_type,
     }
@@ -276,11 +276,7 @@ impl From<StatisticsInfo> for JsStatisticsInfo {
         .into_iter()
         .map(|(k, v)| (k, v.into()))
         .collect(),
-      largest_modules: value
-        .largest_modules
-        .into_iter()
-        .map(Into::into)
-        .collect(),
+      largest_modules: value.largest_modules.into_iter().map(Into::into).collect(),
     }
   }
 }
