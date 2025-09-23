@@ -524,7 +524,7 @@ impl Loader<RunnerContext> for StyleLoader {
 
     // let is_auto = matches!(inject_type, InjectType::AutoStyleTag);
 
-    let source = match inject_type.clone() {
+    let source = match inject_type {
       InjectType::LinkTag => {
         inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options)
       }
