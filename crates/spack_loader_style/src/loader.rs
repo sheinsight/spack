@@ -34,23 +34,6 @@ pub enum InjectType {
 }
 
 impl InjectType {
-  pub fn get_link_hmr_code(&self, request: &str) -> String {
-    return format!(
-      r##"
-if (module.hot) {{
-  module.hot.accept(
-  "!!{request}",
-  function(){{
-    update(content);
-  }}
-  )
-  module.hot.dispose(function() {{
-    update();
-  }});
-}}"##
-    );
-  }
-
   pub fn get_import_insert_by_selector_code(
     &self,
     loader_context: &mut LoaderContext<RunnerContext>,
@@ -67,12 +50,8 @@ if (module.hot) {{
       }
       _ => {
         format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
-      } // None => "".to_string(),
+      }
     }
-  }
-
-  pub fn get_import_link_content_code(&self, request: &str) -> String {
-    format!(r##"import content from "!!{request}";"##)
   }
 
   pub fn get_insert_option_code(&self, insert: &Option<String>) -> String {
@@ -85,27 +64,6 @@ if (module.hot) {{
       }
       None => format!(r##"options.insert = insertFn.bind(null, "head");"##),
     }
-  }
-
-  pub fn get_import_style_api_code(&self) -> String {
-    format!(r##"import API from "!@@/runtime/injectStylesIntoStyleTag.js";"##)
-  }
-
-  pub fn get_export_lazy_style_code(&self, request: &str) -> String {
-    format!(
-      r##"
-export * from "!!{request}";
-export default exported;
-"##
-    )
-  }
-
-  pub fn get_export_style_code(&self, request: &str) -> String {
-    format!(
-      r##"
-    export * from "!!{request}";
-    export default content && content.locals ? content.locals : undefined;"##
-    )
   }
 
   pub fn get_style_hmr_code(&self, request: &str, lazy: bool) -> String {
@@ -199,10 +157,6 @@ if (module.hot) {{
     )
   }
 
-  pub fn get_import_insert_style_element_code(&self) -> String {
-    format!(r##"import insertStyleElement from "!@@/runtime/insertStyleElement.js";"##)
-  }
-
   // TODO
   pub fn get_style_tag_transform_fn_code(&self, loader_options: &StyleLoaderOpts) -> String {
     if let Some(style_tag_transform) = &loader_options.style_tag_transform {
@@ -218,10 +172,6 @@ if (module.hot) {{
     } else {
       format!("")
     }
-  }
-
-  pub fn get_import_style_content_code(&self, request: &str) -> String {
-    format!(r##"import content, * as namedExport from "!!{request}";"##)
   }
 
   pub fn get_dom_api(&self, is_auto: bool) -> String {
@@ -281,25 +231,34 @@ impl InjectType {
   ) -> String {
     let import_link_api_code = r#"import API from "@@/runtime/injectStylesIntoLinkTag.js";"#;
 
-    let hmr_code = self.get_link_hmr_code(&request);
     let import_insert_by_selector_code =
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
-    let import_link_content_code = self.get_import_link_content_code(&request);
+
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
-    let export_code = format!(r##"export default {{}};"##);
 
     let source = format!(
       r##"
       {import_link_api_code}
       {import_insert_by_selector_code}
-      {import_link_content_code}
+      import content from "!!{request}";
       
       var options = {runtime_options};
       {insert_option_code}
       var update = API(content, options);
       
-      {hmr_code}
-      {export_code}
+      if (module.hot) {{
+        module.hot.accept(
+          "!!{request}",
+          function accept(){{
+            update(content);
+          }}
+        );
+        module.hot.dispose(function dispose() {{
+          update();
+        }});
+      }}
+
+      export default {{}};
 "##
     );
     source
@@ -314,12 +273,10 @@ impl InjectType {
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
-    let style_api_code = self.get_import_style_api_code();
     let style_dom_api_code = self.get_import_style_dom_api_code(is_auto, is_singleton);
     let insert_by_selector_code =
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
-    let insert_style_element_code = self.get_import_insert_style_element_code();
 
     let style_tag_transform_fn_code =
       if let Some(style_tag_transform) = &loader_options.style_tag_transform {
@@ -331,8 +288,6 @@ impl InjectType {
         format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
       };
 
-    // let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
-    let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
     let is_old_ie_code = self.get_import_is_old_ie_code(is_auto);
@@ -348,19 +303,17 @@ impl InjectType {
 
     let hmr_code = self.get_style_hmr_code(&request, true);
 
-    let export_code = self.get_export_lazy_style_code(&request);
-
     let source = format!(
       r##"
 var exported = {{}};
+import API from "!@@/runtime/injectStylesIntoStyleTag.js";
 
-{style_api_code}
 {style_dom_api_code}
 {insert_by_selector_code}
 {set_attributes_code}
-{insert_style_element_code}
+import insertStyleElement from "!@@/runtime/insertStyleElement.js";
 {style_tag_transform_fn_code}
-{import_style_content_code}
+import content, * as namedExport from "!!{request}";
 {is_old_ie_code}
 {exported}
 
@@ -393,7 +346,8 @@ exported.unuse = function() {{
 
 {hmr_code}
 
-{export_code}
+export * from "!!{request}";
+export default exported;
 "##
     );
 
@@ -411,12 +365,10 @@ exported.unuse = function() {{
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
-    let style_api_code = self.get_import_style_api_code();
     let style_dom_api_code = self.get_import_style_dom_api_code(is_auto, is_singleton);
     let insert_by_selector_code =
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
-    let insert_style_element_code = self.get_import_insert_style_element_code();
 
     let style_tag_transform_fn_code =
       if let Some(style_tag_transform) = &loader_options.style_tag_transform {
@@ -428,8 +380,6 @@ exported.unuse = function() {{
         format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
       };
 
-    // let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
-    let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
     let is_old_ie_code = self.get_import_is_old_ie_code(is_auto);
@@ -442,17 +392,15 @@ exported.unuse = function() {{
 
     let hmr_code = self.get_style_hmr_code(&request, false);
 
-    let export_code = self.get_export_style_code(&request);
-
     let source = format!(
       r##"
-      {style_api_code}
+      import API from "!@@/runtime/injectStylesIntoStyleTag.js";
       {style_dom_api_code}
       {insert_by_selector_code}
       {set_attributes_code}
-      {insert_style_element_code}
+      import insertStyleElement from "!@@/runtime/insertStyleElement.js";
       {style_tag_transform_fn_code}
-      {import_style_content_code}
+      import content, * as namedExport from "!!{request}";
       {is_old_ie_code}
       {exported}
 
@@ -468,7 +416,8 @@ exported.unuse = function() {{
 
       {hmr_code}
 
-      {export_code}
+      export * from "!!{request}";
+      export default content && content.locals ? content.locals : undefined;
       "##
     );
 
@@ -516,14 +465,6 @@ impl Loader<RunnerContext> for StyleLoader {
     }
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
-    // let is_lazy_singleton = matches!(inject_type, InjectType::LazySingletonStyleTag);
-
-    // let is_lazy_auto = matches!(inject_type, InjectType::LazyAutoStyleTag);
-
-    // let is_singleton = matches!(inject_type, InjectType::SingletonStyleTag);
-
-    // let is_auto = matches!(inject_type, InjectType::AutoStyleTag);
-
     let source = match inject_type {
       InjectType::LinkTag => {
         inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options)
@@ -555,38 +496,6 @@ impl Loader<RunnerContext> for StyleLoader {
         )
       }
     };
-
-    // let source = match inject_type {
-    //   InjectType::LinkTag => {
-    //     let source =
-    //       inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options);
-    //     source
-    //   }
-    //   InjectType::LazyStyleTag
-    //   | InjectType::LazySingletonStyleTag
-    //   | InjectType::LazyAutoStyleTag => {
-    //     let source = inject_type.get_lazy_style_tag_code(
-    //       &request,
-    //       loader_context,
-    //       &self.options,
-    //       &runtime_options,
-    //       is_lazy_singleton,
-    //       is_lazy_auto,
-    //     );
-    //     source
-    //   }
-    //   InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag => {
-    //     let source = inject_type.get_style_tag_code(
-    //       &request,
-    //       loader_context,
-    //       &self.options,
-    //       &runtime_options,
-    //       is_singleton,
-    //       is_auto,
-    //     );
-    //     source
-    //   }
-    // };
 
     loader_context.finish_with((source, source_map));
     Ok(())
