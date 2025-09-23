@@ -16,6 +16,7 @@ pub struct StyleLoaderOpts {
   pub inject_type: Option<InjectType>,
   pub insert: Option<String>,
   pub output: String,
+  pub style_tag_transform: Option<String>,
   pub attributes: Option<HashMap<String, String>>,
 }
 
@@ -203,9 +204,12 @@ if (module.hot) {{
   }
 
   // TODO
-  pub fn get_style_tag_transform_fn_code(&self, _loader_options: &StyleLoaderOpts) -> String {
-    format!("")
-    // match loader_options {}
+  pub fn get_style_tag_transform_fn_code(&self, loader_options: &StyleLoaderOpts) -> String {
+    if let Some(style_tag_transform) = &loader_options.style_tag_transform {
+      format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
+    } else {
+      format!(r##"import styleTagTransformFn from "@@/runtime/styleTagTransform.js";"##)
+    }
   }
 
   pub fn get_import_is_old_ie_code(&self, is_auto: bool) -> String {
@@ -232,9 +236,7 @@ if (module.hot) {{
     if is_singleton {
       format!("")
     } else {
-      format!("")
-      // TODO
-      // format!("options.styleTagTransform = styleTagTransformFn;")
+      format!("options.styleTagTransform = styleTagTransformFn;")
     }
   }
 
@@ -318,7 +320,18 @@ impl InjectType {
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
     let insert_style_element_code = self.get_import_insert_style_element_code();
-    let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
+
+    let style_tag_transform_fn_code =
+      if let Some(style_tag_transform) = &loader_options.style_tag_transform {
+        loader_context
+          .build_dependencies
+          .insert(PathBuf::from(style_tag_transform));
+        format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
+      } else {
+        format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
+      };
+
+    // let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
     let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
@@ -404,7 +417,18 @@ exported.unuse = function() {{
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
     let insert_style_element_code = self.get_import_insert_style_element_code();
-    let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
+
+    let style_tag_transform_fn_code =
+      if let Some(style_tag_transform) = &loader_options.style_tag_transform {
+        loader_context
+          .build_dependencies
+          .insert(PathBuf::from(style_tag_transform));
+        format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
+      } else {
+        format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
+      };
+
+    // let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
     let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
@@ -526,7 +550,7 @@ impl Loader<RunnerContext> for StyleLoader {
       }
     };
 
-    println!("source: {}", source.clone());
+    // println!("source: {}", source.clone());
 
     loader_context.finish_with((source, source_map));
     Ok(())

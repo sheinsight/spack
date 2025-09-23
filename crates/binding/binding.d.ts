@@ -129,6 +129,7 @@ export interface RawStyleLoaderPluginOpts {
   injectType?: string
   insert?: string
   output: string
+  styleTagTransform?: string
   attributes?: Record<string, string>
 }
 

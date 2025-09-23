@@ -63,6 +63,10 @@ impl StyleLoaderPlugin {
         include_str!("runtime/setAttributesWithAttributesAndNonce.js").to_string(),
       ),
       (
+        "styleTagTransform.js",
+        include_str!("runtime/styleTagTransform.js").to_string(),
+      ),
+      (
         "styleDomAPI.js",
         include_str!("runtime/styleDomAPI.js").to_string(),
       ),

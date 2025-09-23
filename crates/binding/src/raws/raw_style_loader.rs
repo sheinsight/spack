@@ -16,6 +16,8 @@ pub struct RawStyleLoaderPluginOpts {
   pub insert: Option<String>,
   #[napi(js_name = "output")]
   pub output: String,
+  #[napi(js_name = "styleTagTransform")]
+  pub style_tag_transform: Option<String>,
   #[napi(js_name = "attributes")]
   pub attributes: Option<HashMap<String, String>>, // 使用 Option 让字段可选
 }
@@ -27,6 +29,7 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
       inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
       insert: value.insert,
       output: value.output,
+      style_tag_transform: value.style_tag_transform,
       attributes: value.attributes,
     }
   }
