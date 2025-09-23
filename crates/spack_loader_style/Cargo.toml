@@ -24,6 +24,7 @@ rspack_hash          = { workspace = true }
 rspack_hook          = { workspace = true }
 rspack_loader_runner = { workspace = true }
 rspack_paths         = { workspace = true }
+rspack_resolver      = { workspace = true }
 rspack_util          = { workspace = true }
 
 sailfish = { workspace = true }

@@ -5412,6 +5412,7 @@ dependencies = [
  "rspack_hook",
  "rspack_loader_runner",
  "rspack_paths",
+ "rspack_resolver",
  "rspack_util",
  "sailfish",
  "serde",

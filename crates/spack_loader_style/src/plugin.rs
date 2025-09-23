@@ -91,13 +91,47 @@ impl Plugin for StyleLoaderPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
-    let dir = ctx
-      .compiler_options
-      .context
-      .as_path()
-      .join(&self.options.output);
+    // let dir = ctx
+    //   .compiler_options
+    //   .context
+    //   .as_path()
+    //   .join(&self.options.output);
 
-    Self::write_runtime(&dir)?;
+    if let Some(alias) = &ctx.compiler_options.resolve.alias {
+      let value = match alias {
+        rspack_core::Alias::OverwriteToNoAlias => None,
+        rspack_core::Alias::MergeAlias(items) => {
+          let alias_values = items
+            .iter()
+            .find_map(|(k, v)| if k == "@@" { Some(v) } else { None });
+
+          if let Some(alias) = alias_values {
+            alias.get(0)
+          } else {
+            None
+          }
+        }
+      };
+
+      if let Some(value) = value {
+        match value {
+          rspack_resolver::AliasValue::Path(path) => {
+            let path = path.to_string();
+            let path = Utf8PathBuf::from(path).join(&self.options.output);
+            Self::write_runtime(&path)?;
+          }
+          rspack_resolver::AliasValue::Ignore => {
+            return Err(rspack_error::error!(
+              "StyleLoaderPlugin requires alias to be configured with '@@'"
+            ));
+          }
+        }
+      } else {
+        return Err(rspack_error::error!(
+          "StyleLoaderPlugin requires alias to be configured with '@@'"
+        ));
+      }
+    }
 
     ctx
       .compilation_hooks

@@ -64,10 +64,9 @@ if (module.hot) {{
           .insert(PathBuf::from(insert));
         format!(r##"import insertFn from "{path}";"##)
       }
-      Some(_) => {
-        format!(r##"import insertFn from "!@/.lego/runtime/insertBySelector.js";"##)
-      }
-      None => "".to_string(),
+      _ => {
+        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+      } // None => "".to_string(),
     }
   }
 
@@ -88,7 +87,7 @@ if (module.hot) {{
   }
 
   pub fn get_import_style_api_code(&self) -> String {
-    format!(r##"import API from "!@/.lego/runtime/injectStylesIntoStyleTag.js";"##)
+    format!(r##"import API from "!@@/runtime/injectStylesIntoStyleTag.js";"##)
   }
 
   pub fn get_export_lazy_style_code(&self, request: &str) -> String {
@@ -200,17 +199,18 @@ if (module.hot) {{
   }
 
   pub fn get_import_insert_style_element_code(&self) -> String {
-    format!(r##"import insertStyleElement from "!@/.lego/runtime/insertStyleElement.js";"##)
+    format!(r##"import insertStyleElement from "!@@/runtime/insertStyleElement.js";"##)
   }
 
   // TODO
-  pub fn get_style_tag_transform_fn_code(&self) -> String {
+  pub fn get_style_tag_transform_fn_code(&self, _loader_options: &StyleLoaderOpts) -> String {
     format!("")
+    // match loader_options {}
   }
 
   pub fn get_import_is_old_ie_code(&self, is_auto: bool) -> String {
     if is_auto {
-      format!(r##"import isOldIE from "!@/.lego/runtime/isOldIE.js";"##)
+      format!(r##"import isOldIE from "!@@/runtime/isOldIE.js";"##)
     } else {
       format!("")
     }
@@ -232,19 +232,21 @@ if (module.hot) {{
     if is_singleton {
       format!("")
     } else {
-      format!("options.styleTagTransform = styleTagTransformFn;")
+      format!("")
+      // TODO
+      // format!("options.styleTagTransform = styleTagTransformFn;")
     }
   }
 
   pub fn get_set_attributes_code(&self, loader_options: &StyleLoaderOpts) -> String {
     let modules = match &loader_options.attributes {
       Some(attributes) if attributes.contains_key("nonce") => {
-        format!(r##"!@/.lego/runtime/setAttributesWithAttributesAndNonce.js"##)
+        format!(r##"!@@/runtime/setAttributesWithAttributesAndNonce.js"##)
       }
       Some(_) => {
-        format!(r##"!@/.lego/runtime/setAttributesWithAttributes.js"##)
+        format!(r##"!@@/runtime/setAttributesWithAttributes.js"##)
       }
-      None => format!(r##"!@/.lego/runtime/setAttributesWithoutAttributes.js"##),
+      None => format!(r##"!@@/runtime/setAttributesWithoutAttributes.js"##),
     };
 
     format!(r##"import setAttributes from "{modules}";"##)
@@ -254,15 +256,15 @@ if (module.hot) {{
     if is_auto {
       return format!(
         r##"
-      import domAPI from "!@/.lego/runtime/styleDomAPI.js";
-      import domAPISingleton from "!@/.lego/runtime/singletonStyleDomAPI.js";"##
+      import domAPI from "!@@/runtime/styleDomAPI.js";
+      import domAPISingleton from "!@@/runtime/singletonStyleDomAPI.js";"##
       );
     }
 
     if is_singleton {
-      return format!(r##"import domAPI from "!@/.lego/runtime/singletonStyleDomAPI.js";"##);
+      return format!(r##"import domAPI from "!@@/runtime/singletonStyleDomAPI.js";"##);
     } else {
-      return format!(r##"import domAPI from "!@/.lego/runtime/styleDomAPI.js";"##);
+      return format!(r##"import domAPI from "!@@/runtime/styleDomAPI.js";"##);
     }
   }
 }
@@ -275,7 +277,7 @@ impl InjectType {
     loader_options: &StyleLoaderOpts,
     runtime_options: &str,
   ) -> String {
-    let import_link_api_code = r#"import API from "@/.lego/runtime/injectStylesIntoLinkTag.js";"#;
+    let import_link_api_code = r#"import API from "@@/runtime/injectStylesIntoLinkTag.js";"#;
 
     let hmr_code = self.get_link_hmr_code(&request);
     let import_insert_by_selector_code =
@@ -316,7 +318,7 @@ impl InjectType {
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
     let insert_style_element_code = self.get_import_insert_style_element_code();
-    let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code();
+    let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
     let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
@@ -402,7 +404,7 @@ exported.unuse = function() {{
       self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
     let set_attributes_code = self.get_set_attributes_code(&loader_options);
     let insert_style_element_code = self.get_import_insert_style_element_code();
-    let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code();
+    let style_tag_transform_fn_code = self.get_style_tag_transform_fn_code(&loader_options);
     let import_style_content_code = self.get_import_style_content_code(&request);
     let insert_option_code = self.get_insert_option_code(&loader_options.insert);
 
@@ -524,7 +526,7 @@ impl Loader<RunnerContext> for StyleLoader {
       }
     };
 
-    // println!("source: {}", source.clone());
+    println!("source: {}", source.clone());
 
     loader_context.finish_with((source, source_map));
     Ok(())

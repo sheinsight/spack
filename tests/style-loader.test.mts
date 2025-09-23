@@ -12,7 +12,8 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 >(binding.CustomPluginNames.StyleLoaderPlugin, (opt) => ({ ...opt }));
 
 const plugin = new StyleLoaderPluginOpts({
-  output: './src/.lego/runtime',
+  output: 'runtime',
+  injectType: 'singletonStyleTag',
 });
 
 test('test style-loader', async () => {
