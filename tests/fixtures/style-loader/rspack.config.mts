@@ -26,7 +26,6 @@ export default {
         test: /\.css$/,
         exclude: /node_modules/,
         use: ['builtin:style-loader', 'css-loader'],
-        // use: ['builtin:style-loader'],
       },
     ],
   },

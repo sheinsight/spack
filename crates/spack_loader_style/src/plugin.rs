@@ -24,9 +24,9 @@ impl StyleLoaderPlugin {
     Self::new_inner(options)
   }
 
-  pub fn write_runtime(output: &Utf8PathBuf) -> Result<()> {
-    if output.exists().not() {
-      std::fs::create_dir_all(output)?;
+  pub fn write_runtime(dir: &Utf8PathBuf) -> Result<()> {
+    if dir.exists().not() {
+      std::fs::create_dir_all(dir)?;
     }
 
     let runtimes = vec![
@@ -74,8 +74,11 @@ impl StyleLoaderPlugin {
     ];
 
     for (file_name, runtime) in runtimes {
-      let path = output.join(file_name);
-      std::fs::write(path, runtime)?;
+      let file = dir.join(file_name);
+
+      if file.exists().not() {
+        std::fs::write(file, runtime)?;
+      }
     }
 
     Ok(())
@@ -92,11 +95,8 @@ impl Plugin for StyleLoaderPlugin {
       .compiler_options
       .context
       .as_path()
-      .join(self.options.output.clone());
+      .join(&self.options.output);
 
-    if dir.exists().not() {
-      std::fs::create_dir_all(&dir)?;
-    }
     Self::write_runtime(&dir)?;
 
     ctx

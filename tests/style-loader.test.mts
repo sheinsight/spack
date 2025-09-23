@@ -5,6 +5,7 @@ import { runCompiler } from './test_case.mts';
 import type { RawStyleLoaderPluginOpts } from '@shined/spack-binding';
 
 binding.registerStyleLoaderPlugin();
+
 const StyleLoaderPluginOpts = experiments.createNativePlugin<
   [RawStyleLoaderPluginOpts],
   RawStyleLoaderPluginOpts
@@ -12,10 +13,6 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 
 const plugin = new StyleLoaderPluginOpts({
   output: './src/.lego/runtime',
-  attributes: {
-    nonce: '123',
-    custom: '456',
-  },
 });
 
 test('test style-loader', async () => {
