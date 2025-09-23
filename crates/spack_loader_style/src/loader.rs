@@ -9,10 +9,6 @@ use rspack_loader_runner::DisplayWithSuffix;
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
-use crate::code_template::CodeTemplate;
-
-// use crate::template;
-
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct StyleLoaderOpts {
@@ -253,6 +249,22 @@ if (module.hot) {{
 
     format!(r##"import setAttributes from "{modules}";"##)
   }
+
+  pub fn get_import_style_dom_api_code(&self, is_auto: bool, is_singleton: bool) -> String {
+    if is_auto {
+      return format!(
+        r##"
+      import domAPI from "!@/.lego/runtime/styleDomAPI.js";
+      import domAPISingleton from "!@/.lego/runtime/singletonStyleDomAPI.js";"##
+      );
+    }
+
+    if is_singleton {
+      return format!(r##"import domAPI from "!@/.lego/runtime/singletonStyleDomAPI.js";"##);
+    } else {
+      return format!(r##"import domAPI from "!@/.lego/runtime/styleDomAPI.js";"##);
+    }
+  }
 }
 
 impl InjectType {
@@ -287,22 +299,6 @@ impl InjectType {
 "##
     );
     source
-  }
-
-  pub fn get_import_style_dom_api_code(&self, is_auto: bool, is_singleton: bool) -> String {
-    if is_auto {
-      return format!(
-        r##"
-      import domAPI from "!@/.lego/runtime/styleDomAPI.js";
-      import domAPISingleton from "!@/.lego/runtime/singletonStyleDomAPI.js";"##
-      );
-    }
-
-    if is_singleton {
-      return format!(r##"import domAPI from "!@/.lego/runtime/singletonStyleDomAPI.js";"##);
-    } else {
-      return format!(r##"import domAPI from "!@/.lego/runtime/styleDomAPI.js";"##);
-    }
   }
 
   pub fn get_lazy_style_tag_code(
@@ -531,7 +527,6 @@ impl Loader<RunnerContext> for StyleLoader {
     // println!("source: {}", source.clone());
 
     loader_context.finish_with((source, source_map));
-
     Ok(())
   }
 
