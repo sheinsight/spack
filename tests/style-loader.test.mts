@@ -13,7 +13,6 @@ const StyleLoaderPluginOpts = experiments.createNativePlugin<
 
 const plugin = new StyleLoaderPluginOpts({
   output: 'runtime',
-  injectType: 'singletonStyleTag',
 });
 
 test('test style-loader', async () => {

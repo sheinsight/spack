@@ -476,6 +476,12 @@ exported.unuse = function() {{
   }
 }
 
+impl Default for InjectType {
+  fn default() -> Self {
+    InjectType::StyleTag // 保持当前默认值
+  }
+}
+
 #[cacheable]
 pub struct StyleLoader {
   pub options: StyleLoaderOpts,
@@ -498,7 +504,7 @@ impl Loader<RunnerContext> for StyleLoader {
 
     let request = request.display_with_suffix(resource);
 
-    let inject_type = self.options.inject_type.unwrap_or(InjectType::StyleTag);
+    let inject_type = self.options.inject_type.unwrap_or_default();
 
     let mut runtime_options = HashMap::new();
     if let Some(attributes) = &self.options.attributes {
@@ -550,8 +556,6 @@ impl Loader<RunnerContext> for StyleLoader {
       }
     };
 
-    // println!("source: {}", source.clone());
-
     loader_context.finish_with((source, source_map));
     Ok(())
   }
@@ -559,7 +563,6 @@ impl Loader<RunnerContext> for StyleLoader {
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
-    // let request = loader_context.resource_query();
 
     loader_context.finish_with((source, sm));
     Ok(())
