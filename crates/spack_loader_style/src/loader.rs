@@ -45,47 +45,7 @@ impl Loader<RunnerContext> for StyleLoader {
 
     let inject_type = self.options.inject_type.unwrap_or_default();
 
-    let mut runtime_options = HashMap::new();
-    if let Some(attributes) = &self.options.attributes {
-      runtime_options.insert("attributes".to_string(), serde_json::json!(attributes));
-    }
-
-    if let Some(base) = &self.options.base {
-      runtime_options.insert("base".to_string(), serde_json::json!(base));
-    }
-    let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
-
-    let source = match inject_type {
-      InjectType::LinkTag => {
-        inject_type.get_link_tag_code(&request, loader_context, &self.options, &runtime_options)
-      }
-      style @ (InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag) => {
-        let is_singleton = matches!(style, InjectType::SingletonStyleTag);
-        let is_auto = matches!(style, InjectType::AutoStyleTag);
-        style.get_style_tag_code(
-          &request,
-          loader_context,
-          &self.options,
-          &runtime_options,
-          is_singleton,
-          is_auto,
-        )
-      }
-      lazy @ (InjectType::LazyStyleTag
-      | InjectType::LazySingletonStyleTag
-      | InjectType::LazyAutoStyleTag) => {
-        let is_singleton = matches!(lazy, InjectType::LazySingletonStyleTag);
-        let is_auto = matches!(lazy, InjectType::LazyAutoStyleTag);
-        lazy.get_lazy_style_tag_code(
-          &request,
-          loader_context,
-          &self.options,
-          &runtime_options,
-          is_singleton,
-          is_auto,
-        )
-      }
-    };
+    let source = inject_type.code(&request, loader_context, &self.options);
 
     loader_context.finish_with((source, source_map));
     Ok(())

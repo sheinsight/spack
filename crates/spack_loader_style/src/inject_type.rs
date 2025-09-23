@@ -1,11 +1,14 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use rspack_cacheable::cacheable;
 use rspack_core::{LoaderContext, RunnerContext, contextify};
 use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
-use crate::StyleLoaderOpts;
+use crate::{
+  StyleLoaderOpts, get_dom_api, get_import_is_old_ie_code, get_import_style_dom_api_code,
+  get_insert_option_code, get_set_attributes_code, get_style_hmr_code, get_style_tag_transform_fn,
+};
 
 #[derive(Debug, Clone, Copy, Serialize, Display, EnumString)]
 #[cacheable]
@@ -21,194 +24,7 @@ pub enum InjectType {
 }
 
 impl InjectType {
-  pub fn get_import_insert_by_selector_code(
-    &self,
-    loader_context: &mut LoaderContext<RunnerContext>,
-    insert: &Option<String>,
-  ) -> String {
-    let context = &loader_context.context.options.context;
-    match &insert {
-      Some(insert) if PathBuf::from(insert).is_absolute() => {
-        let path = contextify(context, &insert);
-        loader_context
-          .build_dependencies
-          .insert(PathBuf::from(insert));
-        format!(r##"import insertFn from "{path}";"##)
-      }
-      _ => {
-        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
-      }
-    }
-  }
-
-  pub fn get_insert_option_code(&self, insert: &Option<String>) -> String {
-    match &insert {
-      Some(insert) if PathBuf::from(insert).is_absolute() => {
-        format!(r##"options.insert = insertFn;"##)
-      }
-      Some(insert) => {
-        format!(r##"options.insert = insertFn.bind(null, "{insert}");"##)
-      }
-      None => format!(r##"options.insert = insertFn.bind(null, "head");"##),
-    }
-  }
-
-  pub fn get_style_hmr_code(&self, request: &str, lazy: bool) -> String {
-    let dispose_content = if lazy {
-      format!(
-        r##"
-      if (update) {{
-        update();
-      }}"##
-      )
-    } else {
-      format!(r##"update();"##)
-    };
-
-    let hmr_code = if lazy {
-      format!(
-        r##"
-        if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
-          module.hot.invalidate();
-          return;
-        }}
-        oldLocals = isNamedExport ? namedExport : content.locals;
-        if (update && refs > 0) {{
-          update(content);
-        }}"##
-      )
-    } else {
-      format!(
-        r##"
-        if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
-          module.hot.invalidate();
-          return;
-        }}
-        oldLocals = isNamedExport ? namedExport : content.locals;
-        update(content);"##
-      )
-    };
-
-    format!(
-      r##"
-if (module.hot) {{
-    if (!content.locals || module.hot.invalidate) {{
-      function isEqualLocals(a, b, isNamedExport) {{
-        if ((!a && b) || (a && !b)) {{
-          return false;
-        }}
-
-        let property;
-
-        for (property in a) {{
-          if (isNamedExport && property === "default") {{
-            continue;
-          }}
-
-          if (a[property] !== b[property]) {{
-            return false;
-          }}
-        }}
-
-        for (property in b) {{
-          if (isNamedExport && property === "default") {{
-            continue;
-          }}
-
-          if (!a[property]) {{
-            return false;
-          }}
-        }}
-
-        return true;
-      }};
-
-      var isNamedExport = !content.locals;
-      var oldLocals = isNamedExport ? namedExport : content.locals;
-
-
-      module.hot.accept(
-        "!!{request}",
-        function accept() {{
-          {hmr_code}
-        }}
-      );
-    }}
-
-    module.hot.dispose(function dispose() {{
-      {dispose_content}
-    }});
-}}
-"##
-    )
-  }
-
-  // TODO
-  pub fn get_style_tag_transform_fn_code(&self, loader_options: &StyleLoaderOpts) -> String {
-    if let Some(style_tag_transform) = &loader_options.style_tag_transform {
-      format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
-    } else {
-      format!(r##"import styleTagTransformFn from "@@/runtime/styleTagTransform.js";"##)
-    }
-  }
-
-  pub fn get_import_is_old_ie_code(&self, is_auto: bool) -> String {
-    if is_auto {
-      format!(r##"import isOldIE from "!@@/runtime/isOldIE.js";"##)
-    } else {
-      format!("")
-    }
-  }
-
-  pub fn get_dom_api(&self, is_auto: bool) -> String {
-    if is_auto {
-      format!("isOldIE() ? domAPISingleton : domAPI;")
-    } else {
-      format!("domAPI;")
-    }
-  }
-
-  pub fn get_style_tag_transform_fn(&self, is_singleton: bool) -> String {
-    if is_singleton {
-      format!("")
-    } else {
-      format!("options.styleTagTransform = styleTagTransformFn;")
-    }
-  }
-
-  pub fn get_set_attributes_code(&self, loader_options: &StyleLoaderOpts) -> String {
-    let modules = match &loader_options.attributes {
-      Some(attributes) if attributes.contains_key("nonce") => {
-        format!(r##"!@@/runtime/setAttributesWithAttributesAndNonce.js"##)
-      }
-      Some(_) => {
-        format!(r##"!@@/runtime/setAttributesWithAttributes.js"##)
-      }
-      None => format!(r##"!@@/runtime/setAttributesWithoutAttributes.js"##),
-    };
-
-    format!(r##"import setAttributes from "{modules}";"##)
-  }
-
-  pub fn get_import_style_dom_api_code(&self, is_auto: bool, is_singleton: bool) -> String {
-    if is_auto {
-      return format!(
-        r##"
-      import domAPI from "!@@/runtime/styleDomAPI.js";
-      import domAPISingleton from "!@@/runtime/singletonStyleDomAPI.js";"##
-      );
-    }
-
-    if is_singleton {
-      return format!(r##"import domAPI from "!@@/runtime/singletonStyleDomAPI.js";"##);
-    } else {
-      return format!(r##"import domAPI from "!@@/runtime/styleDomAPI.js";"##);
-    }
-  }
-}
-
-impl InjectType {
-  pub fn get_link_tag_code(
+  fn get_link_tag_code(
     &self,
     request: &str,
     loader_context: &mut LoaderContext<RunnerContext>,
@@ -217,40 +33,53 @@ impl InjectType {
   ) -> String {
     let import_link_api_code = r#"import API from "@@/runtime/injectStylesIntoLinkTag.js";"#;
 
-    let import_insert_by_selector_code =
-      self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
+    // let import_insert_by_selector_code =
+    //   self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
 
-    let insert_option_code = self.get_insert_option_code(&loader_options.insert);
+    let import_insert_by_selector_code = match &loader_options.insert {
+      Some(insert) if PathBuf::from(insert).is_absolute() => {
+        let path = contextify(&loader_context.context.options.context, &insert);
+        loader_context
+          .build_dependencies
+          .insert(PathBuf::from(&path));
+        format!(r##"import insertFn from "{path}";"##)
+      }
+      _ => {
+        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+      }
+    };
+
+    let insert_option_code = get_insert_option_code(&loader_options.insert);
 
     let source = format!(
       r##"
-      {import_link_api_code}
-      {import_insert_by_selector_code}
-      import content from "!!{request}";
-      
-      var options = {runtime_options};
-      {insert_option_code}
-      var update = API(content, options);
-      
-      if (module.hot) {{
-        module.hot.accept(
-          "!!{request}",
-          function accept(){{
-            update(content);
-          }}
-        );
-        module.hot.dispose(function dispose() {{
-          update();
-        }});
-      }}
+{import_link_api_code}
+{import_insert_by_selector_code}
+import content from "!!{request}";
 
-      export default {{}};
+var options = {runtime_options};
+{insert_option_code}
+var update = API(content, options);
+
+if (module.hot) {{
+  module.hot.accept(
+    "!!{request}",
+    function accept(){{
+      update(content);
+    }}
+  );
+  module.hot.dispose(function dispose() {{
+    update();
+  }});
+}}
+
+export default {{}};
 "##
     );
     source
   }
 
-  pub fn get_lazy_style_tag_code(
+  fn get_lazy_style_tag_code(
     &self,
     request: &str,
     loader_context: &mut LoaderContext<RunnerContext>,
@@ -259,10 +88,24 @@ impl InjectType {
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
-    let style_dom_api_code = self.get_import_style_dom_api_code(is_auto, is_singleton);
-    let insert_by_selector_code =
-      self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
-    let set_attributes_code = self.get_set_attributes_code(&loader_options);
+    let style_dom_api_code = get_import_style_dom_api_code(is_auto, is_singleton);
+    // let insert_by_selector_code =
+    //   self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
+
+    let import_insert_by_selector_code = match &loader_options.insert {
+      Some(insert) if PathBuf::from(insert).is_absolute() => {
+        let path = contextify(&loader_context.context.options.context, &insert);
+        loader_context
+          .build_dependencies
+          .insert(PathBuf::from(&path));
+        format!(r##"import insertFn from "{path}";"##)
+      }
+      _ => {
+        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+      }
+    };
+
+    let set_attributes_code = get_set_attributes_code(&loader_options);
 
     let style_tag_transform_fn_code =
       if let Some(style_tag_transform) = &loader_options.style_tag_transform {
@@ -274,20 +117,15 @@ impl InjectType {
         format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
       };
 
-    let insert_option_code = self.get_insert_option_code(&loader_options.insert);
+    let insert_option_code = get_insert_option_code(&loader_options.insert);
 
-    let is_old_ie_code = self.get_import_is_old_ie_code(is_auto);
+    let is_old_ie_code = get_import_is_old_ie_code(is_auto);
 
-    let exported = r##"
-      if (content && content.locals) {{
-        exported.locals = content.locals;
-      }}"##;
+    let style_tag_transform_fn = get_style_tag_transform_fn(is_singleton);
 
-    let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
+    let dom_api = get_dom_api(is_auto);
 
-    let dom_api = self.get_dom_api(is_auto);
-
-    let hmr_code = self.get_style_hmr_code(&request, true);
+    let hmr_code = get_style_hmr_code(&request, true);
 
     let source = format!(
       r##"
@@ -295,13 +133,16 @@ var exported = {{}};
 import API from "!@@/runtime/injectStylesIntoStyleTag.js";
 
 {style_dom_api_code}
-{insert_by_selector_code}
+{import_insert_by_selector_code}
 {set_attributes_code}
 import insertStyleElement from "!@@/runtime/insertStyleElement.js";
 {style_tag_transform_fn_code}
 import content, * as namedExport from "!!{request}";
 {is_old_ie_code}
-{exported}
+
+if (content && content.locals) {{
+  exported.locals = content.locals;
+}}
 
 var refs = 0;
 var update;
@@ -342,7 +183,7 @@ export default exported;
     source
   }
 
-  pub fn get_style_tag_code(
+  fn get_style_tag_code(
     &self,
     request: &str,
     loader_context: &mut LoaderContext<RunnerContext>,
@@ -351,10 +192,24 @@ export default exported;
     is_singleton: bool,
     is_auto: bool,
   ) -> String {
-    let style_dom_api_code = self.get_import_style_dom_api_code(is_auto, is_singleton);
-    let insert_by_selector_code =
-      self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
-    let set_attributes_code = self.get_set_attributes_code(&loader_options);
+    let style_dom_api_code = get_import_style_dom_api_code(is_auto, is_singleton);
+    // let insert_by_selector_code =
+    //   self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
+
+    let import_insert_by_selector_code = match &loader_options.insert {
+      Some(insert) if PathBuf::from(insert).is_absolute() => {
+        let path = contextify(&loader_context.context.options.context, &insert);
+        loader_context
+          .build_dependencies
+          .insert(PathBuf::from(&path));
+        format!(r##"import insertFn from "{path}";"##)
+      }
+      _ => {
+        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+      }
+    };
+
+    let set_attributes_code = get_set_attributes_code(&loader_options);
 
     let style_tag_transform_fn_code =
       if let Some(style_tag_transform) = &loader_options.style_tag_transform {
@@ -366,29 +221,26 @@ export default exported;
         format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
       };
 
-    let insert_option_code = self.get_insert_option_code(&loader_options.insert);
+    let insert_option_code = get_insert_option_code(&loader_options.insert);
 
-    let is_old_ie_code = self.get_import_is_old_ie_code(is_auto);
+    let is_old_ie_code = get_import_is_old_ie_code(is_auto);
 
-    let exported = r##""##;
+    let style_tag_transform_fn = get_style_tag_transform_fn(is_singleton);
 
-    let style_tag_transform_fn = self.get_style_tag_transform_fn(is_singleton);
+    let dom_api = get_dom_api(is_auto);
 
-    let dom_api = self.get_dom_api(is_auto);
-
-    let hmr_code = self.get_style_hmr_code(&request, false);
+    let hmr_code = get_style_hmr_code(&request, false);
 
     let source = format!(
       r##"
       import API from "!@@/runtime/injectStylesIntoStyleTag.js";
       {style_dom_api_code}
-      {insert_by_selector_code}
+      {import_insert_by_selector_code}
       {set_attributes_code}
       import insertStyleElement from "!@@/runtime/insertStyleElement.js";
       {style_tag_transform_fn_code}
       import content, * as namedExport from "!!{request}";
       {is_old_ie_code}
-      {exported}
 
       var options = {runtime_options};
 
@@ -406,6 +258,57 @@ export default exported;
       export default content && content.locals ? content.locals : undefined;
       "##
     );
+
+    source
+  }
+
+  pub fn code(
+    &self,
+    request: &str,
+    loader_context: &mut LoaderContext<RunnerContext>,
+    loader_options: &StyleLoaderOpts,
+  ) -> String {
+    let inject_type = loader_options.inject_type.unwrap_or_default();
+    let mut runtime_options = HashMap::new();
+    if let Some(attributes) = &loader_options.attributes {
+      runtime_options.insert("attributes".to_string(), serde_json::json!(attributes));
+    }
+    if let Some(base) = &loader_options.base {
+      runtime_options.insert("base".to_string(), serde_json::json!(base));
+    }
+    let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
+
+    let source = match inject_type {
+      InjectType::LinkTag => {
+        inject_type.get_link_tag_code(&request, loader_context, loader_options, &runtime_options)
+      }
+      style @ (InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag) => {
+        let is_singleton = matches!(style, InjectType::SingletonStyleTag);
+        let is_auto = matches!(style, InjectType::AutoStyleTag);
+        style.get_style_tag_code(
+          &request,
+          loader_context,
+          loader_options,
+          &runtime_options,
+          is_singleton,
+          is_auto,
+        )
+      }
+      lazy @ (InjectType::LazyStyleTag
+      | InjectType::LazySingletonStyleTag
+      | InjectType::LazyAutoStyleTag) => {
+        let is_singleton = matches!(lazy, InjectType::LazySingletonStyleTag);
+        let is_auto = matches!(lazy, InjectType::LazyAutoStyleTag);
+        lazy.get_lazy_style_tag_code(
+          &request,
+          loader_context,
+          loader_options,
+          &runtime_options,
+          is_singleton,
+          is_auto,
+        )
+      }
+    };
 
     source
   }
