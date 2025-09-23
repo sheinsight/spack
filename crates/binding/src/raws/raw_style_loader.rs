@@ -10,7 +10,10 @@ use spack_loader_style::{InjectType, StyleLoaderOpts, StyleLoaderPlugin};
 pub struct RawStyleLoaderPluginOpts {
   #[napi(js_name = "base")]
   pub base: Option<i64>,
-  #[napi(js_name = "injectType")]
+  #[napi(
+    js_name = "injectType",
+    ts_type = "'linkTag' | 'styleTag' | 'singletonStyleTag' | 'autoStyleTag' | 'lazyStyleTag' | 'lazySingletonStyleTag' | 'lazyAutoStyleTag'"
+  )]
   pub inject_type: Option<String>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
@@ -35,6 +38,7 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
   }
 }
 
+#[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawStyleLoaderPluginOpts::from_unknown(options)?;
   Ok(Box::new(StyleLoaderPlugin::new(options.into())) as BoxPlugin)
