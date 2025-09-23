@@ -67,8 +67,6 @@ impl InjectType {
   }
 
   pub fn get_style_hmr_code(&self, request: &str, lazy: bool) -> String {
-    let is_named_export = "!content.locals";
-
     let dispose_content = if lazy {
       format!(
         r##"
@@ -80,8 +78,8 @@ impl InjectType {
       format!(r##"update();"##)
     };
 
-    let hmr_code = match lazy {
-      true => format!(
+    let hmr_code = if lazy {
+      format!(
         r##"
         if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
           module.hot.invalidate();
@@ -91,8 +89,9 @@ impl InjectType {
         if (update && refs > 0) {{
           update(content);
         }}"##
-      ),
-      false => format!(
+      )
+    } else {
+      format!(
         r##"
         if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
           module.hot.invalidate();
@@ -100,7 +99,7 @@ impl InjectType {
         }}
         oldLocals = isNamedExport ? namedExport : content.locals;
         update(content);"##
-      ),
+      )
     };
 
     format!(
@@ -137,19 +136,19 @@ if (module.hot) {{
         return true;
       }};
 
-      var isNamedExport = {is_named_export};
+      var isNamedExport = !content.locals;
       var oldLocals = isNamedExport ? namedExport : content.locals;
 
 
       module.hot.accept(
         "!!{request}",
-        function() {{
+        function accept() {{
           {hmr_code}
         }}
       );
     }}
 
-    module.hot.dispose(function() {{
+    module.hot.dispose(function dispose() {{
       {dispose_content}
     }});
 }}
