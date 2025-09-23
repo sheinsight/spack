@@ -1,4 +1,4 @@
-use std::sync::Arc;
+// use std::sync::Arc;
 
 use rspack_core::{
   ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin,
@@ -222,7 +222,7 @@ pub(crate) async fn resolve_loader(
   Ok(None)
 }
 
-pub fn get_builtin_test_loader(builtin: &str) -> Option<BoxLoader> {
+pub fn get_builtin_test_loader(_builtin: &str) -> Option<BoxLoader> {
   // if builtin.starts_with(rspack_loader_testing::SIMPLE_ASYNC_LOADER_IDENTIFIER) {
   //   return Some(Arc::new(rspack_loader_testing::SimpleAsyncLoader));
   // }
