@@ -12,7 +12,7 @@ pub struct UnifiedPluginOpts {
   pub case_sensitive: Option<CaseSensitivePathsPluginOpts>,
 }
 
-pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "spack.UnifiedPlugin";
+pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
 
 #[plugin]
 #[derive(Debug)]

@@ -15,7 +15,7 @@ const plugin = new UnifiedPlugin({
   styleLoader: {
     output: 'runtime',
   },
-  caseSensitivePaths: {},
+  // caseSensitive: {},
 });
 
 test('test style-loader', async () => {
