@@ -9,6 +9,9 @@ name                    = "spack_plugin_unified"
 repository.workspace    = true
 version.workspace       = true
 
+[lib]
+test = false
+
 [dependencies]
 spack_loader_style                = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
