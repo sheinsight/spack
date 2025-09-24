@@ -33,9 +33,6 @@ impl InjectType {
   ) -> String {
     let import_link_api_code = r#"import API from "@@/runtime/injectStylesIntoLinkTag.js";"#;
 
-    // let import_insert_by_selector_code =
-    //   self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
-
     let import_insert_by_selector_code = match &loader_options.insert {
       Some(insert) if PathBuf::from(insert).is_absolute() => {
         let path = contextify(&loader_context.context.options.context, &insert);
@@ -89,8 +86,6 @@ export default {{}};
     is_auto: bool,
   ) -> String {
     let style_dom_api_code = get_import_style_dom_api_code(is_auto, is_singleton);
-    // let insert_by_selector_code =
-    //   self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
 
     let import_insert_by_selector_code = match &loader_options.insert {
       Some(insert) if PathBuf::from(insert).is_absolute() => {
@@ -193,8 +188,6 @@ export default exported;
     is_auto: bool,
   ) -> String {
     let style_dom_api_code = get_import_style_dom_api_code(is_auto, is_singleton);
-    // let insert_by_selector_code =
-    //   self.get_import_insert_by_selector_code(loader_context, &loader_options.insert);
 
     let import_insert_by_selector_code = match &loader_options.insert {
       Some(insert) if PathBuf::from(insert).is_absolute() => {
