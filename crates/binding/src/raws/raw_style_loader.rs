@@ -10,10 +10,12 @@ use spack_loader_style::{InjectType, StyleLoaderOpts, StyleLoaderPlugin};
 pub struct RawStyleLoaderPluginOpts {
   #[napi(js_name = "base")]
   pub base: Option<i64>,
-  #[napi(
-    js_name = "injectType",
-    ts_type = "'linkTag' | 'styleTag' | 'singletonStyleTag' | 'autoStyleTag' | 'lazyStyleTag' | 'lazySingletonStyleTag' | 'lazyAutoStyleTag'"
-  )]
+  // #[napi(
+  //   js_name = "injectType",
+  //   ts_type = "'linkTag' | 'styleTag' | 'singletonStyleTag' | 'autoStyleTag' | 'lazyStyleTag' | 'lazySingletonStyleTag' | 'lazyAutoStyleTag'"
+  // )]
+  // 暂时只开放 styleTag
+  #[napi(js_name = "injectType", ts_type = "'styleTag'")]
   pub inject_type: Option<String>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
