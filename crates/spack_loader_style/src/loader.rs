@@ -14,7 +14,7 @@ use crate::InjectType;
 #[derive(Debug, Clone, Serialize)]
 pub struct StyleLoaderOpts {
   pub base: Option<i64>,
-  pub inject_type: Option<InjectType>,
+  // pub inject_type: Option<InjectType>,
   pub insert: Option<String>,
   pub output: String,
   pub style_tag_transform: Option<String>,
@@ -43,7 +43,9 @@ impl Loader<RunnerContext> for StyleLoader {
 
     let request = request.display_with_suffix(resource);
 
-    let inject_type = self.options.inject_type.unwrap_or_default();
+    // let inject_type = self.options.inject_type.unwrap_or_default();
+
+    let inject_type = InjectType::StyleTag;
 
     let source = inject_type.code(&request, loader_context, &self.options);
 

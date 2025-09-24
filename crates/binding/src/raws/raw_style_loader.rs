@@ -1,9 +1,9 @@
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
-use spack_loader_style::{InjectType, StyleLoaderOpts, StyleLoaderPlugin};
+use spack_loader_style::{StyleLoaderOpts, StyleLoaderPlugin};
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
@@ -15,8 +15,8 @@ pub struct RawStyleLoaderPluginOpts {
   //   ts_type = "'linkTag' | 'styleTag' | 'singletonStyleTag' | 'autoStyleTag' | 'lazyStyleTag' | 'lazySingletonStyleTag' | 'lazyAutoStyleTag'"
   // )]
   // 暂时只开放 styleTag
-  #[napi(js_name = "injectType", ts_type = "'styleTag'")]
-  pub inject_type: Option<String>,
+  // #[napi(js_name = "injectType", ts_type = "'styleTag'")]
+  // pub inject_type: Option<String>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
   #[napi(js_name = "output")]
@@ -31,7 +31,7 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
   fn from(value: RawStyleLoaderPluginOpts) -> Self {
     Self {
       base: value.base,
-      inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
+      // inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
       insert: value.insert,
       output: value.output,
       style_tag_transform: value.style_tag_transform,

@@ -126,7 +126,6 @@ export interface RawDuplicateDependencyPluginOpts {
 
 export interface RawStyleLoaderPluginOpts {
   base?: number
-  injectType?: 'linkTag' | 'styleTag' | 'singletonStyleTag' | 'autoStyleTag' | 'lazyStyleTag' | 'lazySingletonStyleTag' | 'lazyAutoStyleTag'
   insert?: string
   output: string
   styleTagTransform?: string

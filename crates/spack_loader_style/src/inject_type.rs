@@ -284,7 +284,6 @@ export default exported;
   ) -> String {
     let path_helper = ModuleHelper::new(&loader_options.output);
 
-    let inject_type = loader_options.inject_type.unwrap_or_default();
     let mut runtime_options = HashMap::new();
     if let Some(attributes) = &loader_options.attributes {
       runtime_options.insert("attributes".to_string(), serde_json::json!(attributes));
@@ -294,8 +293,8 @@ export default exported;
     }
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
-    let source = match inject_type {
-      InjectType::LinkTag => inject_type.get_link_tag_code(
+    let source = match *self {
+      InjectType::LinkTag => self.get_link_tag_code(
         &request,
         loader_context,
         loader_options,
@@ -305,7 +304,7 @@ export default exported;
       style @ (InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag) => {
         let is_singleton = matches!(style, InjectType::SingletonStyleTag);
         let is_auto = matches!(style, InjectType::AutoStyleTag);
-        style.get_style_tag_code(
+        self.get_style_tag_code(
           &request,
           loader_context,
           loader_options,
@@ -320,7 +319,7 @@ export default exported;
       | InjectType::LazyAutoStyleTag) => {
         let is_singleton = matches!(lazy, InjectType::LazySingletonStyleTag);
         let is_auto = matches!(lazy, InjectType::LazyAutoStyleTag);
-        lazy.get_lazy_style_tag_code(
+        self.get_lazy_style_tag_code(
           &request,
           loader_context,
           loader_options,
