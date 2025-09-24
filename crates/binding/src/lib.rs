@@ -18,4 +18,7 @@ pub enum CustomPluginNames {
   // DemoPlugin,
   #[register(raws::raw_style_loader::binding)]
   StyleLoaderPlugin,
+
+  #[register(raws::raw_unified::binding)]
+  UnifiedPlugin,
 }

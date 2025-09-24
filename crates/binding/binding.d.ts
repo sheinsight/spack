@@ -2,7 +2,8 @@ export declare enum CustomPluginNames {
   DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
   CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   BundleAnalyzerPlugin = 'BundleAnalyzerPlugin',
-  StyleLoaderPlugin = 'StyleLoaderPlugin'
+  StyleLoaderPlugin = 'StyleLoaderPlugin',
+  UnifiedPlugin = 'UnifiedPlugin'
 }
 
 export interface JsBundleAnalyzerPluginResp {
@@ -127,9 +128,18 @@ export interface RawDuplicateDependencyPluginOpts {
 export interface RawStyleLoaderPluginOpts {
   base?: number
   insert?: string
+  /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   output: string
   styleTagTransform?: string
+  /** 为 style 标签添加的属性 */
   attributes?: Record<string, string>
+}
+
+export interface RawUnifiedPluginOpts {
+  /** style-loader 的配置 */
+  styleLoader?: RawStyleLoaderPluginOpts
+  /** case-sensitive-paths 的配置 */
+  caseSensitive?: RawCaseSensitivePathsPluginOpts
 }
 
 export declare function registerBundleAnalyzerPlugin(): void
@@ -139,3 +149,5 @@ export declare function registerCaseSensitivePathsPlugin(): void
 export declare function registerDuplicateDependencyPlugin(): void
 
 export declare function registerStyleLoaderPlugin(): void
+
+export declare function registerUnifiedPlugin(): void

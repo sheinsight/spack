@@ -1,0 +1,18 @@
+[package]
+authors.workspace       = true
+categories.workspace    = true
+documentation.workspace = true
+edition.workspace       = true
+homepage.workspace      = true
+license.workspace       = true
+name                    = "spack_plugin_unified"
+repository.workspace    = true
+version.workspace       = true
+
+[dependencies]
+spack_loader_style                = { workspace = true }
+spack_plugin_case_sensitive_paths = { workspace = true }
+
+rspack_core  = { workspace = true }
+rspack_error = { workspace = true }
+rspack_hook  = { workspace = true }

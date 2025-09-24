@@ -263,6 +263,7 @@ dependencies = [
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
  "spack_plugin_duplicate_dependency",
+ "spack_plugin_unified",
  "swc_core 38.0.0",
 ]
 
@@ -5519,6 +5520,17 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "up_finder",
+]
+
+[[package]]
+name = "spack_plugin_unified"
+version = "0.1.0"
+dependencies = [
+ "rspack_core",
+ "rspack_error",
+ "rspack_hook",
+ "spack_loader_style",
+ "spack_plugin_case_sensitive_paths",
 ]
 
 [[package]]

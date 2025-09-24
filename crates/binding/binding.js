@@ -398,3 +398,4 @@ module.exports.registerBundleAnalyzerPlugin = nativeBinding.registerBundleAnalyz
 module.exports.registerCaseSensitivePathsPlugin = nativeBinding.registerCaseSensitivePathsPlugin
 module.exports.registerDuplicateDependencyPlugin = nativeBinding.registerDuplicateDependencyPlugin
 module.exports.registerStyleLoaderPlugin = nativeBinding.registerStyleLoaderPlugin
+module.exports.registerUnifiedPlugin = nativeBinding.registerUnifiedPlugin

@@ -19,10 +19,12 @@ pub struct RawStyleLoaderPluginOpts {
   // pub inject_type: Option<String>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
+  /// runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置
   #[napi(js_name = "output")]
   pub output: String,
   #[napi(js_name = "styleTagTransform")]
   pub style_tag_transform: Option<String>,
+  /// 为 style 标签添加的属性
   #[napi(js_name = "attributes")]
   pub attributes: Option<HashMap<String, String>>, // 使用 Option 让字段可选
 }

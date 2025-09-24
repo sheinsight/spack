@@ -2,17 +2,20 @@ import { test, expect } from 'vitest';
 import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
-import type { RawStyleLoaderPluginOpts } from '@shined/spack-binding';
+import type { RawUnifiedPluginOpts } from '@shined/spack-binding';
 
-binding.registerStyleLoaderPlugin();
+binding.registerUnifiedPlugin();
 
-const StyleLoaderPluginOpts = experiments.createNativePlugin<
-  [RawStyleLoaderPluginOpts],
-  RawStyleLoaderPluginOpts
->(binding.CustomPluginNames.StyleLoaderPlugin, (opt) => ({ ...opt }));
+const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], RawUnifiedPluginOpts>(
+  binding.CustomPluginNames.UnifiedPlugin,
+  (opt) => ({ ...opt })
+);
 
-const plugin = new StyleLoaderPluginOpts({
-  output: 'runtime',
+const plugin = new UnifiedPlugin({
+  styleLoader: {
+    output: 'runtime',
+  },
+  caseSensitivePaths: {},
 });
 
 test('test style-loader', async () => {

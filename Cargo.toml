@@ -66,6 +66,7 @@ spack_plugin_bundle_analyzer      = { path = "crates/spack_plugin_bundle_analyze
 spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
 spack_plugin_demo                 = { path = "crates/spack_plugin_demo" }
 spack_plugin_duplicate_dependency = { path = "crates/spack_plugin_duplicate_dependency" }
+spack_plugin_unified              = { path = "crates/spack_plugin_unified" }
 
 tracing            = { version = "0.1.41", features = ["max_level_trace", "release_max_level_trace"] }
 tracing-subscriber = { version = "0.3.19" }
