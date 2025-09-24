@@ -16,7 +16,8 @@ pub struct StyleLoaderOpts {
   pub base: Option<i64>,
   pub inject_type: Option<InjectType>,
   pub insert: Option<String>,
-  pub output: String,
+  pub home_dir: String,
+  pub output_dir: String,
   pub style_tag_transform: Option<String>,
   pub attributes: Option<HashMap<String, String>>,
 }

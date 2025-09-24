@@ -17,8 +17,10 @@ pub struct RawStyleLoaderPluginOpts {
   pub inject_type: Option<String>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
-  #[napi(js_name = "output")]
-  pub output: String,
+  #[napi(js_name = "homeDir")]
+  pub home_dir: String,
+  #[napi(js_name = "outputDir")]
+  pub output_dir: String,
   #[napi(js_name = "styleTagTransform")]
   pub style_tag_transform: Option<String>,
   #[napi(js_name = "attributes")]
@@ -31,7 +33,8 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
       base: value.base,
       inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
       insert: value.insert,
-      output: value.output,
+      home_dir: value.home_dir,
+      output_dir: value.output_dir,
       style_tag_transform: value.style_tag_transform,
       attributes: value.attributes,
     }

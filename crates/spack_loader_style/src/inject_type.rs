@@ -6,8 +6,9 @@ use serde::Serialize;
 use strum_macros::{Display, EnumString};
 
 use crate::{
-  StyleLoaderOpts, get_dom_api, get_import_is_old_ie_code, get_import_style_dom_api_code,
-  get_insert_option_code, get_set_attributes_code, get_style_hmr_code, get_style_tag_transform_fn,
+  ModuleHelper, StyleLoaderOpts, get_dom_api, get_import_is_old_ie_code,
+  get_import_style_dom_api_code, get_insert_option_code, get_set_attributes_code,
+  get_style_hmr_code, get_style_tag_transform_fn,
 };
 
 #[derive(Debug, Clone, Copy, Serialize, Display, EnumString)]
@@ -30,8 +31,9 @@ impl InjectType {
     loader_context: &mut LoaderContext<RunnerContext>,
     loader_options: &StyleLoaderOpts,
     runtime_options: &str,
+    module_helper: &ModuleHelper,
   ) -> String {
-    let import_link_api_code = r#"import API from "@@/runtime/injectStylesIntoLinkTag.js";"#;
+    let import_link_api_code = module_helper.file_path_buf_str("injectStylesIntoLinkTag.js");
 
     let import_insert_by_selector_code = match &loader_options.insert {
       Some(insert) if PathBuf::from(insert).is_absolute() => {
@@ -42,7 +44,8 @@ impl InjectType {
         format!(r##"import insertFn from "{path}";"##)
       }
       _ => {
-        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+        let import_insert_by_selector_code = module_helper.file_path_buf_str("insertBySelector.js");
+        format!(r##"import insertFn from "!{import_insert_by_selector_code}";"##)
       }
     };
 
@@ -84,6 +87,7 @@ export default {{}};
     runtime_options: &str,
     is_singleton: bool,
     is_auto: bool,
+    module_helper: &ModuleHelper,
   ) -> String {
     let style_dom_api_code = get_import_style_dom_api_code(is_auto, is_singleton);
 
@@ -96,21 +100,24 @@ export default {{}};
         format!(r##"import insertFn from "{path}";"##)
       }
       _ => {
-        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+        let import_insert_by_selector_code = module_helper.file_path_buf_str("insertBySelector.js");
+        format!(r##"import insertFn from "!{import_insert_by_selector_code}";"##)
       }
     };
 
     let set_attributes_code = get_set_attributes_code(&loader_options);
 
-    let style_tag_transform_fn_code =
-      if let Some(style_tag_transform) = &loader_options.style_tag_transform {
-        loader_context
-          .build_dependencies
-          .insert(PathBuf::from(style_tag_transform));
-        format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
-      } else {
-        format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
-      };
+    let style_tag_transform_fn_code = if let Some(style_tag_transform) =
+      &loader_options.style_tag_transform
+    {
+      loader_context
+        .build_dependencies
+        .insert(PathBuf::from(style_tag_transform));
+      format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
+    } else {
+      let import_style_tag_transform_code = module_helper.file_path_buf_str("styleTagTransform.js");
+      format!(r##"import styleTagTransformFn from "!{import_style_tag_transform_code}";"##)
+    };
 
     let insert_option_code = get_insert_option_code(&loader_options.insert);
 
@@ -122,15 +129,20 @@ export default {{}};
 
     let hmr_code = get_style_hmr_code(&request, true);
 
+    let import_inject_styles_into_style_tag_code =
+      module_helper.file_path_buf_str("injectStylesIntoStyleTag.js");
+
+    let import_insert_style_element_code = module_helper.file_path_buf_str("insertStyleElement.js");
+
     let source = format!(
       r##"
 var exported = {{}};
-import API from "!@@/runtime/injectStylesIntoStyleTag.js";
+import API from "!{import_inject_styles_into_style_tag_code}";
 
 {style_dom_api_code}
 {import_insert_by_selector_code}
 {set_attributes_code}
-import insertStyleElement from "!@@/runtime/insertStyleElement.js";
+import insertStyleElement from "!{import_insert_style_element_code}";
 {style_tag_transform_fn_code}
 import content, * as namedExport from "!!{request}";
 {is_old_ie_code}
@@ -186,6 +198,7 @@ export default exported;
     runtime_options: &str,
     is_singleton: bool,
     is_auto: bool,
+    module_helper: &ModuleHelper,
   ) -> String {
     let style_dom_api_code = get_import_style_dom_api_code(is_auto, is_singleton);
 
@@ -198,21 +211,24 @@ export default exported;
         format!(r##"import insertFn from "{path}";"##)
       }
       _ => {
-        format!(r##"import insertFn from "!@@/runtime/insertBySelector.js";"##)
+        let import_insert_by_selector_code = module_helper.file_path_buf_str("insertBySelector.js");
+        format!(r##"import insertFn from "!{import_insert_by_selector_code}";"##)
       }
     };
 
     let set_attributes_code = get_set_attributes_code(&loader_options);
 
-    let style_tag_transform_fn_code =
-      if let Some(style_tag_transform) = &loader_options.style_tag_transform {
-        loader_context
-          .build_dependencies
-          .insert(PathBuf::from(style_tag_transform));
-        format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
-      } else {
-        format!(r##"import styleTagTransformFn from "!@@/runtime/styleTagTransform.js";"##)
-      };
+    let style_tag_transform_fn_code = if let Some(style_tag_transform) =
+      &loader_options.style_tag_transform
+    {
+      loader_context
+        .build_dependencies
+        .insert(PathBuf::from(style_tag_transform));
+      format!(r##"import styleTagTransformFn from "{style_tag_transform}";"##)
+    } else {
+      let import_style_tag_transform_code = module_helper.file_path_buf_str("styleTagTransform.js");
+      format!(r##"import styleTagTransformFn from "!{import_style_tag_transform_code}";"##)
+    };
 
     let insert_option_code = get_insert_option_code(&loader_options.insert);
 
@@ -224,13 +240,18 @@ export default exported;
 
     let hmr_code = get_style_hmr_code(&request, false);
 
+    let import_inject_styles_into_style_tag_code =
+      module_helper.file_path_buf_str("injectStylesIntoStyleTag.js");
+
+    let import_insert_style_element_code = module_helper.file_path_buf_str("insertStyleElement.js");
+
     let source = format!(
       r##"
-      import API from "!@@/runtime/injectStylesIntoStyleTag.js";
+      import API from "!{import_inject_styles_into_style_tag_code}";
       {style_dom_api_code}
       {import_insert_by_selector_code}
       {set_attributes_code}
-      import insertStyleElement from "!@@/runtime/insertStyleElement.js";
+      import insertStyleElement from "!{import_insert_style_element_code}";
       {style_tag_transform_fn_code}
       import content, * as namedExport from "!!{request}";
       {is_old_ie_code}
@@ -261,6 +282,8 @@ export default exported;
     loader_context: &mut LoaderContext<RunnerContext>,
     loader_options: &StyleLoaderOpts,
   ) -> String {
+    let path_helper = ModuleHelper::new(&loader_options.home_dir, &loader_options.output_dir);
+
     let inject_type = loader_options.inject_type.unwrap_or_default();
     let mut runtime_options = HashMap::new();
     if let Some(attributes) = &loader_options.attributes {
@@ -272,9 +295,13 @@ export default exported;
     let runtime_options = serde_json::to_string_pretty(&runtime_options).unwrap();
 
     let source = match inject_type {
-      InjectType::LinkTag => {
-        inject_type.get_link_tag_code(&request, loader_context, loader_options, &runtime_options)
-      }
+      InjectType::LinkTag => inject_type.get_link_tag_code(
+        &request,
+        loader_context,
+        loader_options,
+        &runtime_options,
+        &path_helper,
+      ),
       style @ (InjectType::StyleTag | InjectType::SingletonStyleTag | InjectType::AutoStyleTag) => {
         let is_singleton = matches!(style, InjectType::SingletonStyleTag);
         let is_auto = matches!(style, InjectType::AutoStyleTag);
@@ -285,6 +312,7 @@ export default exported;
           &runtime_options,
           is_singleton,
           is_auto,
+          &path_helper,
         )
       }
       lazy @ (InjectType::LazyStyleTag
@@ -299,6 +327,7 @@ export default exported;
           &runtime_options,
           is_singleton,
           is_auto,
+          &path_helper,
         )
       }
     };
