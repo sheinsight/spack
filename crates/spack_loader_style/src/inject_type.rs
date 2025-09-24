@@ -282,7 +282,7 @@ export default exported;
     loader_context: &mut LoaderContext<RunnerContext>,
     loader_options: &StyleLoaderOpts,
   ) -> String {
-    let path_helper = ModuleHelper::new(&loader_options.home_dir, &loader_options.output_dir);
+    let path_helper = ModuleHelper::new(&loader_options.output);
 
     let inject_type = loader_options.inject_type.unwrap_or_default();
     let mut runtime_options = HashMap::new();

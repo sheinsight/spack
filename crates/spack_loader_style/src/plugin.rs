@@ -95,12 +95,6 @@ impl Plugin for StyleLoaderPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
-    // let dir = ctx
-    //   .compiler_options
-    //   .context
-    //   .as_path()
-    //   .join(&self.options.output);
-
     if let Some(alias) = &ctx.compiler_options.resolve.alias {
       let value = match alias {
         rspack_core::Alias::OverwriteToNoAlias => None,

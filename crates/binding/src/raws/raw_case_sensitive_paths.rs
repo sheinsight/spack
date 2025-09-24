@@ -13,6 +13,7 @@ impl From<RawCaseSensitivePathsPluginOpts> for CaseSensitivePathsPluginOpts {
   }
 }
 
+#[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawCaseSensitivePathsPluginOpts::from_unknown(options)?;
   Ok(Box::new(CaseSensitivePathsPlugin::new(options.into())) as BoxPlugin)

@@ -311,6 +311,7 @@ impl From<BundleAnalysisResult> for JsBundleAnalyzerPluginResp {
   }
 }
 
+#[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawBundleAnalyzerPluginOpts::from_unknown(options)?;
   Ok(Box::new(BundleAnalyzerPlugin::new(options.into())) as BoxPlugin)

@@ -68,6 +68,7 @@ impl From<DuplicateDependencyPluginResp> for JsDuplicateDependencyPluginResp {
   }
 }
 
+#[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawDuplicateDependencyPluginOpts::from_unknown(options)?;
   Ok(Box::new(DuplicateDependencyPlugin::new(options.into())) as BoxPlugin)
