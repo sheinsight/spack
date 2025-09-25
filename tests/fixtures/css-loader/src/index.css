@@ -1,0 +1,17 @@
+body {
+  background-color: red;
+}
+
+.hello {
+  color: blue;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  text-decoration: underline;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  text-overflow: ellipsis;
+  text-wrap: wrap;
+  text-overflow: ellipsis;
+}

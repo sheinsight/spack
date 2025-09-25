@@ -19,7 +19,7 @@ const plugin = new UnifiedPlugin({
 
 test('test style-loader', async () => {
   const result = await runCompiler({
-    fixture: 'style-loader',
+    fixture: 'css-loader',
     plugins: [plugin],
   });
 
