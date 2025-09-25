@@ -65,7 +65,7 @@ impl StyleLoader {
     let resource = loader_context.resource();
     let request = loader_context.remaining_request();
     let request = request.display_with_suffix(resource);
-    request
+    format!("!!{request}")
   }
 
   fn get_attributes_module(&self) -> String {
@@ -154,7 +154,7 @@ if (module.hot) {{
 
 
     module.hot.accept(
-      "!!{request}",
+      "{request}",
       function accept() {{
         if (!isEqualLocals(oldLocals, isNamedExport ? namedExport : content.locals, isNamedExport)) {{
           module.hot.invalidate();
@@ -207,7 +207,7 @@ import insertFn from "{insert_fn_module}";
 import setAttributes from "{attributes_module}";
 import insertStyleElement from "{insert_style_element_module}";
 import styleTagTransformFn from "{style_tag_transform_fn_module}";
-import content, * as namedExport from "!!{request}";
+import content, * as namedExport from "{request}";
 
 var options = {runtime_options};
 
@@ -221,7 +221,7 @@ var update = API(content, options);
 
 {hmr_code}
 
-export * from "!!{request}";
+export * from "{request}";
 export default content && content.locals ? content.locals : undefined;"##
     );
 
