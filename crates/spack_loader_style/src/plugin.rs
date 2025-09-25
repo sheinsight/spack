@@ -105,7 +105,7 @@ impl StyleLoaderPlugin {
       }
     };
 
-    let Some((_, aliases)) = tuple_aliases.iter().find(|(k, _v)| (k == ALIAS_NAME)) else {
+    let Some((_, aliases)) = tuple_aliases.iter().find(|(k, _v)| k == ALIAS_NAME) else {
       return Err(rspack_error::error!(err_msg.to_string()));
     };
 
