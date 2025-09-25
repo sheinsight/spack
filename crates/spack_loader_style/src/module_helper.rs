@@ -15,15 +15,15 @@ impl ModuleHelper {
     }
   }
 
-  pub fn file_path_buf(&self, file_name: &str) -> PathBuf {
+  fn file_path_buf(&self, file_name: &str) -> PathBuf {
     PathBuf::from("@@").join(&self.output_dir).join(file_name)
   }
 
-  pub fn file_path_buf_str(&self, file_name: &str) -> String {
+  pub fn file_name(&self, file_name: &str) -> String {
     self.file_path_buf(file_name).to_string_lossy().to_string()
   }
 
-  pub fn file_path_buf_str_with_bang(&self, file_name: &str) -> String {
-    format!("!{}", self.file_path_buf_str(file_name))
+  pub fn file_name_with_bang(&self, file_name: &str) -> String {
+    format!("!{}", self.file_name(file_name))
   }
 }

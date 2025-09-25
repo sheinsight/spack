@@ -72,13 +72,13 @@ impl StyleLoader {
     match &self.options.attributes {
       Some(attributes) if attributes.contains_key("nonce") => self
         .module_helper
-        .file_path_buf_str("setAttributesWithAttributesAndNonce.js"),
+        .file_name("setAttributesWithAttributesAndNonce.js"),
       Some(_) => self
         .module_helper
-        .file_path_buf_str("setAttributesWithAttributes.js"),
+        .file_name("setAttributesWithAttributes.js"),
       None => self
         .module_helper
-        .file_path_buf_str("setAttributesWithoutAttributes.js"),
+        .file_name("setAttributesWithoutAttributes.js"),
     }
   }
 
@@ -93,7 +93,7 @@ impl StyleLoader {
       }
       _ => self
         .module_helper
-        .file_path_buf_str_with_bang("insertBySelector.js"),
+        .file_name_with_bang("insertBySelector.js"),
     }
   }
 
@@ -109,7 +109,7 @@ impl StyleLoader {
     } else {
       self
         .module_helper
-        .file_path_buf_str_with_bang("styleTagTransform.js")
+        .file_name_with_bang("styleTagTransform.js")
     }
   }
 
@@ -181,11 +181,9 @@ if (module.hot) {{
 
     let api_module = self
       .module_helper
-      .file_path_buf_str_with_bang("injectStylesIntoStyleTag.js");
+      .file_name_with_bang("injectStylesIntoStyleTag.js");
 
-    let dom_api_module = self
-      .module_helper
-      .file_path_buf_str_with_bang("styleDomAPI.js");
+    let dom_api_module = self.module_helper.file_name_with_bang("styleDomAPI.js");
 
     let insert_fn_module = self.get_insert_fn_module(loader_context);
 
@@ -193,7 +191,7 @@ if (module.hot) {{
 
     let insert_style_element_module = self
       .module_helper
-      .file_path_buf_str_with_bang("insertStyleElement.js");
+      .file_name_with_bang("insertStyleElement.js");
 
     let style_tag_transform_fn_module = self.get_style_tag_transform_fn_module(loader_context);
 
