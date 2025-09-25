@@ -41,7 +41,8 @@ tracing-subscriber = { workspace = true }
 strum        = { workspace = true }
 strum_macros = { workspace = true }
 
-ustr = { workspace = true }
+lightningcss = { workspace = true }
+ustr         = { workspace = true }
 
 [package.metadata.sailfish]
 template_dir = "templates"
