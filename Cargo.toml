@@ -38,7 +38,7 @@ napi-build          = { version = "=2.2.3" }
 napi-derive         = { version = "=3.2.3", features = ["compat-mode"] }
 napi-derive-backend = { version = "=2.1.3" }
 
-lightningcss = { version = "1.0.0-alpha.67", default-features = false, features = ["serde"] }
+lightningcss = { version = "1.0.0-alpha.67", default-features = false }
 
 rkyv = { version = "=0.8.8", default-features = false, features = ["std", "bytecheck"] }
 
