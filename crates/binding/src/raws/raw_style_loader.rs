@@ -10,13 +10,6 @@ use spack_loader_style::{StyleLoaderOpts, StyleLoaderPlugin};
 pub struct RawStyleLoaderPluginOpts {
   #[napi(js_name = "base")]
   pub base: Option<i64>,
-  // #[napi(
-  //   js_name = "injectType",
-  //   ts_type = "'linkTag' | 'styleTag' | 'singletonStyleTag' | 'autoStyleTag' | 'lazyStyleTag' | 'lazySingletonStyleTag' | 'lazyAutoStyleTag'"
-  // )]
-  // 暂时只开放 styleTag
-  // #[napi(js_name = "injectType", ts_type = "'styleTag'")]
-  // pub inject_type: Option<String>,
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
   /// runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置
@@ -33,7 +26,6 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
   fn from(value: RawStyleLoaderPluginOpts) -> Self {
     Self {
       base: value.base,
-      // inject_type: value.inject_type.map(|s| InjectType::from_str(&s).unwrap()),
       insert: value.insert,
       output: value.output,
       style_tag_transform: value.style_tag_transform,

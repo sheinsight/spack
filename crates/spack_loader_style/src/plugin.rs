@@ -1,8 +1,8 @@
 use std::{ops::Not, sync::Arc};
 
 use rspack_core::{
-  ApplyContext, BoxLoader, ChunkUkey, Compilation, CompilationAdditionalTreeRuntimeRequirements,
-  Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin, Resolver, RuntimeGlobals,
+  ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin,
+  Resolver,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -10,7 +10,7 @@ use rspack_paths::Utf8PathBuf;
 
 use crate::loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts};
 
-pub const STYLE_LOADER_PLUGIN_IDENTIFIER: &str = "spack.StyleLoaderPlugin";
+pub const STYLE_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.StyleLoaderPlugin";
 
 #[plugin]
 #[derive(Debug)]
@@ -132,11 +132,6 @@ impl Plugin for StyleLoaderPlugin {
     }
 
     ctx
-      .compilation_hooks
-      .additional_tree_runtime_requirements
-      .tap(additional_tree_runtime_requirements::new(self));
-
-    ctx
       .normal_module_factory_hooks
       .resolve_loader
       .tap(resolve_loader::new(self));
@@ -145,26 +140,6 @@ impl Plugin for StyleLoaderPlugin {
   }
 
   fn clear_cache(&self, _id: rspack_core::CompilationId) {}
-}
-
-#[plugin_hook(CompilationAdditionalTreeRuntimeRequirements for StyleLoaderPlugin)]
-async fn additional_tree_runtime_requirements(
-  &self,
-  _compilation: &mut Compilation,
-  _chunk_ukey: &ChunkUkey, // ✅ 这里有 chunk_ukey
-  _runtime_requirements: &mut RuntimeGlobals,
-) -> Result<()> {
-  // runtime_requirements.insert(RuntimeGlobals::MODULE);
-  // ✅ 这里可以添加 RuntimeModule
-
-  // let es_module = self.options.es_module.unwrap_or(false);
-
-  // compilation.add_runtime_module(
-  //   chunk_ukey,
-  //   Box::new(StyleLoaderRuntimeModule::new(Some(*chunk_ukey), es_module)),
-  // )?;
-
-  Ok(())
 }
 
 #[plugin_hook(NormalModuleFactoryResolveLoader for StyleLoaderPlugin)]
@@ -177,9 +152,7 @@ pub(crate) async fn resolve_loader(
   let loader_request = &l.loader;
 
   if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
-    return Ok(Some(Arc::new(StyleLoader {
-      options: self.options.clone(),
-    })));
+    return Ok(Some(Arc::new(StyleLoader::new(self.options.clone()))));
   }
   Ok(None)
 }

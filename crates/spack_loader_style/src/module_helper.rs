@@ -1,5 +1,9 @@
 use std::path::PathBuf;
 
+use rspack_cacheable::cacheable;
+
+#[cacheable]
+#[derive(Debug, Clone)]
 pub struct ModuleHelper {
   output_dir: String,
 }
@@ -17,5 +21,9 @@ impl ModuleHelper {
 
   pub fn file_path_buf_str(&self, file_name: &str) -> String {
     self.file_path_buf(file_name).to_string_lossy().to_string()
+  }
+
+  pub fn file_path_buf_str_with_bang(&self, file_name: &str) -> String {
+    format!("!{}", self.file_path_buf_str(file_name))
   }
 }
