@@ -55,7 +55,7 @@ impl CssLoader {
                 match image {
                   lightningcss::values::image::Image::None => todo!(),
                   lightningcss::values::image::Image::Url(url) => {
-                    println!("Found background-image: {:?}", url);
+                    println!("Found background-image: {:?}", url.url);
                   }
                   lightningcss::values::image::Image::Gradient(gradient) => todo!(),
                   lightningcss::values::image::Image::ImageSet(image_set) => todo!(),

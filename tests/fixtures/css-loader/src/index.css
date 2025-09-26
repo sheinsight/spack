@@ -18,3 +18,15 @@ body {
   text-wrap: wrap;
   text-overflow: ellipsis;
 }
+
+:import('theme.css') {
+  primary: primary-color;
+  secondary: secondary-color;
+  fontLarge: large-font;
+}
+
+.button {
+  background-color: primary-color;
+  border-color: secondary-color;
+  font-size: large-font;
+}
