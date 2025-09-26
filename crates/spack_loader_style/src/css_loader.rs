@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use lightningcss::properties::Property;
 use lightningcss::rules::CssRule;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use rspack_cacheable::{cacheable, cacheable_dyn};
@@ -46,9 +47,21 @@ impl CssLoader {
         }
         CssRule::Style(style_rule) => {
           // 处理样式规则，查找 background-image 等属性
-          println!("Found style rule: {:?}", style_rule);
+          // println!("Found style rule: {:?}", style_rule);
           for (declaration, _) in style_rule.declarations.iter() {
-            println!("Found declaration: {:?}", declaration);
+            // println!("Found declaration: {:?}", declaration);
+            if let Property::BackgroundImage(background_image) = declaration {
+              for image in background_image.iter() {
+                match image {
+                  lightningcss::values::image::Image::None => todo!(),
+                  lightningcss::values::image::Image::Url(url) => {
+                    println!("Found background-image: {:?}", url);
+                  }
+                  lightningcss::values::image::Image::Gradient(gradient) => todo!(),
+                  lightningcss::values::image::Image::ImageSet(image_set) => todo!(),
+                }
+              }
+            }
           }
         }
         _ => {
