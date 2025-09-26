@@ -30,3 +30,9 @@ body {
   border-color: secondary-color;
   font-size: large-font;
 }
+
+:global {
+  .global-class {
+    color: green;
+  }
+}

@@ -5,6 +5,7 @@
     "deadcode",
     "iarna",
     "itertools",
+    "lightningcss",
     "miette",
     "msvc",
     "napi",

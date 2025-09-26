@@ -17,11 +17,11 @@ const plugin = new UnifiedPlugin({
   },
 });
 
-test('test style-loader', async () => {
+test('test css-loader', async () => {
   const result = await runCompiler({
     fixture: 'css-loader',
     plugins: [plugin],
   });
 
-  expect(result.length).toBe(0);
+  expect(result.length).toBe(1);
 });
