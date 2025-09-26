@@ -1,15 +1,11 @@
-use std::{collections::HashMap, path::PathBuf};
-
 use async_trait::async_trait;
+use lightningcss::rules::CssRule;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
-use rspack_core::{Loader, LoaderContext, RunnerContext, contextify};
+use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::Result;
-use rspack_loader_runner::DisplayWithSuffix;
 use serde::Serialize;
-
-use crate::ModuleHelper;
 
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
@@ -32,10 +28,35 @@ impl CssLoader {
       ..Default::default()
     };
 
-    let stylesheet = StyleSheet::parse(source, parser_options)
-      .map_err(|e| rspack_error::Error::error("parse css error".to_string()))?;
-    println!("stylesheet--->{:?}", stylesheet);
-    // Ok(stylesheet)
+    let style_sheet = StyleSheet::parse(source, parser_options)
+      .map_err(|_e| rspack_error::Error::error("parse css error".to_string()))?;
+    // println!("style_sheet--->{:?}", style_sheet);
+
+    // 遍历所有规则
+    for rule in style_sheet.rules.0.iter() {
+      match rule {
+        CssRule::Import(import_rule) => {
+          // 提取 import 的 URL
+          // let url = import_rule.url.to_string();
+          let url = import_rule.url.clone();
+          println!("Found @import: {:?}", url);
+
+          // 打印媒体查询信息
+          // println!("  Media query: {:?}", import_rule.media);
+        }
+        CssRule::Style(style_rule) => {
+          // 处理样式规则，查找 background-image 等属性
+          println!("Found style rule: {:?}", style_rule);
+          for (declaration, _) in style_rule.declarations.iter() {
+            println!("Found declaration: {:?}", declaration);
+          }
+        }
+        _ => {
+          // 其他类型的规则，可以在这里处理
+        }
+      }
+    }
+
     Ok(())
   }
 }
@@ -59,8 +80,7 @@ impl Loader<RunnerContext> for CssLoader {
 
     println!("source--->{:?}", raw.clone());
 
-    let stylesheet = self.parse_css(&raw.try_into_string()?, loader_context.resource())?;
-    println!("stylesheet--->{:?}", stylesheet);
+    self.parse_css(&raw.try_into_string()?, loader_context.resource())?;
 
     loader_context.finish_with((source, source_map));
     Ok(())
