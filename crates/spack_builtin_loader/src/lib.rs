@@ -1,8 +1,8 @@
 mod css_loader;
-mod loader;
 mod module_helper;
 mod plugin;
+mod style_loader;
 
-pub use loader::*;
 pub use module_helper::*;
 pub use plugin::*;
+pub use style_loader::*;

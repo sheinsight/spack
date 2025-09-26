@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, ops::Not, path::PathBuf};
 
 use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
@@ -6,9 +6,59 @@ use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext, contextify};
 use rspack_error::Result;
 use rspack_loader_runner::DisplayWithSuffix;
+use rspack_paths::Utf8PathBuf;
 use serde::Serialize;
 
 use crate::ModuleHelper;
+
+pub const STYLE_LOADER_IDENTIFIER: &str = "builtin:style-loader";
+
+lazy_static::lazy_static! {
+  static ref STYLE_LOADER_RUNTIME: Vec<(&'static str, &'static str)> = vec![
+    (
+      "injectStylesIntoLinkTag.js",
+      include_str!("runtime/injectStylesIntoLinkTag.js"),
+    ),
+    (
+      "injectStylesIntoStyleTag.js",
+      include_str!("runtime/injectStylesIntoStyleTag.js"),
+    ),
+    (
+      "insertStyleElement.js",
+      include_str!("runtime/insertStyleElement.js"),
+    ),
+    (
+      "insertBySelector.js",
+      include_str!("runtime/insertBySelector.js"),
+    ),
+    (
+      "setAttributesWithoutAttributes.js",
+      include_str!("runtime/setAttributesWithoutAttributes.js"),
+    ),
+    (
+      "setAttributesWithAttributes.js",
+      include_str!("runtime/setAttributesWithAttributes.js"),
+    ),
+    (
+      "setAttributesWithAttributesAndNonce.js",
+      include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
+    ),
+    (
+      "setAttributesWithAttributesAndNonce.js",
+      include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
+    ),
+    (
+      "styleTagTransform.js",
+      include_str!("runtime/styleTagTransform.js"),
+    ),
+    ("styleDomAPI.js", include_str!("runtime/styleDomAPI.js")),
+    (
+      "singletonStyleDomAPI.js",
+      include_str!("runtime/singletonStyleDomAPI.js"),
+    ),
+    ("isOldIE.js", include_str!("runtime/isOldIE.js")),
+  ];
+}
 
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
@@ -26,7 +76,21 @@ pub struct StyleLoader {
   module_helper: ModuleHelper,
 }
 
-pub const STYLE_LOADER_IDENTIFIER: &str = "builtin:style-loader";
+impl StyleLoader {
+  pub fn write_runtime(dir: &Utf8PathBuf) -> Result<()> {
+    if dir.exists().not() {
+      std::fs::create_dir_all(dir)?;
+    }
+    for (file_name, runtime) in STYLE_LOADER_RUNTIME.iter() {
+      let file = dir.join(file_name);
+      if file.exists().not() {
+        std::fs::write(file, runtime)?;
+      }
+    }
+
+    Ok(())
+  }
+}
 
 impl StyleLoader {
   pub fn new(options: StyleLoaderOpts) -> Self {

@@ -1,4 +1,4 @@
-use std::{ops::Not, sync::Arc};
+use std::sync::Arc;
 
 use rspack_core::{
   Alias, ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader,
@@ -9,7 +9,7 @@ use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
 use rspack_resolver::AliasValue;
 
-use crate::loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts};
+use crate::style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts};
 
 pub const STYLE_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.StyleLoaderPlugin";
 
@@ -25,70 +25,6 @@ pub struct StyleLoaderPlugin {
 impl StyleLoaderPlugin {
   pub fn new(options: StyleLoaderOpts) -> Self {
     Self::new_inner(options)
-  }
-
-  pub fn write_runtime(dir: &Utf8PathBuf) -> Result<()> {
-    if dir.exists().not() {
-      std::fs::create_dir_all(dir)?;
-    }
-
-    let runtimes = vec![
-      (
-        "injectStylesIntoLinkTag.js",
-        include_str!("runtime/injectStylesIntoLinkTag.js").to_string(),
-      ),
-      (
-        "injectStylesIntoStyleTag.js",
-        include_str!("runtime/injectStylesIntoStyleTag.js").to_string(),
-      ),
-      (
-        "insertStyleElement.js",
-        include_str!("runtime/insertStyleElement.js").to_string(),
-      ),
-      (
-        "insertBySelector.js",
-        include_str!("runtime/insertBySelector.js").to_string(),
-      ),
-      (
-        "setAttributesWithoutAttributes.js",
-        include_str!("runtime/setAttributesWithoutAttributes.js").to_string(),
-      ),
-      (
-        "setAttributesWithAttributes.js",
-        include_str!("runtime/setAttributesWithAttributes.js").to_string(),
-      ),
-      (
-        "setAttributesWithAttributesAndNonce.js",
-        include_str!("runtime/setAttributesWithAttributesAndNonce.js").to_string(),
-      ),
-      (
-        "setAttributesWithAttributesAndNonce.js",
-        include_str!("runtime/setAttributesWithAttributesAndNonce.js").to_string(),
-      ),
-      (
-        "styleTagTransform.js",
-        include_str!("runtime/styleTagTransform.js").to_string(),
-      ),
-      (
-        "styleDomAPI.js",
-        include_str!("runtime/styleDomAPI.js").to_string(),
-      ),
-      (
-        "singletonStyleDomAPI.js",
-        include_str!("runtime/singletonStyleDomAPI.js").to_string(),
-      ),
-      ("isOldIE.js", include_str!("runtime/isOldIE.js").to_string()),
-    ];
-
-    for (file_name, runtime) in runtimes {
-      let file = dir.join(file_name);
-
-      if file.exists().not() {
-        std::fs::write(file, runtime)?;
-      }
-    }
-
-    Ok(())
   }
 
   pub fn write_runtime_by_alias(&self, alias_config: &Option<Alias>) -> Result<()> {
@@ -116,7 +52,7 @@ impl StyleLoaderPlugin {
     for alias in aliases {
       if let AliasValue::Path(path) = alias {
         let path = Utf8PathBuf::from(path.to_string()).join(&self.options.output);
-        Self::write_runtime(&path)?;
+        StyleLoader::write_runtime(&path)?;
       }
     }
 

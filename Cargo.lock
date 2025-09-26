@@ -5409,6 +5409,7 @@ name = "spack_builtin_loader"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "lazy_static",
  "lightningcss",
  "rspack_binding_api",
  "rspack_cacheable",

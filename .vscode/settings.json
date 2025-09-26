@@ -17,6 +17,7 @@
     "serde",
     "softprops",
     "spack",
+    "stylesheet",
     "Threadsafe",
     "ukey"
   ],
