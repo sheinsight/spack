@@ -16,6 +16,7 @@
     "rkyv",
     "rustc",
     "serde",
+    "smallvec",
     "softprops",
     "spack",
     "stylesheet",

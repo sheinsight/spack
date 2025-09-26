@@ -1,5 +1,6 @@
 use async_trait::async_trait;
-use lightningcss::css_modules::{Config, Pattern};
+use lightningcss::css_modules::{Config, Pattern, Segment};
+use lightningcss::printer::{Printer, PrinterOptions};
 use lightningcss::properties::Property;
 use lightningcss::rules::CssRule;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
@@ -8,6 +9,7 @@ use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::Result;
 use serde::Serialize;
+use smallvec::smallvec;
 
 pub enum Modules {
   False,
@@ -40,7 +42,17 @@ impl CssLoader {
     let parser_options = ParserOptions {
       filename: filename.to_string(),
       css_modules: Some(Config {
-        pattern: Pattern::default(),
+        // pattern: Pattern::default(),
+        // '[local]_[hash:base64:5]'
+        pattern: Pattern {
+          segments: smallvec![
+            Segment::Local,
+            Segment::Literal("_"),
+            Segment::ContentHash,
+            Segment::Literal("_"),
+            Segment::Name
+          ],
+        },
         dashed_idents: false,
         animation: true,
         grid: true,
@@ -118,6 +130,14 @@ impl CssLoader {
 "##,
       sources.join("\n")
     );
+
+    let printer_options = PrinterOptions {
+      ..Default::default()
+    };
+    // let mut output = String::new();
+    // let mut printer = Printer::new(&mut output, printer_options);
+    let result = style_sheet.to_css(printer_options).unwrap();
+    println!("result--->{}", result.code);
 
     Ok(())
   }
