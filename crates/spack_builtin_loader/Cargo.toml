@@ -5,7 +5,7 @@ documentation.workspace = true
 edition.workspace       = true
 homepage.workspace      = true
 license.workspace       = true
-name                    = "spack_loader_style"
+name                    = "spack_builtin_loader"
 repository.workspace    = true
 version.workspace       = true
 

@@ -1,7 +1,7 @@
 use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::plugin;
-use spack_loader_style::{StyleLoaderOpts, StyleLoaderPlugin};
+use spack_builtin_loader::{StyleLoaderOpts, StyleLoaderPlugin};
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
 
 #[derive(Debug)]

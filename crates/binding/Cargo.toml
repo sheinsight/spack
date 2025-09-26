@@ -15,7 +15,7 @@ test       = false
 plugin = ["rspack_binding_builder/plugin"]
 
 [dependencies]
-spack_loader_style                = { workspace = true }
+spack_builtin_loader              = { workspace = true }
 spack_macros                      = { workspace = true }
 spack_plugin_bundle_analyzer      = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }

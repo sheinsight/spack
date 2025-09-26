@@ -13,7 +13,7 @@ version.workspace       = true
 test = false
 
 [dependencies]
-spack_loader_style                = { workspace = true }
+spack_builtin_loader              = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
 
 rspack_core  = { workspace = true }
