@@ -9,7 +9,10 @@ use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
 use rspack_resolver::AliasValue;
 
-use crate::style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts};
+use crate::{
+  css_loader::{CSS_LOADER_IDENTIFIER, CssLoader, CssLoaderOpts},
+  style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
+};
 
 pub const STYLE_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.StyleLoaderPlugin";
 
@@ -91,8 +94,11 @@ pub(crate) async fn resolve_loader(
   if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
     return Ok(Some(Arc::new(StyleLoader::new(self.options.clone()))));
   }
-  // if loader_request.starts_with(CSS_LOADER_IDENTIFIER) {
-  //   return Ok(Some(Arc::new(CssLoader::new(CssLoaderOpts {}))));
-  // }
+  if loader_request.starts_with(CSS_LOADER_IDENTIFIER) {
+    return Ok(Some(Arc::new(CssLoader::new(CssLoaderOpts {
+      modules: "".to_string(),
+      import_loaders: 0,
+    }))));
+  }
   Ok(None)
 }

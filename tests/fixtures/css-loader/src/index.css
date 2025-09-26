@@ -1,4 +1,6 @@
-@import url('b.css');
+@import url('./b.css');
+@import url('./theme.css');
+@import './theme.css';
 
 body {
   background-color: red;
@@ -19,20 +21,8 @@ body {
   text-overflow: ellipsis;
 }
 
-:import('theme.css') {
-  primary: primary-color;
-  secondary: secondary-color;
-  fontLarge: large-font;
-}
-
 .button {
   background-color: primary-color;
   border-color: secondary-color;
   font-size: large-font;
-}
-
-:global {
-  .global-class {
-    color: green;
-  }
 }

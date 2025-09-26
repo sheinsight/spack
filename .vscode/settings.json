@@ -4,6 +4,7 @@
     "contextify",
     "deadcode",
     "iarna",
+    "idents",
     "itertools",
     "lightningcss",
     "miette",
