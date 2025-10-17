@@ -11,7 +11,8 @@
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "release": "node --experimental-strip-types --no-warnings release.mts "
+    "release": "node --experimental-strip-types --no-warnings release.mts ",
+    "oxlint:test": "bun run build:dev && bun run test ./tests/oxlint-loader.test.mts"
   },
   "homepage": "https://github.com/sheinsight/spack",
   "bugs": {
