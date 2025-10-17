@@ -280,8 +280,11 @@ impl Loader<RunnerContext> for OxlintLoader {
         .map(|l| l.offset() + l.len())
         .unwrap_or_default();
 
-      let error =
-        rspack_error::Error::from_string(Some(source_code.clone()), start, end, code, message);
+      let error = rspack_error::Error::error(message);
+
+      // let error =
+      //   rspack_error::Error::from_string(Some(source_code.clone()), start, end, code, message);
+
       loader_context.diagnostics.push(Diagnostic::from(error));
     }
 
