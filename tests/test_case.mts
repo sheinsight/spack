@@ -45,12 +45,12 @@ export async function runCompiler(config: TestCaseConfig): Promise<StatsError[]>
     }
 
     if (stats?.hasErrors()) {
+      console.log(stats.toString());
       const json = stats?.toJson({
         errors: true,
         warnings: true,
         colors: true,
       });
-      console.log(stats.toString());
 
       resolve(json.errors ?? []);
     }
