@@ -46,6 +46,7 @@ strum_macros = { workspace = true }
 
 lazy_static  = { workspace = true }
 lightningcss = { workspace = true }
+miette       = { workspace = true }
 ustr         = { workspace = true }
 
 [package.metadata.sailfish]

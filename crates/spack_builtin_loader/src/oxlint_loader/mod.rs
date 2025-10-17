@@ -1,13 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use oxc::{
-  allocator::Allocator,
-  diagnostics::{GraphicalReportHandler, NamedSource},
-  parser::Parser,
-  semantic::SemanticBuilder,
-  span::SourceType,
-};
+use oxc::{allocator::Allocator, parser::Parser, semantic::SemanticBuilder, span::SourceType};
 use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
@@ -36,29 +30,8 @@ impl OxlintLoader {
   pub fn new(options: OxlintLoaderOpts) -> Self {
     Self { options }
   }
-}
 
-#[async_trait]
-#[cacheable_dyn]
-impl Loader<RunnerContext> for OxlintLoader {
-  fn identifier(&self) -> Identifier {
-    OXLINT_LOADER_IDENTIFIER.into()
-  }
-
-  async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
-    let source = loader_context.take_content();
-    let sm = loader_context.take_source_map();
-
-    let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
-      return Ok(());
-    };
-
-    let Some(source_code) = source else {
-      return Ok(());
-    };
-
-    let source_code = source_code.try_into_string()?;
-
+  pub fn get_config(&self) -> Oxlintrc {
     let config = json!({
       "plugins": ["eslint", "typescript", "unicorn", "react", "oxc"],
       "categories": {
@@ -197,6 +170,33 @@ impl Loader<RunnerContext> for OxlintLoader {
 
     let config = serde_json::from_value::<Oxlintrc>(serde_json::to_value(config).unwrap()).unwrap();
 
+    config
+  }
+}
+
+#[async_trait]
+#[cacheable_dyn]
+impl Loader<RunnerContext> for OxlintLoader {
+  fn identifier(&self) -> Identifier {
+    OXLINT_LOADER_IDENTIFIER.into()
+  }
+
+  async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    let source = loader_context.take_content();
+    let sm = loader_context.take_source_map();
+
+    let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
+      return Ok(());
+    };
+
+    let Some(source_code) = source else {
+      return Ok(());
+    };
+
+    let source_code = source_code.try_into_string()?;
+
+    let config = self.get_config();
+
     let mut external_plugin_store = ExternalPluginStore::default();
 
     let config =
@@ -253,23 +253,18 @@ impl Loader<RunnerContext> for OxlintLoader {
     for message in messages {
       let err = message.error;
 
-      // 将 oxc 的 miette 错误转换为 rspack 的 Diagnostic
-      // 使用 GraphicalReportHandler 格式化错误信息
-      let handler = GraphicalReportHandler::new();
-      let mut output = String::new();
-      let report = err.with_source_code(NamedSource::new(
-        resource_path.to_string(),
-        source_code.clone(),
-      ));
+      let code = err
+        .code
+        .scope
+        .as_ref()
+        .map(|c| c.clone().into_owned())
+        .unwrap_or_default();
 
-      if handler.render_report(&mut output, report.as_ref()).is_ok() {
-        // 创建 rspack Diagnostic 并推送到 loader_context
-        let diagnostic = Diagnostic::warn(
-          "Oxlint".to_string(),
-          output,
-        );
-        loader_context.diagnostics.push(diagnostic);
-      }
+      let message = err.message.clone().into_owned();
+
+      loader_context
+        .diagnostics
+        .push(Diagnostic::error(code.to_string(), message));
     }
 
     loader_context.finish_with((source_code, sm));

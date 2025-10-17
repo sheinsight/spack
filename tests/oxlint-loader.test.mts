@@ -23,5 +23,9 @@ test('test oxlint-loader', async () => {
     plugins: [plugin],
   });
 
-  expect(result.length).toBe(0);
+  for (const error of result) {
+    console.log('Error:', error);
+  }
+
+  expect(result.length).toBeGreaterThan(0);
 });

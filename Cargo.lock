@@ -6086,6 +6086,7 @@ dependencies = [
  "async-trait",
  "lazy_static",
  "lightningcss",
+ "miette",
  "oxc",
  "oxc_linter",
  "rspack_binding_api",
