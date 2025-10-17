@@ -249,10 +249,28 @@ impl Loader<RunnerContext> for OxlintLoader {
       &allocator,
     );
 
-    for message in messages {
-      let err = message.error;
-      let diag = err.clone().with_source_code(source_code.clone());
-      println!("message--->{:?}", diag);
+    // 将 lint 诊断信息输出到 stderr
+    // 注意：理想情况下应该通过 rspack 的诊断系统报告，但 Loader 接口目前不支持推送 diagnostics
+    // 未来可以考虑将 oxlint 改为 Plugin 实现，这样就能访问 compilation.push_diagnostic()
+    if !messages.is_empty() {
+      eprintln!("\n{} lint issue(s) found in {}:", messages.len(), resource_path);
+
+      for message in messages {
+        let err = message.error;
+
+        // 使用 GraphicalReportHandler 格式化输出
+        let handler = GraphicalReportHandler::new();
+        let mut output = String::new();
+        let report = err.with_source_code(NamedSource::new(
+          resource_path.to_string(),
+          source_code.clone(),
+        ));
+
+        if handler.render_report(&mut output, report.as_ref()).is_ok() {
+          eprintln!("{}", output);
+        }
+      }
+      eprintln!(); // 添加空行分隔
     }
 
     loader_context.finish_with((source_code, sm));
