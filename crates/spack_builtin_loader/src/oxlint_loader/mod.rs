@@ -262,9 +262,27 @@ impl Loader<RunnerContext> for OxlintLoader {
 
       let message = err.message.clone().into_owned();
 
-      loader_context
-        .diagnostics
-        .push(Diagnostic::error(code.to_string(), message));
+      let start = err
+        .labels
+        .as_ref()
+        .map(|l| l.clone())
+        .unwrap_or_default()
+        .first()
+        .map(|l| l.offset())
+        .unwrap_or_default();
+
+      let end = err
+        .labels
+        .as_ref()
+        .map(|l| l.clone())
+        .unwrap_or_default()
+        .first()
+        .map(|l| l.offset() + l.len())
+        .unwrap_or_default();
+
+      let error =
+        rspack_error::Error::from_string(Some(source_code.clone()), start, end, code, message);
+      loader_context.diagnostics.push(Diagnostic::from(error));
     }
 
     loader_context.finish_with((source_code, sm));

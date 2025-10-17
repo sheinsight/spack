@@ -50,6 +50,8 @@ export async function runCompiler(config: TestCaseConfig): Promise<StatsError[]>
         warnings: true,
         colors: true,
       });
+      console.log(stats.toString());
+
       resolve(json.errors ?? []);
     }
     resolve([]);
