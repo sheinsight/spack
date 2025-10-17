@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "bitflags",
     "cdylib",
     "contextify",
     "deadcode",
@@ -10,6 +11,8 @@
     "msvc",
     "napi",
     "npmjs",
+    "Oxlint",
+    "Oxlintrc",
     "pathdiff",
     "premajor",
     "rkyv",

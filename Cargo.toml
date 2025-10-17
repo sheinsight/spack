@@ -33,6 +33,11 @@ rspack_util                   = "=0.5.7"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "0.6.0", default-features = false }
 
+oxc = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.23.0", package = "oxc", features = [
+  "semantic",
+] }
+oxc_linter = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.23.0", package = "oxc_linter" }
+
 napi                = { version = "=3.2.3", features = ["async", "tokio_rt", "serde-json", "anyhow", "napi7", "compat-mode"] }
 napi-build          = { version = "=2.2.3" }
 napi-derive         = { version = "=3.2.3", features = ["compat-mode"] }
@@ -93,6 +98,7 @@ itertools   = { version = "0.14.0" }
 miette      = { version = "7.6.0" }
 pathdiff    = { version = "0.2.3" }
 
+bitflags    = { version = "^2.9.4" }
 lazy_static = { version = "1.5.0" }
 sailfish    = { version = "0.10.0" }
 tera        = { version = "1.20.0" }
