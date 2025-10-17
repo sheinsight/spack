@@ -1,7 +1,13 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use oxc::{allocator::Allocator, parser::Parser, semantic::SemanticBuilder, span::SourceType};
+use oxc::{
+  allocator::Allocator,
+  diagnostics::{GraphicalReportHandler, NamedSource},
+  parser::Parser,
+  semantic::SemanticBuilder,
+  span::SourceType,
+};
 use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
@@ -243,10 +249,10 @@ impl Loader<RunnerContext> for OxlintLoader {
       &allocator,
     );
 
-    // println!("messages--->{:?}", messages);
-
     for message in messages {
-      println!("message--->{:#?}", message);
+      let err = message.error;
+      let diag = err.clone().with_source_code(source_code.clone());
+      println!("message--->{:?}", diag);
     }
 
     loader_context.finish_with((source_code, sm));
