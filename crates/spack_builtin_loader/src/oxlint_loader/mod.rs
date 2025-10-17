@@ -15,7 +15,7 @@ use oxc_linter::{
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
-use rspack_error::Result;
+use rspack_error::{Diagnostic, Result};
 use rspack_util::fx_hash::FxHashMap;
 use serde::Serialize;
 use serde_json::json;
@@ -49,7 +49,7 @@ impl Loader<RunnerContext> for OxlintLoader {
     let source = loader_context.take_content();
     let sm = loader_context.take_source_map();
 
-    let Some(resource_path) = loader_context.resource_path() else {
+    let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
       return Ok(());
     };
 
@@ -249,28 +249,27 @@ impl Loader<RunnerContext> for OxlintLoader {
       &allocator,
     );
 
-    // 将 lint 诊断信息输出到 stderr
-    // 注意：理想情况下应该通过 rspack 的诊断系统报告，但 Loader 接口目前不支持推送 diagnostics
-    // 未来可以考虑将 oxlint 改为 Plugin 实现，这样就能访问 compilation.push_diagnostic()
-    if !messages.is_empty() {
-      eprintln!("\n{} lint issue(s) found in {}:", messages.len(), resource_path);
+    // 将 lint 诊断信息推送到 rspack 的诊断系统
+    for message in messages {
+      let err = message.error;
 
-      for message in messages {
-        let err = message.error;
+      // 将 oxc 的 miette 错误转换为 rspack 的 Diagnostic
+      // 使用 GraphicalReportHandler 格式化错误信息
+      let handler = GraphicalReportHandler::new();
+      let mut output = String::new();
+      let report = err.with_source_code(NamedSource::new(
+        resource_path.to_string(),
+        source_code.clone(),
+      ));
 
-        // 使用 GraphicalReportHandler 格式化输出
-        let handler = GraphicalReportHandler::new();
-        let mut output = String::new();
-        let report = err.with_source_code(NamedSource::new(
-          resource_path.to_string(),
-          source_code.clone(),
-        ));
-
-        if handler.render_report(&mut output, report.as_ref()).is_ok() {
-          eprintln!("{}", output);
-        }
+      if handler.render_report(&mut output, report.as_ref()).is_ok() {
+        // 创建 rspack Diagnostic 并推送到 loader_context
+        let diagnostic = Diagnostic::warn(
+          "Oxlint".to_string(),
+          output,
+        );
+        loader_context.diagnostics.push(diagnostic);
       }
-      eprintln!(); // 添加空行分隔
     }
 
     loader_context.finish_with((source_code, sm));
