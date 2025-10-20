@@ -67,7 +67,14 @@ impl OxlintLoader {
         "eslint/no-constant-condition":[0],
         "eslint/no-control-regex":[2],
         "eslint/no-debugger":[0],
-        "eslint/no-delete-var":[2]
+        "eslint/no-delete-var":[2],
+        "eslint/no-dupe-class-members":[2],
+        "eslint/no-dupe-else-if":[2],
+        "eslint/no-dupe-keys":[2],
+        "eslint/no-duplicate-case":[2],
+        "eslint/no-empty-character-class":[2],
+        "eslint/no-empty-pattern":[2],
+        "eslint/no-empty-static-block":[2]
       },
       "settings":{},
       "env":{},
