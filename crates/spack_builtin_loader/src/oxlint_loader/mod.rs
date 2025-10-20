@@ -214,7 +214,6 @@ impl Loader<RunnerContext> for OxlintLoader {
     }
 
     // 配置带颜色和源代码上下文的 GraphicalReportHandler
-
     let handler = GraphicalReportHandler::new()
       .with_links(true)
       .with_theme(GraphicalTheme::unicode());
