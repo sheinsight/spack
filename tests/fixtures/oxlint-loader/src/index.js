@@ -16,3 +16,8 @@ const x = a + b ?? c;
 const isEmpty = x === [];
 
 // However, this will always result in `isEmpty` being `false`.
+const user = { name: '张三', age: 25 };
+const key = 'name';
+
+// ❌ 不要用 eval
+const value = eval('user.' + key);

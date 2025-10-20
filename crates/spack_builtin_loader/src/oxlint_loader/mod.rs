@@ -3,14 +3,16 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use oxc::{
   allocator::Allocator,
-  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcCode, OxcDiagnostic},
+  diagnostics::{
+    GraphicalReportHandler, GraphicalTheme, NamedSource, OxcCode, OxcDiagnostic, Severity,
+  },
   parser::Parser,
   semantic::SemanticBuilder,
   span::SourceType,
 };
 use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
-  FrameworkFlags, LintOptions, Linter, Oxlintrc,
+  FrameworkFlags, LintOptions, Linter, Message, Oxlintrc,
 };
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
@@ -74,7 +76,8 @@ impl OxlintLoader {
         "eslint/no-duplicate-case":[2],
         "eslint/no-empty-character-class":[2],
         "eslint/no-empty-pattern":[2],
-        "eslint/no-empty-static-block":[2]
+        "eslint/no-empty-static-block":[2],
+        "eslint/no-eval":[1]
       },
       "settings":{},
       "env":{},
@@ -87,6 +90,37 @@ impl OxlintLoader {
     let config = serde_json::from_value::<Oxlintrc>(serde_json::to_value(config).unwrap()).unwrap();
 
     config
+  }
+}
+
+impl OxlintLoader {
+  fn create_report(
+    &self,
+    named_source: &NamedSource<String>,
+    message: Message,
+  ) -> oxc::diagnostics::Error {
+    let msg = message.error;
+    let message_text = msg.message.to_string();
+    // 使用引用解构，避免 clone
+    let OxcCode { number, .. } = &msg.code;
+    let number = number.clone(); // 只 clone number 字段
+    let error = match msg.severity {
+      Severity::Error => OxcDiagnostic::error(message_text.clone()),
+      Severity::Warning | Severity::Advice => OxcDiagnostic::warn(message_text.clone()),
+    };
+    // 直接使用引用
+    let mut error = error.with_error_code("LEGO", number.unwrap_or_else(|| "Unknown".into()));
+
+    if let Some(labels) = &msg.labels {
+      error = error.with_labels(labels.iter().cloned());
+    }
+
+    if let Some(help) = &msg.help {
+      error = error.with_help(help.to_string());
+    }
+
+    // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
+    error.with_source_code(named_source.clone())
   }
 }
 
@@ -183,44 +217,26 @@ impl Loader<RunnerContext> for OxlintLoader {
 
     // 将 lint 诊断信息推送到 rspack 的诊断系统
     for message in messages {
+      let message_text = message.error.message.to_string();
+
       let mut output = String::with_capacity(1024 * 1024);
 
-      let msg = message.error;
-
-      // 直接获取字符串所有权
-      let message_text = msg.message.to_string();
-
-      // 使用引用解构，避免 clone
-      let OxcCode { number, .. } = &msg.code;
-      let number = number.clone(); // 只 clone number 字段
-
-      // 直接使用引用
-      let mut error = OxcDiagnostic::error(message_text.clone())
-        .with_error_code("LEGO", number.unwrap_or_else(|| "Unknown".into()));
-
-      if let Some(labels) = &msg.labels {
-        error = error.with_labels(labels.iter().cloned());
-      }
-
-      if let Some(help) = &msg.help {
-        error = error.with_help(help.to_string());
-      }
-
-      // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
-      let error = error.with_source_code(named_source.clone());
+      let error = self.create_report(&named_source, message);
 
       handler
         .render_report(&mut output, error.as_ref())
         .map_err(|e| rspack_error::Error::from_error(e))?;
 
-      eprintln!("{}", output);
-
-      // 直接使用，不需要再 to_string()
-      let error = rspack_error::Error::error(message_text);
+      let error = match &error.severity() {
+        Some(Severity::Error) => rspack_error::Error::error(message_text),
+        _ => rspack_error::Error::warning(message_text),
+      };
 
       loader_context
         .diagnostics
         .push(rspack_error::Diagnostic::from(error));
+
+      eprintln!("{}", output);
     }
 
     loader_context.finish_with((source_code, sm));
