@@ -100,7 +100,9 @@ impl OxlintLoader {
     message: Message,
   ) -> oxc::diagnostics::Error {
     let msg = message.error;
+
     let message_text = msg.message.to_string();
+
     // 使用引用解构，避免 clone
     let OxcCode { number, .. } = &msg.code;
     let number = number.clone(); // 只 clone number 字段
@@ -108,6 +110,7 @@ impl OxlintLoader {
       Severity::Error => OxcDiagnostic::error(message_text.clone()),
       Severity::Warning | Severity::Advice => OxcDiagnostic::warn(message_text.clone()),
     };
+
     // 直接使用引用
     let mut error = error.with_error_code("LEGO", number.unwrap_or_else(|| "Unknown".into()));
 
