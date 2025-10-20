@@ -1,7 +1,13 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use oxc::{allocator::Allocator, parser::Parser, semantic::SemanticBuilder, span::SourceType};
+use oxc::{
+  allocator::Allocator,
+  diagnostics::{GraphicalReportHandler, GraphicalTheme},
+  parser::Parser,
+  semantic::SemanticBuilder,
+  span::SourceType,
+};
 use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
@@ -9,7 +15,7 @@ use oxc_linter::{
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
-use rspack_error::{Diagnostic, Result};
+use rspack_error::Result;
 use rspack_util::fx_hash::FxHashMap;
 use serde::Serialize;
 use serde_json::json;
@@ -249,43 +255,40 @@ impl Loader<RunnerContext> for OxlintLoader {
       &allocator,
     );
 
+    if messages.is_empty() {
+      loader_context.finish_with((source_code, sm));
+      return Ok(());
+    }
+
+    // 配置带颜色和源代码上下文的 GraphicalReportHandler
+    let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode());
+
+    // 收集所有 lint 错误信息
+    let mut all_errors = Vec::new();
+
     // 将 lint 诊断信息推送到 rspack 的诊断系统
     for message in messages {
-      let err = message.error;
+      let error = message.error;
 
-      let code = err
-        .code
-        .scope
-        .as_ref()
-        .map(|c| c.clone().into_owned())
-        .unwrap_or_default();
+      let mut output = String::new();
+      handler
+        .render_report(&mut output, &error)
+        .map_err(|e| rspack_error::Error::from_error(e))?;
 
-      let message = err.message.clone().into_owned();
+      // 打印带格式的错误信息
+      println!("\n{}", output);
 
-      let start = err
-        .labels
-        .as_ref()
-        .map(|l| l.clone())
-        .unwrap_or_default()
-        .first()
-        .map(|l| l.offset())
-        .unwrap_or_default();
+      all_errors.push(output);
+    }
 
-      let end = err
-        .labels
-        .as_ref()
-        .map(|l| l.clone())
-        .unwrap_or_default()
-        .first()
-        .map(|l| l.offset() + l.len())
-        .unwrap_or_default();
-
-      let error = rspack_error::Error::error(message);
-
-      // let error =
-      //   rspack_error::Error::from_string(Some(source_code.clone()), start, end, code, message);
-
-      loader_context.diagnostics.push(Diagnostic::from(error));
+    // 如果有错误,返回错误以阻止编译
+    if !all_errors.is_empty() {
+      let combined_error = all_errors.join("\n\n");
+      return Err(rspack_error::error!(format!(
+        "Linting failed with {} error(s):\n\n{}",
+        all_errors.len(),
+        combined_error
+      )));
     }
 
     loader_context.finish_with((source_code, sm));
