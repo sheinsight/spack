@@ -27,5 +27,5 @@ test('test oxlint-loader', async () => {
   //   console.log('Error:', error);
   // }
 
-  expect(result.length).toBeGreaterThan(0);
+  expect(result.length).toBeGreaterThan(1);
 });
