@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
-use spack_builtin_loader::{StyleLoaderOpts, StyleLoaderPlugin};
+use spack_builtin_loader::{StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
@@ -37,5 +37,7 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
 #[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawStyleLoaderPluginOpts::from_unknown(options)?;
-  Ok(Box::new(StyleLoaderPlugin::new(options.into())) as BoxPlugin)
+  Ok(Box::new(UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
+    style_loader: Some(options.into()),
+  })) as BoxPlugin)
 }

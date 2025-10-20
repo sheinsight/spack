@@ -1,7 +1,7 @@
 use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::plugin;
-use spack_builtin_loader::{StyleLoaderOpts, StyleLoaderPlugin};
+use spack_builtin_loader::{StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
 
 #[derive(Debug)]
@@ -33,8 +33,11 @@ impl Plugin for UnifiedPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    if let Some(style_loader) = self.options.style_loader.clone() {
-      StyleLoaderPlugin::new(style_loader).apply(ctx)?;
+    if self.options.style_loader.is_some() {
+      UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
+        style_loader: self.options.style_loader.clone(),
+      })
+      .apply(ctx)?;
     }
 
     if let Some(case_sensitive) = self.options.case_sensitive.clone() {

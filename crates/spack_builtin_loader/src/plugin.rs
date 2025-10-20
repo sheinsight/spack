@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use rspack_cacheable::cacheable;
 use rspack_core::{
   Alias, ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader,
   Plugin, Resolver,
@@ -8,30 +9,39 @@ use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
 use rspack_resolver::AliasValue;
+use serde::Serialize;
 
 use crate::{
   OXLINT_LOADER_IDENTIFIER, OxlintLoader, OxlintLoaderOpts,
   style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
 };
 
-pub const STYLE_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.StyleLoaderPlugin";
+pub const UNIFIED_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedLoaderPlugin";
 
 const ALIAS_NAME: &str = "@@";
 
-#[plugin]
-#[derive(Debug)]
-pub struct StyleLoaderPlugin {
-  #[allow(unused)]
-  options: StyleLoaderOpts,
+#[cacheable]
+#[derive(Debug, Clone, Serialize)]
+pub struct UnifiedLoaderPluginOpts {
+  pub style_loader: Option<StyleLoaderOpts>,
+  // pub oxlint_loader: Option<OxlintLoaderOpts>,
+  // pub css_loader: Option<CssLoaderOpts>,
 }
 
-impl StyleLoaderPlugin {
-  pub fn new(options: StyleLoaderOpts) -> Self {
+#[plugin]
+#[derive(Debug)]
+pub struct UnifiedLoaderPlugin {
+  #[allow(unused)]
+  options: UnifiedLoaderPluginOpts,
+}
+
+impl UnifiedLoaderPlugin {
+  pub fn new(options: UnifiedLoaderPluginOpts) -> Self {
     Self::new_inner(options)
   }
 
   pub fn write_runtime_by_alias(&self, alias_config: &Option<Alias>) -> Result<()> {
-    let err_msg = "StyleLoaderPlugin requires the alias '@@' to be configured.”";
+    let err_msg = "UnifiedLoaderPlugin requires the alias '@@' to be configured.”";
 
     let Some(alias) = alias_config else {
       return Err(rspack_error::error!(err_msg.to_string()));
@@ -54,8 +64,10 @@ impl StyleLoaderPlugin {
 
     for alias in aliases {
       if let AliasValue::Path(path) = alias {
-        let path = Utf8PathBuf::from(path.to_string()).join(&self.options.output);
-        StyleLoader::write_runtime(&path)?;
+        if let Some(style_loader) = &self.options.style_loader {
+          let path = Utf8PathBuf::from(path.to_string()).join(&style_loader.output);
+          StyleLoader::write_runtime(&path)?;
+        }
       }
     }
 
@@ -63,9 +75,9 @@ impl StyleLoaderPlugin {
   }
 }
 
-impl Plugin for StyleLoaderPlugin {
+impl Plugin for UnifiedLoaderPlugin {
   fn name(&self) -> &'static str {
-    STYLE_LOADER_PLUGIN_IDENTIFIER
+    UNIFIED_LOADER_PLUGIN_IDENTIFIER
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
@@ -82,7 +94,7 @@ impl Plugin for StyleLoaderPlugin {
   fn clear_cache(&self, _id: rspack_core::CompilationId) {}
 }
 
-#[plugin_hook(NormalModuleFactoryResolveLoader for StyleLoaderPlugin)]
+#[plugin_hook(NormalModuleFactoryResolveLoader for UnifiedLoaderPlugin)]
 pub(crate) async fn resolve_loader(
   &self,
   _context: &Context,
@@ -92,7 +104,9 @@ pub(crate) async fn resolve_loader(
   let loader_request = &l.loader;
 
   if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
-    return Ok(Some(Arc::new(StyleLoader::new(self.options.clone()))));
+    if let Some(style_loader) = &self.options.style_loader {
+      return Ok(Some(Arc::new(StyleLoader::new(style_loader.clone()))));
+    }
   }
   if loader_request.starts_with(OXLINT_LOADER_IDENTIFIER) {
     return Ok(Some(Arc::new(OxlintLoader::new(OxlintLoaderOpts {}))));
