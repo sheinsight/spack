@@ -39,9 +39,15 @@ impl OxlintLoader {
 
   pub fn get_config(&self) -> Oxlintrc {
     let config = json!({
-      "plugins": ["eslint", "typescript", "unicorn", "react", "oxc"],
+      "plugins": [
+        "eslint",
+        "typescript",
+        "unicorn",
+        "react",
+        "oxc"
+      ],
       "categories": {
-        "correctness": "deny",
+        "correctness": "off",
         "suspicious": "off",
         "pedantic": "off",
         "style": "off",
@@ -49,7 +55,15 @@ impl OxlintLoader {
         "perf": "off",
         "nursery": "off"
       },
-      "rules": {},
+      "rules": {
+        "eslint/for-direction":[2],
+        "eslint/no-async-promise-executor":[2],
+        "eslint/no-caller":[0],
+        "eslint/no-class-assign":[2],
+        "eslint/no-compare-neg-zero":[2],
+        "eslint/no-cond-assign":[2],
+        "eslint/no-const-assign":[2]
+      },
       "settings":{},
       "env":{},
       "globals":{},
@@ -163,9 +177,12 @@ impl Loader<RunnerContext> for OxlintLoader {
         .render_report(&mut output, diag.as_ref())
         .map_err(|e| rspack_error::Error::from_error(e))?;
       eprintln!("{}", output);
-      // loader_context
-      //   .diagnostics
-      //   .push();
+
+      let error = rspack_error::Error::error(message.error.message.to_string());
+
+      loader_context
+        .diagnostics
+        .push(rspack_error::Diagnostic::from(error));
     }
 
     loader_context.finish_with((source_code, sm));
