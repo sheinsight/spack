@@ -5,7 +5,7 @@ use spack_plugin_unified::{UnifiedPlugin, UnifiedPluginOpts};
 
 use crate::raws::{
   raw_case_sensitive_paths::RawCaseSensitivePathsPluginOpts,
-  raw_style_loader::RawStyleLoaderPluginOpts,
+  raw_oxlint_loader::RawOXLintLoaderPluginOpts, raw_style_loader::RawStyleLoaderPluginOpts,
 };
 
 #[derive(Debug)]
@@ -17,6 +17,10 @@ pub struct RawUnifiedPluginOpts {
   /// case-sensitive-paths 的配置
   #[napi(js_name = "caseSensitive")]
   pub case_sensitive: Option<RawCaseSensitivePathsPluginOpts>,
+
+  /// oxlint-loader 的配置
+  #[napi(js_name = "oxlintLoader")]
+  pub oxlint_loader: Option<RawOXLintLoaderPluginOpts>,
 }
 
 impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
@@ -24,6 +28,7 @@ impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
     Self {
       style_loader: value.style_loader.map(From::from),
       case_sensitive: value.case_sensitive.map(From::from),
+      oxlint_loader: None,
     }
   }
 }

@@ -39,5 +39,6 @@ pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
   let options = RawStyleLoaderPluginOpts::from_unknown(options)?;
   Ok(Box::new(UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
     style_loader: Some(options.into()),
+    oxlint_loader: None,
   })) as BoxPlugin)
 }

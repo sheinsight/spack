@@ -125,6 +125,11 @@ export interface RawDuplicateDependencyPluginOpts {
   onDetected?: (response: JsDuplicateDependencyPluginResp) => void|Promise<void>
 }
 
+export interface RawOxLintLoaderPluginOpts {
+  /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
+  output: string
+}
+
 export interface RawStyleLoaderPluginOpts {
   base?: number
   insert?: string
@@ -140,6 +145,8 @@ export interface RawUnifiedPluginOpts {
   styleLoader?: RawStyleLoaderPluginOpts
   /** case-sensitive-paths 的配置 */
   caseSensitive?: RawCaseSensitivePathsPluginOpts
+  /** oxlint-loader 的配置 */
+  oxlintLoader?: RawOxLintLoaderPluginOpts
 }
 
 export declare function registerBundleAnalyzerPlugin(): void

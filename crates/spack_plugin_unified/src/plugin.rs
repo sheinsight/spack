@@ -1,7 +1,9 @@
 use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::plugin;
-use spack_builtin_loader::{StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
+use spack_builtin_loader::{
+  OxlintLoaderOpts, StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts,
+};
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
 
 #[derive(Debug)]
@@ -10,6 +12,8 @@ pub struct UnifiedPluginOpts {
   pub style_loader: Option<StyleLoaderOpts>,
   #[allow(unused)]
   pub case_sensitive: Option<CaseSensitivePathsPluginOpts>,
+  #[allow(unused)]
+  pub oxlint_loader: Option<OxlintLoaderOpts>,
 }
 
 pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
@@ -36,6 +40,15 @@ impl Plugin for UnifiedPlugin {
     if self.options.style_loader.is_some() {
       UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
         style_loader: self.options.style_loader.clone(),
+        oxlint_loader: None,
+      })
+      .apply(ctx)?;
+    }
+
+    if self.options.oxlint_loader.is_some() {
+      UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
+        style_loader: None,
+        oxlint_loader: self.options.oxlint_loader.clone(),
       })
       .apply(ctx)?;
     }

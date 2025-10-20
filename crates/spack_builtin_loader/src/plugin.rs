@@ -24,7 +24,7 @@ const ALIAS_NAME: &str = "@@";
 #[derive(Debug, Clone, Serialize)]
 pub struct UnifiedLoaderPluginOpts {
   pub style_loader: Option<StyleLoaderOpts>,
-  // pub oxlint_loader: Option<OxlintLoaderOpts>,
+  pub oxlint_loader: Option<OxlintLoaderOpts>,
   // pub css_loader: Option<CssLoaderOpts>,
 }
 
@@ -109,7 +109,9 @@ pub(crate) async fn resolve_loader(
     }
   }
   if loader_request.starts_with(OXLINT_LOADER_IDENTIFIER) {
-    return Ok(Some(Arc::new(OxlintLoader::new(OxlintLoaderOpts {}))));
+    if let Some(oxlint_loader) = &self.options.oxlint_loader {
+      return Ok(Some(Arc::new(OxlintLoader::new(oxlint_loader.clone()))));
+    }
   }
   // if loader_request.starts_with(CSS_LOADER_IDENTIFIER) {
   //   return Ok(Some(Arc::new(CssLoader::new(CssLoaderOpts {}))));
