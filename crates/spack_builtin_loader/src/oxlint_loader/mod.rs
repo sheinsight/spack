@@ -62,7 +62,12 @@ impl OxlintLoader {
         "eslint/no-class-assign":[2],
         "eslint/no-compare-neg-zero":[2],
         "eslint/no-cond-assign":[2],
-        "eslint/no-const-assign":[2]
+        "eslint/no-const-assign":[2],
+        "eslint/no-constant-binary-expression":[2],
+        "eslint/no-constant-condition":[0],
+        "eslint/no-control-regex":[2],
+        "eslint/no-debugger":[0],
+        "eslint/no-delete-var":[2]
       },
       "settings":{},
       "env":{},
@@ -172,10 +177,19 @@ impl Loader<RunnerContext> for OxlintLoader {
     // 将 lint 诊断信息推送到 rspack 的诊断系统
     for message in messages {
       let mut output = String::with_capacity(1024 * 1024);
-      let diag = message.error.clone().with_source_code(named_source.clone());
+
+      let error = message
+        .error
+        .clone()
+        .with_error_code("LEGO", "number")
+        .with_source_code(named_source.clone());
+
+      // let diag = message.error.clone().with_source_code(named_source.clone());
+
       handler
-        .render_report(&mut output, diag.as_ref())
+        .render_report(&mut output, error.as_ref())
         .map_err(|e| rspack_error::Error::from_error(e))?;
+
       eprintln!("{}", output);
 
       let error = rspack_error::Error::error(message.error.message.to_string());
