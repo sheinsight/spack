@@ -77,7 +77,13 @@ impl OxlintLoader {
         "eslint/no-empty-character-class":[2],
         "eslint/no-empty-pattern":[2],
         "eslint/no-empty-static-block":[2],
-        "eslint/no-eval":[1]
+        "eslint/no-eval":[1,{
+          "allowIndirect": true,
+        }],
+        "eslint/no-ex-assign":[2],
+        "eslint/no-extra-boolean-cast":[1],
+        "eslint/no-func-assign":[2],
+        "eslint/no-global-assign":[2]
       },
       "settings":{},
       "env":{},
