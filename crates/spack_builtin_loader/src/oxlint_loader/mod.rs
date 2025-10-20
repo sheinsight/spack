@@ -1,4 +1,4 @@
-use std::{borrow::Cow, sync::Arc};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use oxc::{
@@ -193,6 +193,10 @@ impl Loader<RunnerContext> for OxlintLoader {
 
       if let Some(labels) = &msg.labels {
         error = error.with_labels(labels.iter().cloned());
+      }
+
+      if let Some(help) = &msg.help {
+        error = error.with_help(help.to_string());
       }
 
       // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
