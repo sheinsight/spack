@@ -222,6 +222,15 @@ impl Loader<RunnerContext> for OxlintLoader {
     for message in messages {
       let message_text = message.error.message.to_string();
 
+      let error = match message.error.severity {
+        Severity::Error => rspack_error::Error::error(message_text),
+        _ => rspack_error::Error::warning(message_text),
+      };
+
+      loader_context
+        .diagnostics
+        .push(rspack_error::Diagnostic::from(error));
+
       let mut output = String::with_capacity(1024 * 1024);
 
       let error = self.create_report(&named_source, message);
@@ -229,15 +238,6 @@ impl Loader<RunnerContext> for OxlintLoader {
       handler
         .render_report(&mut output, error.as_ref())
         .map_err(|e| rspack_error::Error::from_error(e))?;
-
-      let error = match &error.severity() {
-        Some(Severity::Error) => rspack_error::Error::error(message_text),
-        _ => rspack_error::Error::warning(message_text),
-      };
-
-      loader_context
-        .diagnostics
-        .push(rspack_error::Diagnostic::from(error));
 
       eprintln!("{}", output);
     }
