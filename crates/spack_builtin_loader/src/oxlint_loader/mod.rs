@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use async_trait::async_trait;
 use oxc::{
   allocator::Allocator,
-  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
+  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcCode, OxcDiagnostic},
   parser::Parser,
   semantic::SemanticBuilder,
   span::SourceType,
@@ -178,13 +178,25 @@ impl Loader<RunnerContext> for OxlintLoader {
     for message in messages {
       let mut output = String::with_capacity(1024 * 1024);
 
-      let error = message
-        .error
-        .clone()
-        .with_error_code("LEGO", "number")
-        .with_source_code(named_source.clone());
+      let msg = message.error;
 
-      // let diag = message.error.clone().with_source_code(named_source.clone());
+      // 直接获取字符串所有权
+      let message_text = msg.message.to_string();
+
+      // 使用引用解构，避免 clone
+      let OxcCode { number, .. } = &msg.code;
+      let number = number.clone(); // 只 clone number 字段
+
+      // 直接使用引用
+      let mut error = OxcDiagnostic::error(message_text.clone())
+        .with_error_code("LEGO", number.unwrap_or_else(|| "Unknown".into()));
+
+      if let Some(labels) = &msg.labels {
+        error = error.with_labels(labels.iter().cloned());
+      }
+
+      // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
+      let error = error.with_source_code(named_source.clone());
 
       handler
         .render_report(&mut output, error.as_ref())
@@ -192,7 +204,8 @@ impl Loader<RunnerContext> for OxlintLoader {
 
       eprintln!("{}", output);
 
-      let error = rspack_error::Error::error(message.error.message.to_string());
+      // 直接使用，不需要再 to_string()
+      let error = rspack_error::Error::error(message_text);
 
       loader_context
         .diagnostics
