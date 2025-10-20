@@ -155,20 +155,18 @@ impl Loader<RunnerContext> for OxlintLoader {
       source_code.to_string(),
     );
 
-    let mut output = String::with_capacity(1024 * 1024);
-
     // 将 lint 诊断信息推送到 rspack 的诊断系统
     for message in messages {
+      let mut output = String::with_capacity(1024 * 1024);
       let diag = message.error.clone().with_source_code(named_source.clone());
       handler
         .render_report(&mut output, diag.as_ref())
         .map_err(|e| rspack_error::Error::from_error(e))?;
+      eprintln!("{}", output);
+      // loader_context
+      //   .diagnostics
+      //   .push();
     }
-    eprintln!("{}", output);
-
-    // loader_context
-    //   .diagnostics
-    //   .push(rspack_error::Diagnostic::from(output));
 
     loader_context.finish_with((source_code, sm));
     Ok(())
