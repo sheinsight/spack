@@ -43,10 +43,10 @@ lazy_static::lazy_static! {
       "setAttributesWithAttributesAndNonce.js",
       include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
     ),
-    (
-      "setAttributesWithAttributesAndNonce.js",
-      include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
-    ),
+    // (
+    //   "setAttributesWithAttributesAndNonce.js",
+    //   include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
+    // ),
     (
       "styleTagTransform.js",
       include_str!("runtime/styleTagTransform.js"),
