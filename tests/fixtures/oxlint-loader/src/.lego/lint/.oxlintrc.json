@@ -81,7 +81,63 @@
     "no-with": "allow",
     "require-yield": "deny",
     "use-isnan": "deny",
-    "valid-typeof": "deny"
+    "valid-typeof": "deny",
+    "no-await-in-loop": "deny",
+    "no-useless-call": "allow",
+    "class-methods-use-this": "allow",
+    "default-case": "allow",
+    "no-alert": "warn",
+    "no-bitwise": "allow",
+    "no-console": "warn",
+    "no-div-regex": "warn",
+    "no-empty": "warn",
+    "no-empty-function": [
+      "warn",
+      [
+        {
+          "allow": [
+            "constructors",
+            "arrowFunctions"
+          ]
+        }
+      ]
+    ],
+    "no-eq-null": "deny",
+    "no-iterator": "deny",
+    "no-param-reassign": "deny",
+    "no-plusplus": "allow",
+    "no-proto": "deny",
+    "no-regex-spaces": "deny",
+    "no-restricted-globals": [
+      "deny",
+      [
+        {
+          "name": "event",
+          "message": "Use local parameter instead."
+        }
+      ]
+    ],
+    "no-restricted-imports": [
+      "deny",
+      [
+        {
+          "paths": [
+            {
+              "name": "import-foo",
+              "message": "Please use import-bar instead."
+            },
+            {
+              "name": "import-baz",
+              "message": "Please use import-quux instead."
+            }
+          ]
+        }
+      ]
+    ],
+    "no-undefined": "warn",
+    "no-var": "deny",
+    "no-void": "allow",
+    "unicode-bom": "deny"
   },
   "settings": {
     "jsx-a11y": {

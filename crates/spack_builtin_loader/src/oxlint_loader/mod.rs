@@ -135,7 +135,43 @@ impl OxLintLoader {
         "eslint/no-with":[0],
         "eslint/require-yield":[2],
         "eslint/use-isnan":[2],
-        "eslint/valid-typeof":[2]
+        "eslint/valid-typeof":[2],
+        "eslint/no-await-in-loop":[2],
+        "eslint/no-useless-call":[0],
+        "eslint/class-methods-use-this":[0],
+        "eslint/default-case":[0],
+        "eslint/no-alert":[1],
+        "eslint/no-bitwise":[0],
+        "eslint/no-console":[1],
+        "eslint/no-div-regex":[1],
+        "eslint/no-empty":[1],
+        "eslint/no-empty-function":[1,{"allow":["constructors","arrowFunctions"]}],
+        "eslint/no-eq-null":[2],
+        "eslint/no-iterator":[2],
+        "eslint/no-param-reassign":[2],
+        "eslint/no-plusplus":[0],
+        "eslint/no-proto":[2],
+        "eslint/no-regex-spaces":[2],
+        // TODO: 添加 no-restricted-globals 规则
+        "no-restricted-globals": [2, {
+          "name": "event",
+          "message": "Use local parameter instead."
+        }],
+
+        // TODO: 添加 restricted-imports 规则
+        "no-restricted-imports": [2, {
+          "paths": [{
+            "name": "import-foo",
+            "message": "Please use import-bar instead."
+          }, {
+            "name": "import-baz",
+            "message": "Please use import-quux instead."
+          }]
+        }],
+        "eslint/no-undefined":[1],
+        "eslint/no-var":[2],
+        "eslint/no-void":[0],
+        "eslint/unicode-bom":[2]
       },
       "settings":{},
       "env":{},
