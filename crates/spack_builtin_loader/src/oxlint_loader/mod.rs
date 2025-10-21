@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Not, sync::Arc};
 
 use async_trait::async_trait;
 use oxc::{
@@ -18,6 +18,7 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::Result;
+use rspack_paths::Utf8PathBuf;
 use rspack_util::fx_hash::FxHashMap;
 use serde::Serialize;
 use serde_json::json;
@@ -41,7 +42,26 @@ impl OxLintLoader {
     Self { options }
   }
 
-  pub fn get_config(&self) -> Oxlintrc {
+  pub fn write_runtime(dir: &Utf8PathBuf) -> Result<()> {
+    if dir.exists().not() {
+      std::fs::create_dir_all(dir)?;
+    }
+
+    let file = dir.join(".oxlintrc.json");
+
+    let config = OxLintLoader::get_config();
+
+    let config = serde_json::to_value(config).map_err(|e| rspack_error::Error::from_error(e))?;
+
+    std::fs::write(
+      file,
+      serde_json::to_string_pretty(&config).map_err(|e| rspack_error::Error::from_error(e))?,
+    )?;
+
+    Ok(())
+  }
+
+  fn get_config() -> Oxlintrc {
     let config = json!({
       "plugins": [
         "eslint",
@@ -186,7 +206,7 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let source_code = source_code.try_into_string()?;
 
-    let config = self.get_config();
+    let config = OxLintLoader::get_config();
 
     let mut external_plugin_store = ExternalPluginStore::default();
 

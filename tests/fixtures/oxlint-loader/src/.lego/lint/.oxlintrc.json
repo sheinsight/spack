@@ -1,0 +1,113 @@
+{
+  "plugins": [
+    "react",
+    "unicorn",
+    "typescript",
+    "oxc"
+  ],
+  "jsPlugins": null,
+  "categories": {
+    "correctness": "allow",
+    "restriction": "allow",
+    "suspicious": "allow",
+    "perf": "allow",
+    "nursery": "allow",
+    "style": "allow",
+    "pedantic": "allow"
+  },
+  "rules": {
+    "for-direction": "deny",
+    "no-async-promise-executor": "deny",
+    "no-caller": "allow",
+    "no-class-assign": "deny",
+    "no-compare-neg-zero": "deny",
+    "no-cond-assign": "deny",
+    "no-const-assign": "deny",
+    "no-constant-binary-expression": "deny",
+    "no-constant-condition": "allow",
+    "no-control-regex": "deny",
+    "no-debugger": "allow",
+    "no-delete-var": "deny",
+    "no-dupe-class-members": "deny",
+    "no-dupe-else-if": "deny",
+    "no-dupe-keys": "deny",
+    "no-duplicate-case": "deny",
+    "no-empty-character-class": "deny",
+    "no-empty-pattern": "deny",
+    "no-empty-static-block": "deny",
+    "no-eval": [
+      "warn",
+      [
+        {
+          "allowIndirect": true
+        }
+      ]
+    ],
+    "no-ex-assign": "deny",
+    "no-extra-boolean-cast": "warn",
+    "no-func-assign": "deny",
+    "no-global-assign": "deny",
+    "no-import-assign": "deny",
+    "no-invalid-regexp": "deny",
+    "no-irregular-whitespace": "deny",
+    "no-loss-of-precision": "deny",
+    "no-new-native-nonconstructor": "deny",
+    "no-nonoctal-decimal-escape": "deny",
+    "no-obj-calls": "deny",
+    "no-self-assign": "allow",
+    "no-setter-return": "deny",
+    "no-shadow-restricted-names": "deny",
+    "no-sparse-arrays": "allow",
+    "no-this-before-super": "deny",
+    "no-unassigned-vars": "allow",
+    "no-unsafe-finally": "deny",
+    "no-unsafe-negation": [
+      "deny",
+      [
+        {
+          "enforceForOrderingRelations": false
+        }
+      ]
+    ],
+    "no-unsafe-optional-chaining": "deny",
+    "no-unused-expressions": "allow",
+    "no-unused-labels": "allow",
+    "no-unused-private-class-members": "allow",
+    "no-unused-vars": "allow",
+    "no-useless-backreference": "deny",
+    "no-useless-catch": "deny",
+    "no-useless-escape": "warn",
+    "no-useless-rename": "deny",
+    "no-with": "allow",
+    "require-yield": "deny",
+    "use-isnan": "deny",
+    "valid-typeof": "deny"
+  },
+  "settings": {
+    "jsx-a11y": {
+      "polymorphicPropName": null,
+      "components": {},
+      "attributes": {}
+    },
+    "next": {
+      "rootDir": []
+    },
+    "react": {
+      "formComponents": [],
+      "linkComponents": []
+    },
+    "jsdoc": {
+      "ignorePrivate": false,
+      "ignoreInternal": false,
+      "ignoreReplacesDocs": true,
+      "overrideReplacesDocs": true,
+      "augmentsExtendsReplacesDocs": false,
+      "implementsReplacesDocs": false,
+      "exemptDestructuredRootsFromChecks": false,
+      "tagNamePreference": {}
+    }
+  },
+  "env": {},
+  "globals": {},
+  "ignorePatterns": []
+}

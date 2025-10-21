@@ -68,6 +68,11 @@ impl UnifiedLoaderPlugin {
           let path = Utf8PathBuf::from(path.to_string()).join(&style_loader.output);
           StyleLoader::write_runtime(&path)?;
         }
+
+        if let Some(oxlint_loader) = &self.options.oxlint_loader {
+          let path = Utf8PathBuf::from(path.to_string()).join(&oxlint_loader.output);
+          OxLintLoader::write_runtime(&path)?;
+        }
       }
     }
 
