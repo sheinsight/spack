@@ -29,7 +29,6 @@ pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
 #[derive(Debug, Clone, Serialize)]
 pub struct OxLintLoaderOpts {
   pub output_dir: String,
-  pub show_error: bool,
   pub show_warning: bool,
 }
 
@@ -274,25 +273,6 @@ impl OxLintLoader {
     // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
     error.with_source_code(named_source.clone())
   }
-
-  fn emit_diagnostic(
-    &self,
-    message: &Message,
-    named_source: &NamedSource<String>,
-    handler: &GraphicalReportHandler,
-  ) -> Result<()> {
-    let mut output = String::with_capacity(1024 * 1024);
-
-    let error = self.create_report(&named_source, &message);
-
-    handler
-      .render_report(&mut output, error.as_ref())
-      .map_err(|e| rspack_error::Error::from_error(e))?;
-
-    eprintln!("{}", output);
-
-    Ok(())
-  }
 }
 
 #[async_trait]
@@ -401,10 +381,20 @@ impl Loader<RunnerContext> for OxLintLoader {
         .diagnostics
         .push(rspack_error::Diagnostic::from(error));
 
-      self.emit_diagnostic(&message, &named_source, &handler)?;
+      let should_output = match message.error.severity {
+        Severity::Error => true,
+        _ => self.options.show_warning,
+      };
 
-      if self.options.show_warning && matches!(message.error.severity, Severity::Warning) {
-        self.emit_diagnostic(&message, &named_source, &handler)?;
+      if should_output {
+        let mut output = String::with_capacity(1024 * 1024);
+        let error = self.create_report(&named_source, &message);
+
+        handler
+          .render_report(&mut output, error.as_ref())
+          .map_err(|e| rspack_error::Error::from_error(e))?;
+
+        eprintln!("{}", output);
       }
     }
 

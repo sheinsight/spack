@@ -8,7 +8,7 @@ use rspack_core::{
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
-use rspack_resolver::AliasValue;
+// use rspack_resolver::AliasValue;
 use serde::Serialize;
 
 use crate::{

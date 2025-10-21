@@ -20,8 +20,7 @@ const plugin = new UnifiedPlugin({
     outputDir: 'runtime',
   },
   oxlintLoader: {
-    showError: true,
-    showWarning: false,
+    showWarning: true,
     outputDir: 'lint',
   },
 });
