@@ -7,12 +7,20 @@ pub struct RawOxLintLoaderPluginOpts {
   /// runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置
   #[napi(js_name = "outputDir")]
   pub output_dir: String,
+
+  #[napi(js_name = "showError")]
+  pub show_error: bool,
+
+  #[napi(js_name = "showWarning")]
+  pub show_warning: bool,
 }
 
 impl From<RawOxLintLoaderPluginOpts> for OxLintLoaderOpts {
   fn from(value: RawOxLintLoaderPluginOpts) -> Self {
     Self {
       output_dir: value.output_dir,
+      show_error: value.show_error,
+      show_warning: value.show_warning,
     }
   }
 }

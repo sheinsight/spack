@@ -127,6 +127,8 @@ export interface RawDuplicateDependencyPluginOpts {
 export interface RawOxLintLoaderPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   outputDir: string
+  showError: boolean
+  showWarning: boolean
 }
 
 export interface RawStyleLoaderPluginOpts {

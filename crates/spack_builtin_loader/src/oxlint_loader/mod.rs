@@ -29,6 +29,8 @@ pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
 #[derive(Debug, Clone, Serialize)]
 pub struct OxLintLoaderOpts {
   pub output_dir: String,
+  pub show_error: bool,
+  pub show_warning: bool,
 }
 
 #[cacheable]
@@ -51,8 +53,6 @@ impl OxLintLoader {
 
     let config = OxLintLoader::get_config();
 
-    let config = serde_json::to_value(config).map_err(|e| rspack_error::Error::from_error(e))?;
-
     std::fs::write(
       file,
       serde_json::to_string_pretty(&config).map_err(|e| rspack_error::Error::from_error(e))?,
@@ -61,7 +61,7 @@ impl OxLintLoader {
     Ok(())
   }
 
-  fn get_config() -> Oxlintrc {
+  fn get_config() -> serde_json::Value {
     let config = json!({
       "plugins": [
         "eslint",
@@ -180,7 +180,7 @@ impl OxLintLoader {
         "eslint/no-useless-concat":[2],
         "eslint/no-useless-constructor":[0],
         "eslint/preserve-caught-error":[2,{
-          "requireCatchParameter":true
+          "requireCatchParameter":false
         }],
         "eslint/array-callback-return":[1],
         "eqeqeq": [2, "always", {
@@ -202,7 +202,7 @@ impl OxLintLoader {
           "IIFEs": false
         }],
         "eslint/max-nested-callbacks":[2,{
-          "max": 3
+          "max": 9
         }],
         "eslint/no-array-constructor":[2],
         "eslint/no-case-declarations":[2],
@@ -210,7 +210,7 @@ impl OxLintLoader {
         "eslint/no-else-return":[0],
         "eslint/no-fallthrough":[0],
         "eslint/no-inner-declarations":[0],
-        "eslint/no-lonely-if":[2],
+        "eslint/no-lonely-if":[1],
         "eslint/no-negated-condition":[0],
         "eslint/no-new-wrappers":[2],
         "eslint/no-object-constructor":[2],
@@ -230,14 +230,13 @@ impl OxLintLoader {
       "settings":{},
       "env":{
         "browser": true,
-        "es2024": true
+        "es2024": true,
+        "node": true
       },
       "globals":{},
       "overrides":[],
       "ignorePatterns":[]
     });
-
-    let config = serde_json::from_value::<Oxlintrc>(serde_json::to_value(config).unwrap()).unwrap();
 
     config
   }
@@ -247,9 +246,9 @@ impl OxLintLoader {
   fn create_report(
     &self,
     named_source: &NamedSource<String>,
-    message: Message,
+    message: &Message,
   ) -> oxc::diagnostics::Error {
-    let msg = message.error;
+    let msg = &message.error;
 
     let message_text = msg.message.to_string();
 
@@ -275,6 +274,25 @@ impl OxLintLoader {
     // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
     error.with_source_code(named_source.clone())
   }
+
+  fn emit_diagnostic(
+    &self,
+    message: &Message,
+    named_source: &NamedSource<String>,
+    handler: &GraphicalReportHandler,
+  ) -> Result<()> {
+    let mut output = String::with_capacity(1024 * 1024);
+
+    let error = self.create_report(&named_source, &message);
+
+    handler
+      .render_report(&mut output, error.as_ref())
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    eprintln!("{}", output);
+
+    Ok(())
+  }
 }
 
 #[async_trait]
@@ -299,6 +317,9 @@ impl Loader<RunnerContext> for OxLintLoader {
     let source_code = source_code.try_into_string()?;
 
     let config = OxLintLoader::get_config();
+
+    let config =
+      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
 
     let mut external_plugin_store = ExternalPluginStore::default();
 
@@ -380,15 +401,11 @@ impl Loader<RunnerContext> for OxLintLoader {
         .diagnostics
         .push(rspack_error::Diagnostic::from(error));
 
-      let mut output = String::with_capacity(1024 * 1024);
+      self.emit_diagnostic(&message, &named_source, &handler)?;
 
-      let error = self.create_report(&named_source, message);
-
-      handler
-        .render_report(&mut output, error.as_ref())
-        .map_err(|e| rspack_error::Error::from_error(e))?;
-
-      eprintln!("{}", output);
+      if self.options.show_warning && matches!(message.error.severity, Severity::Warning) {
+        self.emit_diagnostic(&message, &named_source, &handler)?;
+      }
     }
 
     loader_context.finish_with((source_code, sm));

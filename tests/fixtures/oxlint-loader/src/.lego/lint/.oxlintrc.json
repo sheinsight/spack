@@ -1,265 +1,420 @@
 {
   "plugins": [
-    "react",
-    "unicorn",
+    "eslint",
     "typescript",
+    "unicorn",
+    "react",
     "oxc"
   ],
-  "jsPlugins": null,
   "categories": {
-    "correctness": "allow",
-    "restriction": "allow",
-    "suspicious": "allow",
-    "perf": "allow",
-    "nursery": "allow",
-    "style": "allow",
-    "pedantic": "allow"
+    "correctness": "off",
+    "suspicious": "off",
+    "pedantic": "off",
+    "style": "off",
+    "restriction": "off",
+    "perf": "off",
+    "nursery": "off"
   },
   "rules": {
-    "for-direction": "deny",
-    "no-async-promise-executor": "deny",
-    "no-caller": "allow",
-    "no-class-assign": "deny",
-    "no-compare-neg-zero": "deny",
-    "no-cond-assign": "deny",
-    "no-const-assign": "deny",
-    "no-constant-binary-expression": "deny",
-    "no-constant-condition": "allow",
-    "no-control-regex": "deny",
-    "no-debugger": "allow",
-    "no-delete-var": "deny",
-    "no-dupe-class-members": "deny",
-    "no-dupe-else-if": "deny",
-    "no-dupe-keys": "deny",
-    "no-duplicate-case": "deny",
-    "no-empty-character-class": "deny",
-    "no-empty-pattern": "deny",
-    "no-empty-static-block": "deny",
-    "no-eval": [
-      "warn",
-      [
-        {
-          "allowIndirect": true
-        }
-      ]
+    "eslint/for-direction": [
+      2
     ],
-    "no-ex-assign": "deny",
-    "no-extra-boolean-cast": "warn",
-    "no-func-assign": "deny",
-    "no-global-assign": "deny",
-    "no-import-assign": "deny",
-    "no-invalid-regexp": "deny",
-    "no-irregular-whitespace": "deny",
-    "no-loss-of-precision": "deny",
-    "no-new-native-nonconstructor": "deny",
-    "no-nonoctal-decimal-escape": "deny",
-    "no-obj-calls": "deny",
-    "no-self-assign": "allow",
-    "no-setter-return": "deny",
-    "no-shadow-restricted-names": "deny",
-    "no-sparse-arrays": "allow",
-    "no-this-before-super": "deny",
-    "no-unassigned-vars": "allow",
-    "no-unsafe-finally": "deny",
-    "no-unsafe-negation": [
-      "deny",
-      [
-        {
-          "enforceForOrderingRelations": false
-        }
-      ]
+    "eslint/no-async-promise-executor": [
+      2
     ],
-    "no-unsafe-optional-chaining": "deny",
-    "no-unused-expressions": "allow",
-    "no-unused-labels": "allow",
-    "no-unused-private-class-members": "allow",
-    "no-unused-vars": "allow",
-    "no-useless-backreference": "deny",
-    "no-useless-catch": "deny",
-    "no-useless-escape": "warn",
-    "no-useless-rename": "deny",
-    "no-with": "allow",
-    "require-yield": "deny",
-    "use-isnan": "deny",
-    "valid-typeof": "deny",
-    "no-await-in-loop": "deny",
-    "no-useless-call": "allow",
-    "class-methods-use-this": "allow",
-    "default-case": "allow",
-    "no-alert": "warn",
-    "no-bitwise": "allow",
-    "no-console": "warn",
-    "no-div-regex": "warn",
-    "no-empty": "warn",
-    "no-empty-function": [
-      "warn",
-      [
-        {
-          "allow": [
-            "constructors",
-            "arrowFunctions"
-          ]
-        }
-      ]
+    "eslint/no-caller": [
+      0
     ],
-    "no-eq-null": "deny",
-    "no-iterator": "deny",
-    "no-param-reassign": "deny",
-    "no-plusplus": "allow",
-    "no-proto": "deny",
-    "no-regex-spaces": "deny",
+    "eslint/no-class-assign": [
+      2
+    ],
+    "eslint/no-compare-neg-zero": [
+      2
+    ],
+    "eslint/no-cond-assign": [
+      2
+    ],
+    "eslint/no-const-assign": [
+      2
+    ],
+    "eslint/no-constant-binary-expression": [
+      2
+    ],
+    "eslint/no-constant-condition": [
+      0
+    ],
+    "eslint/no-control-regex": [
+      2
+    ],
+    "eslint/no-debugger": [
+      0
+    ],
+    "eslint/no-delete-var": [
+      2
+    ],
+    "eslint/no-dupe-class-members": [
+      2
+    ],
+    "eslint/no-dupe-else-if": [
+      2
+    ],
+    "eslint/no-dupe-keys": [
+      2
+    ],
+    "eslint/no-duplicate-case": [
+      2
+    ],
+    "eslint/no-empty-character-class": [
+      2
+    ],
+    "eslint/no-empty-pattern": [
+      2
+    ],
+    "eslint/no-empty-static-block": [
+      2
+    ],
+    "eslint/no-eval": [
+      1,
+      {
+        "allowIndirect": true
+      }
+    ],
+    "eslint/no-ex-assign": [
+      2
+    ],
+    "eslint/no-extra-boolean-cast": [
+      1
+    ],
+    "eslint/no-func-assign": [
+      2
+    ],
+    "eslint/no-global-assign": [
+      2
+    ],
+    "eslint/no-import-assign": [
+      2
+    ],
+    "eslint/no-invalid-regexp": [
+      2
+    ],
+    "eslint/no-irregular-whitespace": [
+      2
+    ],
+    "eslint/no-loss-of-precision": [
+      2
+    ],
+    "eslint/no-new-native-nonconstructor": [
+      2
+    ],
+    "eslint/no-nonoctal-decimal-escape": [
+      2
+    ],
+    "eslint/no-obj-calls": [
+      2
+    ],
+    "eslint/no-self-assign": [
+      0
+    ],
+    "eslint/no-setter-return": [
+      2
+    ],
+    "eslint/no-shadow-restricted-names": [
+      2
+    ],
+    "eslint/no-sparse-arrays": [
+      0
+    ],
+    "eslint/no-this-before-super": [
+      2
+    ],
+    "eslint/no-unassigned-vars": [
+      0
+    ],
+    "eslint/no-unsafe-finally": [
+      2
+    ],
+    "eslint/no-unsafe-negation": [
+      2,
+      {
+        "enforceForOrderingRelations": false
+      }
+    ],
+    "eslint/no-unsafe-optional-chaining": [
+      2
+    ],
+    "eslint/no-unused-expressions": [
+      0
+    ],
+    "eslint/no-unused-labels": [
+      0
+    ],
+    "eslint/no-unused-private-class-members": [
+      0
+    ],
+    "eslint/no-unused-vars": [
+      0
+    ],
+    "eslint/no-useless-backreference": [
+      2
+    ],
+    "eslint/no-useless-catch": [
+      2
+    ],
+    "eslint/no-useless-escape": [
+      1
+    ],
+    "eslint/no-useless-rename": [
+      2
+    ],
+    "eslint/no-with": [
+      0
+    ],
+    "eslint/require-yield": [
+      2
+    ],
+    "eslint/use-isnan": [
+      2
+    ],
+    "eslint/valid-typeof": [
+      2
+    ],
+    "eslint/no-await-in-loop": [
+      2
+    ],
+    "eslint/no-useless-call": [
+      0
+    ],
+    "eslint/class-methods-use-this": [
+      0
+    ],
+    "eslint/default-case": [
+      0
+    ],
+    "eslint/no-alert": [
+      1
+    ],
+    "eslint/no-bitwise": [
+      0
+    ],
+    "eslint/no-console": [
+      1
+    ],
+    "eslint/no-div-regex": [
+      1
+    ],
+    "eslint/no-empty": [
+      1
+    ],
+    "eslint/no-empty-function": [
+      1,
+      {
+        "allow": [
+          "constructors",
+          "arrowFunctions"
+        ]
+      }
+    ],
+    "eslint/no-eq-null": [
+      2
+    ],
+    "eslint/no-iterator": [
+      2
+    ],
+    "eslint/no-param-reassign": [
+      2
+    ],
+    "eslint/no-plusplus": [
+      0
+    ],
+    "eslint/no-proto": [
+      2
+    ],
+    "eslint/no-regex-spaces": [
+      2
+    ],
     "no-restricted-globals": [
-      "deny",
-      [
-        {
-          "name": "event",
-          "message": "Use local parameter instead."
-        }
-      ]
+      2,
+      {
+        "name": "event",
+        "message": "Use local parameter instead."
+      }
     ],
     "no-restricted-imports": [
-      "deny",
-      [
-        {
-          "paths": [
-            {
-              "name": "import-foo",
-              "message": "Please use import-bar instead."
-            },
-            {
-              "name": "import-baz",
-              "message": "Please use import-quux instead."
-            }
-          ]
-        }
-      ]
+      2,
+      {
+        "paths": [
+          {
+            "name": "import-foo",
+            "message": "Please use import-bar instead."
+          },
+          {
+            "name": "import-baz",
+            "message": "Please use import-quux instead."
+          }
+        ]
+      }
     ],
-    "no-undefined": "warn",
-    "no-var": "deny",
-    "no-void": "allow",
-    "unicode-bom": "deny",
-    "block-scoped-var": "deny",
-    "no-extend-native": "deny",
-    "no-extra-bind": "deny",
-    "no-new": "warn",
-    "no-unexpected-multiline": "deny",
-    "no-unneeded-ternary": "warn",
-    "no-useless-concat": "deny",
-    "no-useless-constructor": "allow",
-    "preserve-caught-error": [
-      "deny",
-      [
-        {
-          "requireCatchParameter": true
-        }
-      ]
+    "eslint/no-undefined": [
+      1
     ],
-    "array-callback-return": "warn",
+    "eslint/no-var": [
+      2
+    ],
+    "eslint/no-void": [
+      0
+    ],
+    "eslint/unicode-bom": [
+      2
+    ],
+    "eslint/block-scoped-var": [
+      2
+    ],
+    "eslint/no-extend-native": [
+      2
+    ],
+    "eslint/no-extra-bind": [
+      2
+    ],
+    "eslint/no-new": [
+      1
+    ],
+    "eslint/no-unexpected-multiline": [
+      2
+    ],
+    "eslint/no-unneeded-ternary": [
+      1
+    ],
+    "eslint/no-useless-concat": [
+      2
+    ],
+    "eslint/no-useless-constructor": [
+      0
+    ],
+    "eslint/preserve-caught-error": [
+      2,
+      {
+        "requireCatchParameter": false
+      }
+    ],
+    "eslint/array-callback-return": [
+      1
+    ],
     "eqeqeq": [
-      "deny",
-      [
-        "always",
-        {
-          "null": "always"
-        }
-      ]
+      2,
+      "always",
+      {
+        "null": "always"
+      }
     ],
-    "max-classes-per-file": [
-      "deny",
-      [
-        {
-          "max": 1
-        }
-      ]
+    "eslint/max-classes-per-file": [
+      2,
+      {
+        "max": 1
+      }
     ],
-    "max-depth": "allow",
-    "max-lines": [
-      "deny",
-      [
-        {
-          "max": 1000,
-          "skipBlankLines": true,
-          "skipComments": true
-        }
-      ]
+    "eslint/max-depth": [
+      0
     ],
-    "max-lines-per-function": [
-      "deny",
-      [
-        {
-          "max": 300,
-          "skipBlankLines": true,
-          "skipComments": true,
-          "IIFEs": false
-        }
-      ]
+    "eslint/max-lines": [
+      2,
+      {
+        "max": 1000,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
     ],
-    "max-nested-callbacks": [
-      "deny",
-      [
-        {
-          "max": 3
-        }
-      ]
+    "eslint/max-lines-per-function": [
+      2,
+      {
+        "max": 300,
+        "skipBlankLines": true,
+        "skipComments": true,
+        "IIFEs": false
+      }
     ],
-    "no-array-constructor": "deny",
-    "no-case-declarations": "deny",
-    "no-constructor-return": "deny",
-    "no-else-return": "allow",
-    "no-fallthrough": "allow",
-    "no-inner-declarations": "allow",
-    "no-lonely-if": "deny",
-    "no-negated-condition": "allow",
-    "no-new-wrappers": "deny",
-    "no-object-constructor": "deny",
-    "no-prototype-builtins": "deny",
-    "no-redeclare": [
-      "deny",
-      [
-        {
-          "builtinGlobals": true
-        }
-      ]
+    "eslint/max-nested-callbacks": [
+      2,
+      {
+        "max": 9
+      }
     ],
-    "no-self-compare": "deny",
-    "no-throw-literal": "deny",
-    "radix": "allow",
-    "require-await": "deny",
-    "sort-vars": "allow",
-    "symbol-description": "deny",
-    "getter-return": "deny",
-    "no-misleading-character-class": "allow",
-    "no-undef": "deny",
-    "no-unreachable": "deny"
+    "eslint/no-array-constructor": [
+      2
+    ],
+    "eslint/no-case-declarations": [
+      2
+    ],
+    "eslint/no-constructor-return": [
+      2
+    ],
+    "eslint/no-else-return": [
+      0
+    ],
+    "eslint/no-fallthrough": [
+      0
+    ],
+    "eslint/no-inner-declarations": [
+      0
+    ],
+    "eslint/no-lonely-if": [
+      1
+    ],
+    "eslint/no-negated-condition": [
+      0
+    ],
+    "eslint/no-new-wrappers": [
+      2
+    ],
+    "eslint/no-object-constructor": [
+      2
+    ],
+    "eslint/no-prototype-builtins": [
+      2
+    ],
+    "eslint/no-redeclare": [
+      2,
+      {
+        "builtinGlobals": true
+      }
+    ],
+    "eslint/no-self-compare": [
+      2
+    ],
+    "eslint/no-throw-literal": [
+      2
+    ],
+    "eslint/radix": [
+      0
+    ],
+    "eslint/require-await": [
+      2
+    ],
+    "eslint/sort-vars": [
+      0
+    ],
+    "eslint/symbol-description": [
+      2
+    ],
+    "eslint/getter-return": [
+      2
+    ],
+    "eslint/no-misleading-character-class": [
+      0
+    ],
+    "eslint/no-undef": [
+      2
+    ],
+    "eslint/no-unreachable": [
+      2
+    ]
   },
-  "settings": {
-    "jsx-a11y": {
-      "polymorphicPropName": null,
-      "components": {},
-      "attributes": {}
-    },
-    "next": {
-      "rootDir": []
-    },
-    "react": {
-      "formComponents": [],
-      "linkComponents": []
-    },
-    "jsdoc": {
-      "ignorePrivate": false,
-      "ignoreInternal": false,
-      "ignoreReplacesDocs": true,
-      "overrideReplacesDocs": true,
-      "augmentsExtendsReplacesDocs": false,
-      "implementsReplacesDocs": false,
-      "exemptDestructuredRootsFromChecks": false,
-      "tagNamePreference": {}
-    }
-  },
+  "settings": {},
   "env": {
     "browser": true,
-    "es2024": true
+    "es2024": true,
+    "node": true
   },
   "globals": {},
+  "overrides": [],
   "ignorePatterns": []
 }

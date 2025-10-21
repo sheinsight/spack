@@ -20,6 +20,8 @@ const plugin = new UnifiedPlugin({
     outputDir: 'runtime',
   },
   oxlintLoader: {
+    showError: true,
+    showWarning: false,
     outputDir: 'lint',
   },
 });
@@ -27,7 +29,6 @@ const plugin = new UnifiedPlugin({
 test('test oxlint-loader', async () => {
   const result = await runCompiler({
     fixture: 'oxlint-loader',
-
     plugins: [plugin],
   });
 
