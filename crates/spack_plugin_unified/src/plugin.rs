@@ -37,21 +37,11 @@ impl Plugin for UnifiedPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    if self.options.style_loader.is_some() {
-      UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
-        style_loader: self.options.style_loader.clone(),
-        oxlint_loader: None,
-      })
-      .apply(ctx)?;
-    }
-
-    if self.options.oxlint_loader.is_some() {
-      UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
-        style_loader: None,
-        oxlint_loader: self.options.oxlint_loader.clone(),
-      })
-      .apply(ctx)?;
-    }
+    UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
+      style_loader: self.options.style_loader.clone(),
+      oxlint_loader: self.options.oxlint_loader.clone(),
+    })
+    .apply(ctx)?;
 
     if let Some(case_sensitive) = self.options.case_sensitive.clone() {
       CaseSensitivePathsPlugin::new(case_sensitive).apply(ctx)?;

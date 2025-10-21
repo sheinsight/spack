@@ -103,13 +103,13 @@ pub(crate) async fn resolve_loader(
 ) -> Result<Option<BoxLoader>> {
   let loader_request = &l.loader;
 
-  if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
-    if let Some(style_loader) = &self.options.style_loader {
+  if let Some(style_loader) = &self.options.style_loader {
+    if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
       return Ok(Some(Arc::new(StyleLoader::new(style_loader.clone()))));
     }
   }
-  if loader_request.starts_with(OXLINT_LOADER_IDENTIFIER) {
-    if let Some(oxlint_loader) = &self.options.oxlint_loader {
+  if let Some(oxlint_loader) = &self.options.oxlint_loader {
+    if loader_request.starts_with(OXLINT_LOADER_IDENTIFIER) {
       return Ok(Some(Arc::new(OxlintLoader::new(oxlint_loader.clone()))));
     }
   }

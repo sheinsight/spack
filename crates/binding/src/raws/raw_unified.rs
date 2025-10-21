@@ -14,21 +14,20 @@ pub struct RawUnifiedPluginOpts {
   /// style-loader 的配置
   #[napi(js_name = "styleLoader")]
   pub style_loader: Option<RawStyleLoaderPluginOpts>,
-  /// case-sensitive-paths 的配置
-  #[napi(js_name = "caseSensitive")]
-  pub case_sensitive: Option<RawCaseSensitivePathsPluginOpts>,
-
   /// oxlint-loader 的配置
   #[napi(js_name = "oxlintLoader")]
   pub oxlint_loader: Option<RawOXLintLoaderPluginOpts>,
+  /// case-sensitive-paths 的配置
+  #[napi(js_name = "caseSensitive")]
+  pub case_sensitive: Option<RawCaseSensitivePathsPluginOpts>,
 }
 
 impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
   fn from(value: RawUnifiedPluginOpts) -> Self {
     Self {
       style_loader: value.style_loader.map(From::from),
+      oxlint_loader: value.oxlint_loader.map(From::from),
       case_sensitive: value.case_sensitive.map(From::from),
-      oxlint_loader: None,
     }
   }
 }

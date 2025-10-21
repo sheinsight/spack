@@ -143,10 +143,10 @@ export interface RawStyleLoaderPluginOpts {
 export interface RawUnifiedPluginOpts {
   /** style-loader 的配置 */
   styleLoader?: RawStyleLoaderPluginOpts
-  /** case-sensitive-paths 的配置 */
-  caseSensitive?: RawCaseSensitivePathsPluginOpts
   /** oxlint-loader 的配置 */
   oxlintLoader?: RawOxLintLoaderPluginOpts
+  /** case-sensitive-paths 的配置 */
+  caseSensitive?: RawCaseSensitivePathsPluginOpts
 }
 
 export declare function registerBundleAnalyzerPlugin(): void

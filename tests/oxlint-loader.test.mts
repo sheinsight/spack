@@ -15,6 +15,9 @@ const plugin = new UnifiedPlugin({
   styleLoader: {
     output: 'runtime',
   },
+  oxlintLoader: {
+    output: 'lint',
+  },
 });
 
 test('test oxlint-loader', async () => {
