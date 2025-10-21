@@ -63,7 +63,6 @@ impl OxLintLoader {
 
   fn get_config() -> Oxlintrc {
     let config = json!({
-
       "plugins": [
         "eslint",
         "typescript",
@@ -71,7 +70,6 @@ impl OxLintLoader {
         "react",
         "oxc"
       ],
-
       "categories": {
         "correctness": "off",
         "suspicious": "off",
@@ -81,7 +79,6 @@ impl OxLintLoader {
         "perf": "off",
         "nursery": "off"
       },
-
       "rules": {
         "eslint/for-direction":[2],
         "eslint/no-async-promise-executor":[2],
@@ -230,20 +227,12 @@ impl OxLintLoader {
         "eslint/no-undef":[2],
         "eslint/no-unreachable":[2]
       },
-
-      "settings":{
-
-      },
-
+      "settings":{},
       "env":{
         "browser": true,
         "es2024": true
       },
-
-      "globals":{
-
-      },
-
+      "globals":{},
       "overrides":[],
       "ignorePatterns":[]
     });

@@ -11,6 +11,9 @@ use crate::raws::{
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
 pub struct RawUnifiedPluginOpts {
+  /// 输出目录
+  #[napi(js_name = "baseDir")]
+  pub base_dir: String,
   /// style-loader 的配置
   #[napi(js_name = "styleLoader")]
   pub style_loader: Option<RawStyleLoaderPluginOpts>,
@@ -25,6 +28,7 @@ pub struct RawUnifiedPluginOpts {
 impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
   fn from(value: RawUnifiedPluginOpts) -> Self {
     Self {
+      base_dir: value.base_dir,
       style_loader: value.style_loader.map(From::from),
       oxlint_loader: value.oxlint_loader.map(From::from),
       case_sensitive: value.case_sensitive.map(From::from),

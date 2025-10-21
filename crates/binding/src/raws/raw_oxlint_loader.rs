@@ -1,7 +1,5 @@
-use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
-use rspack_core::BoxPlugin;
-use spack_builtin_loader::{OxLintLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
+use spack_builtin_loader::OxLintLoaderOpts;
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
@@ -17,13 +15,4 @@ impl From<RawOxLintLoaderPluginOpts> for OxLintLoaderOpts {
       output: value.output,
     }
   }
-}
-
-#[allow(unused)]
-pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
-  let options = RawOxLintLoaderPluginOpts::from_unknown(options)?;
-  Ok(Box::new(UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
-    style_loader: None,
-    oxlint_loader: Some(options.into()),
-  })) as BoxPlugin)
 }

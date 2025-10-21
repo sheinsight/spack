@@ -3,6 +3,7 @@ import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
 import type { RawUnifiedPluginOpts } from '@shined/spack-binding';
+import path from 'node:path';
 
 binding.registerUnifiedPlugin();
 
@@ -11,7 +12,10 @@ const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], Raw
   (opt) => ({ ...opt })
 );
 
+const baseDir = path.resolve(__dirname, 'fixtures', 'oxlint-loader', 'src', '.lego');
+
 const plugin = new UnifiedPlugin({
+  baseDir,
   styleLoader: {
     output: 'runtime',
   },
@@ -23,6 +27,7 @@ const plugin = new UnifiedPlugin({
 test('test oxlint-loader', async () => {
   const result = await runCompiler({
     fixture: 'oxlint-loader',
+
     plugins: [plugin],
   });
 

@@ -2,7 +2,6 @@ export declare enum CustomPluginNames {
   DuplicateDependencyPlugin = 'DuplicateDependencyPlugin',
   CaseSensitivePathsPlugin = 'CaseSensitivePathsPlugin',
   BundleAnalyzerPlugin = 'BundleAnalyzerPlugin',
-  StyleLoaderPlugin = 'StyleLoaderPlugin',
   UnifiedPlugin = 'UnifiedPlugin'
 }
 
@@ -141,6 +140,8 @@ export interface RawStyleLoaderPluginOpts {
 }
 
 export interface RawUnifiedPluginOpts {
+  /** 输出目录 */
+  baseDir: string
   /** style-loader 的配置 */
   styleLoader?: RawStyleLoaderPluginOpts
   /** oxlint-loader 的配置 */
@@ -154,7 +155,5 @@ export declare function registerBundleAnalyzerPlugin(): void
 export declare function registerCaseSensitivePathsPlugin(): void
 
 export declare function registerDuplicateDependencyPlugin(): void
-
-export declare function registerStyleLoaderPlugin(): void
 
 export declare function registerUnifiedPlugin(): void

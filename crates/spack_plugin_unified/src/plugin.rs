@@ -8,6 +8,7 @@ use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitiveP
 
 #[derive(Debug)]
 pub struct UnifiedPluginOpts {
+  pub base_dir: String,
   #[allow(unused)]
   pub style_loader: Option<StyleLoaderOpts>,
   #[allow(unused)]
@@ -40,6 +41,7 @@ impl Plugin for UnifiedPlugin {
     UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
       style_loader: self.options.style_loader.clone(),
       oxlint_loader: self.options.oxlint_loader.clone(),
+      base_dir: self.options.base_dir.clone(),
     })
     .apply(ctx)?;
 

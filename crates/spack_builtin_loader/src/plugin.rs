@@ -23,6 +23,7 @@ const ALIAS_NAME: &str = "@@";
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct UnifiedLoaderPluginOpts {
+  pub base_dir: String,
   pub style_loader: Option<StyleLoaderOpts>,
   pub oxlint_loader: Option<OxLintLoaderOpts>,
   // pub css_loader: Option<CssLoaderOpts>,
@@ -62,18 +63,30 @@ impl UnifiedLoaderPlugin {
       return Err(rspack_error::error!(err_msg.to_string()));
     }
 
-    for alias in aliases {
-      if let AliasValue::Path(path) = alias {
-        if let Some(style_loader) = &self.options.style_loader {
-          let path = Utf8PathBuf::from(path.to_string()).join(&style_loader.output);
-          StyleLoader::write_runtime(&path)?;
-        }
+    let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
 
-        if let Some(oxlint_loader) = &self.options.oxlint_loader {
-          let path = Utf8PathBuf::from(path.to_string()).join(&oxlint_loader.output);
-          OxLintLoader::write_runtime(&path)?;
-        }
-      }
+    // for alias in aliases {
+    //   if let AliasValue::Path(path) = alias {
+    //     if let Some(style_loader) = &self.options.style_loader {
+    //       let path = base_dir.join(path.to_string()).join(&style_loader.output);
+    //       StyleLoader::write_runtime(&path)?;
+    //     }
+
+    //     if let Some(oxlint_loader) = &self.options.oxlint_loader {
+    //       let path = base_dir.join(path.to_string()).join(&oxlint_loader.output);
+    //       OxLintLoader::write_runtime(&path)?;
+    //     }
+    //   }
+    // }
+
+    if let Some(style_loader) = &self.options.style_loader {
+      let path = base_dir.join(&style_loader.output);
+      StyleLoader::write_runtime(&path)?;
+    }
+
+    if let Some(oxlint_loader) = &self.options.oxlint_loader {
+      let path = base_dir.join(&oxlint_loader.output);
+      OxLintLoader::write_runtime(&path)?;
     }
 
     Ok(())
