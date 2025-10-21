@@ -28,7 +28,7 @@ pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct OxLintLoaderOpts {
-  pub output: String,
+  pub output_dir: String,
 }
 
 #[cacheable]

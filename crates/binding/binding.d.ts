@@ -126,14 +126,14 @@ export interface RawDuplicateDependencyPluginOpts {
 
 export interface RawOxLintLoaderPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
-  output: string
+  outputDir: string
 }
 
 export interface RawStyleLoaderPluginOpts {
   base?: number
   insert?: string
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
-  output: string
+  outputDir: string
   styleTagTransform?: string
   /** 为 style 标签添加的属性 */
   attributes?: Record<string, string>

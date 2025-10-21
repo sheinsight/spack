@@ -80,12 +80,12 @@ impl UnifiedLoaderPlugin {
     // }
 
     if let Some(style_loader) = &self.options.style_loader {
-      let path = base_dir.join(&style_loader.output);
+      let path = base_dir.join(&style_loader.output_dir);
       StyleLoader::write_runtime(&path)?;
     }
 
     if let Some(oxlint_loader) = &self.options.oxlint_loader {
-      let path = base_dir.join(&oxlint_loader.output);
+      let path = base_dir.join(&oxlint_loader.output_dir);
       OxLintLoader::write_runtime(&path)?;
     }
 

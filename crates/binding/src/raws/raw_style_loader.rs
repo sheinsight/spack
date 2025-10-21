@@ -11,8 +11,8 @@ pub struct RawStyleLoaderPluginOpts {
   #[napi(js_name = "insert")]
   pub insert: Option<String>,
   /// runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置
-  #[napi(js_name = "output")]
-  pub output: String,
+  #[napi(js_name = "outputDir")]
+  pub output_dir: String,
   #[napi(js_name = "styleTagTransform")]
   pub style_tag_transform: Option<String>,
   /// 为 style 标签添加的属性
@@ -25,7 +25,7 @@ impl From<RawStyleLoaderPluginOpts> for StyleLoaderOpts {
     Self {
       base: value.base,
       insert: value.insert,
-      output: value.output,
+      output_dir: value.output_dir,
       style_tag_transform: value.style_tag_transform,
       attributes: value.attributes,
     }

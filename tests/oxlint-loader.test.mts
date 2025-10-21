@@ -17,10 +17,10 @@ const baseDir = path.resolve(__dirname, 'fixtures', 'oxlint-loader', 'src', '.le
 const plugin = new UnifiedPlugin({
   baseDir,
   styleLoader: {
-    output: 'runtime',
+    outputDir: 'runtime',
   },
   oxlintLoader: {
-    output: 'lint',
+    outputDir: 'lint',
   },
 });
 
