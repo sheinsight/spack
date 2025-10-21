@@ -26,18 +26,18 @@ pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
 
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
-pub struct OxlintLoaderOpts {
+pub struct OxLintLoaderOpts {
   pub output: String,
 }
 
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
-pub struct OxlintLoader {
-  options: OxlintLoaderOpts,
+pub struct OxLintLoader {
+  options: OxLintLoaderOpts,
 }
 
-impl OxlintLoader {
-  pub fn new(options: OxlintLoaderOpts) -> Self {
+impl OxLintLoader {
+  pub fn new(options: OxLintLoaderOpts) -> Self {
     Self { options }
   }
 
@@ -131,7 +131,7 @@ impl OxlintLoader {
   }
 }
 
-impl OxlintLoader {
+impl OxLintLoader {
   fn create_report(
     &self,
     named_source: &NamedSource<String>,
@@ -167,7 +167,7 @@ impl OxlintLoader {
 
 #[async_trait]
 #[cacheable_dyn]
-impl Loader<RunnerContext> for OxlintLoader {
+impl Loader<RunnerContext> for OxLintLoader {
   fn identifier(&self) -> Identifier {
     OXLINT_LOADER_IDENTIFIER.into()
   }

@@ -2,7 +2,7 @@ use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::plugin;
 use spack_builtin_loader::{
-  OxlintLoaderOpts, StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts,
+  OxLintLoaderOpts, StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts,
 };
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
 
@@ -13,7 +13,7 @@ pub struct UnifiedPluginOpts {
   #[allow(unused)]
   pub case_sensitive: Option<CaseSensitivePathsPluginOpts>,
   #[allow(unused)]
-  pub oxlint_loader: Option<OxlintLoaderOpts>,
+  pub oxlint_loader: Option<OxLintLoaderOpts>,
 }
 
 pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
