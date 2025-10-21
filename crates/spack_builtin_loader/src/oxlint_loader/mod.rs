@@ -63,6 +63,7 @@ impl OxLintLoader {
 
   fn get_config() -> Oxlintrc {
     let config = json!({
+
       "plugins": [
         "eslint",
         "typescript",
@@ -70,6 +71,7 @@ impl OxLintLoader {
         "react",
         "oxc"
       ],
+
       "categories": {
         "correctness": "off",
         "suspicious": "off",
@@ -79,6 +81,7 @@ impl OxLintLoader {
         "perf": "off",
         "nursery": "off"
       },
+
       "rules": {
         "eslint/for-direction":[2],
         "eslint/no-async-promise-executor":[2],
@@ -157,7 +160,6 @@ impl OxLintLoader {
           "name": "event",
           "message": "Use local parameter instead."
         }],
-
         // TODO: 添加 restricted-imports 规则
         "no-restricted-imports": [2, {
           "paths": [{
@@ -171,13 +173,78 @@ impl OxLintLoader {
         "eslint/no-undefined":[1],
         "eslint/no-var":[2],
         "eslint/no-void":[0],
-        "eslint/unicode-bom":[2]
+        "eslint/unicode-bom":[2],
+        "eslint/block-scoped-var":[2],
+        "eslint/no-extend-native":[2],
+        "eslint/no-extra-bind":[2],
+        "eslint/no-new":[1],
+        "eslint/no-unexpected-multiline":[2],
+        "eslint/no-unneeded-ternary":[1],
+        "eslint/no-useless-concat":[2],
+        "eslint/no-useless-constructor":[0],
+        "eslint/preserve-caught-error":[2,{
+          "requireCatchParameter":true
+        }],
+        "eslint/array-callback-return":[1],
+        "eqeqeq": [2, "always", {
+          "null": "always"
+        }],
+        "eslint/max-classes-per-file":[2,{
+          "max":1
+        }],
+        "eslint/max-depth":[0],
+        "eslint/max-lines":[2,{
+          "max":1000,
+          "skipBlankLines":true,
+          "skipComments":true
+        }],
+        "eslint/max-lines-per-function":[2,{
+          "max": 300,
+          "skipBlankLines": true,
+          "skipComments": true,
+          "IIFEs": false
+        }],
+        "eslint/max-nested-callbacks":[2,{
+          "max": 3
+        }],
+        "eslint/no-array-constructor":[2],
+        "eslint/no-case-declarations":[2],
+        "eslint/no-constructor-return":[2],
+        "eslint/no-else-return":[0],
+        "eslint/no-fallthrough":[0],
+        "eslint/no-inner-declarations":[0],
+        "eslint/no-lonely-if":[2],
+        "eslint/no-negated-condition":[0],
+        "eslint/no-new-wrappers":[2],
+        "eslint/no-object-constructor":[2],
+        "eslint/no-prototype-builtins":[2],
+        "eslint/no-redeclare":[2,{"builtinGlobals":true}],
+        "eslint/no-self-compare":[2],
+        "eslint/no-throw-literal":[2],
+        "eslint/radix":[0],
+        "eslint/require-await":[2],
+        "eslint/sort-vars":[0],
+        "eslint/symbol-description":[2],
+        "eslint/getter-return":[2],
+        "eslint/no-misleading-character-class":[0],
+        "eslint/no-undef":[2],
+        "eslint/no-unreachable":[2]
       },
-      "settings":{},
-      "env":{},
-      "globals":{},
-      "overrides":[
-      ],
+
+      "settings":{
+
+      },
+
+      "env":{
+        "browser": true,
+        "es2024": true
+      },
+
+      "globals":{
+
+      },
+
+      "overrides":[],
       "ignorePatterns":[]
     });
 
@@ -250,7 +317,7 @@ impl Loader<RunnerContext> for OxLintLoader {
       ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
         .unwrap()
         .build(&external_plugin_store)
-        .unwrap();
+        .map_err(|e| rspack_error::Error::from_error(e))?;
 
     let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
 

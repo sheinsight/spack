@@ -137,7 +137,100 @@
     "no-undefined": "warn",
     "no-var": "deny",
     "no-void": "allow",
-    "unicode-bom": "deny"
+    "unicode-bom": "deny",
+    "block-scoped-var": "deny",
+    "no-extend-native": "deny",
+    "no-extra-bind": "deny",
+    "no-new": "warn",
+    "no-unexpected-multiline": "deny",
+    "no-unneeded-ternary": "warn",
+    "no-useless-concat": "deny",
+    "no-useless-constructor": "allow",
+    "preserve-caught-error": [
+      "deny",
+      [
+        {
+          "requireCatchParameter": true
+        }
+      ]
+    ],
+    "array-callback-return": "warn",
+    "eqeqeq": [
+      "deny",
+      [
+        "always",
+        {
+          "null": "always"
+        }
+      ]
+    ],
+    "max-classes-per-file": [
+      "deny",
+      [
+        {
+          "max": 1
+        }
+      ]
+    ],
+    "max-depth": "allow",
+    "max-lines": [
+      "deny",
+      [
+        {
+          "max": 1000,
+          "skipBlankLines": true,
+          "skipComments": true
+        }
+      ]
+    ],
+    "max-lines-per-function": [
+      "deny",
+      [
+        {
+          "max": 300,
+          "skipBlankLines": true,
+          "skipComments": true,
+          "IIFEs": false
+        }
+      ]
+    ],
+    "max-nested-callbacks": [
+      "deny",
+      [
+        {
+          "max": 3
+        }
+      ]
+    ],
+    "no-array-constructor": "deny",
+    "no-case-declarations": "deny",
+    "no-constructor-return": "deny",
+    "no-else-return": "allow",
+    "no-fallthrough": "allow",
+    "no-inner-declarations": "allow",
+    "no-lonely-if": "deny",
+    "no-negated-condition": "allow",
+    "no-new-wrappers": "deny",
+    "no-object-constructor": "deny",
+    "no-prototype-builtins": "deny",
+    "no-redeclare": [
+      "deny",
+      [
+        {
+          "builtinGlobals": true
+        }
+      ]
+    ],
+    "no-self-compare": "deny",
+    "no-throw-literal": "deny",
+    "radix": "allow",
+    "require-await": "deny",
+    "sort-vars": "allow",
+    "symbol-description": "deny",
+    "getter-return": "deny",
+    "no-misleading-character-class": "allow",
+    "no-undef": "deny",
+    "no-unreachable": "deny"
   },
   "settings": {
     "jsx-a11y": {
@@ -163,7 +256,10 @@
       "tagNamePreference": {}
     }
   },
-  "env": {},
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
   "globals": {},
   "ignorePatterns": []
 }
