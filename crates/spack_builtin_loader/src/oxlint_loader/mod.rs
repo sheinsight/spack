@@ -377,14 +377,16 @@ impl Loader<RunnerContext> for OxLintLoader {
         _ => rspack_error::Error::warning(message_text),
       };
 
-      loader_context
-        .diagnostics
-        .push(rspack_error::Diagnostic::from(error));
-
       let should_output = match message.error.severity {
         Severity::Error => true,
         _ => self.options.show_warning,
       };
+
+      if should_output {
+        loader_context
+          .diagnostics
+          .push(rspack_error::Diagnostic::from(error));
+      }
 
       if should_output {
         let mut output = String::with_capacity(1024 * 1024);
