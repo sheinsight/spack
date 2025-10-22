@@ -234,22 +234,24 @@
     ],
     "no-restricted-globals": [
       2,
-      {
-        "name": "event",
-        "message": "Use local parameter instead."
-      }
+      [
+        {
+          "name": "window",
+          "message": "window is not allowed"
+        }
+      ]
     ],
     "no-restricted-imports": [
       2,
       {
         "paths": [
           {
-            "name": "import-foo",
-            "message": "Please use import-bar instead."
+            "name": "lodash",
+            "message": "Please use lodash-es instead"
           },
           {
-            "name": "import-baz",
-            "message": "Please use import-quux instead."
+            "name": "moment",
+            "message": "Please use dayjs instead"
           }
         ]
       }

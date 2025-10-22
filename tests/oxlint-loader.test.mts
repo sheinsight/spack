@@ -22,6 +22,22 @@ const plugin = new UnifiedPlugin({
   oxlintLoader: {
     showWarning: true,
     outputDir: 'lint',
+    restrictedImports: [
+      {
+        name: 'lodash',
+        message: 'Please use lodash-es instead',
+      },
+      {
+        name: 'moment',
+        message: 'Please use dayjs instead',
+      },
+    ],
+    restrictedGlobals: [
+      {
+        name: 'window',
+        message: 'window is not allowed',
+      },
+    ],
   },
 });
 

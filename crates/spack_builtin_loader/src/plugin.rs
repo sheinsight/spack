@@ -84,10 +84,10 @@ impl UnifiedLoaderPlugin {
       StyleLoader::write_runtime(&path)?;
     }
 
-    if let Some(oxlint_loader) = &self.options.oxlint_loader {
-      let path = base_dir.join(&oxlint_loader.output_dir);
-      OxLintLoader::write_runtime(&path)?;
-    }
+    // if let Some(oxlint_loader) = &self.options.oxlint_loader {
+    //   let path = base_dir.join(&oxlint_loader.output_dir);
+    //   OxLintLoader::write_runtime(&path)?;
+    // }
 
     Ok(())
   }
@@ -120,15 +120,20 @@ pub(crate) async fn resolve_loader(
   l: &ModuleRuleUseLoader,
 ) -> Result<Option<BoxLoader>> {
   let loader_request = &l.loader;
+  let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
 
   if let Some(style_loader) = &self.options.style_loader {
     if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
       return Ok(Some(Arc::new(StyleLoader::new(style_loader.clone()))));
     }
   }
-  if let Some(oxlint_loader) = &self.options.oxlint_loader {
+
+  if let Some(oxlint_loader_opts) = &self.options.oxlint_loader {
     if loader_request.starts_with(OXLINT_LOADER_IDENTIFIER) {
-      return Ok(Some(Arc::new(OxLintLoader::new(oxlint_loader.clone()))));
+      let path = base_dir.join(&oxlint_loader_opts.output_dir);
+      let oxlint_loader = OxLintLoader::new(oxlint_loader_opts.clone());
+      oxlint_loader.write_runtime(&path)?;
+      return Ok(Some(Arc::new(oxlint_loader)));
     }
   }
   // if loader_request.starts_with(CSS_LOADER_IDENTIFIER) {

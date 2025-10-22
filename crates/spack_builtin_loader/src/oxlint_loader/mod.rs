@@ -23,6 +23,10 @@ use rspack_util::fx_hash::FxHashMap;
 use serde::Serialize;
 use serde_json::json;
 
+use crate::oxlint_loader::restricted::Restricted;
+
+pub mod restricted;
+
 pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
 
 #[cacheable]
@@ -30,6 +34,8 @@ pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
 pub struct OxLintLoaderOpts {
   pub output_dir: String,
   pub show_warning: bool,
+  pub restricted_imports: Vec<Restricted>,
+  pub restricted_globals: Vec<Restricted>,
 }
 
 #[cacheable]
@@ -43,14 +49,14 @@ impl OxLintLoader {
     Self { options }
   }
 
-  pub fn write_runtime(dir: &Utf8PathBuf) -> Result<()> {
+  pub fn write_runtime(&self, dir: &Utf8PathBuf) -> Result<()> {
     if dir.exists().not() {
       std::fs::create_dir_all(dir)?;
     }
 
     let file = dir.join(".oxlintrc.json");
 
-    let config = OxLintLoader::get_config();
+    let config = self.get_config()?;
 
     std::fs::write(
       file,
@@ -60,7 +66,12 @@ impl OxLintLoader {
     Ok(())
   }
 
-  fn get_config() -> serde_json::Value {
+  fn get_config(&self) -> Result<serde_json::Value> {
+    let restricted_imports = serde_json::to_value(self.options.restricted_imports.clone())
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+    let restricted_globals = serde_json::to_value(self.options.restricted_globals.clone())
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
     let config = json!({
       "plugins": [
         "eslint",
@@ -152,19 +163,10 @@ impl OxLintLoader {
         "eslint/no-proto":[2],
         "eslint/no-regex-spaces":[2],
         // TODO: 添加 no-restricted-globals 规则
-        "no-restricted-globals": [2, {
-          "name": "event",
-          "message": "Use local parameter instead."
-        }],
+        "no-restricted-globals": [2, restricted_globals],
         // TODO: 添加 restricted-imports 规则
         "no-restricted-imports": [2, {
-          "paths": [{
-            "name": "import-foo",
-            "message": "Please use import-bar instead."
-          }, {
-            "name": "import-baz",
-            "message": "Please use import-quux instead."
-          }]
+          "paths": restricted_imports
         }],
         "eslint/no-undefined":[1],
         "eslint/no-var":[2],
@@ -237,7 +239,7 @@ impl OxLintLoader {
       "ignorePatterns":[]
     });
 
-    config
+    Ok(config)
   }
 }
 
@@ -296,7 +298,7 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let source_code = source_code.try_into_string()?;
 
-    let config = OxLintLoader::get_config();
+    let config = self.get_config()?;
 
     let config =
       serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
