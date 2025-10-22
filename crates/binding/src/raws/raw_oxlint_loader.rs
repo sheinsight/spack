@@ -24,6 +24,9 @@ pub struct RawOxLintLoaderPluginOpts {
 
   #[napi(js_name = "environments")]
   pub environments: Option<RawEnvironment>,
+
+  #[napi(js_name = "ignore")]
+  pub ignore: Option<Vec<String>>,
 }
 
 #[derive(Debug)]
@@ -98,6 +101,7 @@ impl From<RawOxLintLoaderPluginOpts> for OxLintLoaderOpts {
         .map(From::from)
         .collect(),
       globals: value.globals.unwrap_or_default(),
+      ignore: value.ignore.unwrap_or_default(),
     }
   }
 }

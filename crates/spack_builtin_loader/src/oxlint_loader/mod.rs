@@ -40,6 +40,7 @@ pub struct OxLintLoaderOpts {
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
   pub environments: Environment,
+  pub ignore: Vec<String>,
 }
 
 #[cacheable]
@@ -60,7 +61,9 @@ impl OxLintLoader {
 
     let file = dir.join(".oxlintrc.json");
 
-    let config = self.get_config()?;
+    let config = self
+      .get_config()
+      .map_err(|e| rspack_error::Error::from_error(e))?;
 
     std::fs::write(
       file,
@@ -70,17 +73,15 @@ impl OxLintLoader {
     Ok(())
   }
 
-  fn get_config(&self) -> Result<serde_json::Value> {
-    let restricted_imports = serde_json::to_value(&self.options.restricted_imports)
-      .map_err(|e| rspack_error::Error::from_error(e))?;
-    let restricted_globals = serde_json::to_value(&self.options.restricted_globals)
-      .map_err(|e| rspack_error::Error::from_error(e))?;
+  fn get_config(&self) -> serde_json::Result<serde_json::Value> {
+    let restricted_imports = serde_json::to_value(&self.options.restricted_imports)?;
+    let restricted_globals = serde_json::to_value(&self.options.restricted_globals)?;
 
-    let globals = serde_json::to_value(&self.options.globals)
-      .map_err(|e| rspack_error::Error::from_error(e))?;
+    let globals = serde_json::to_value(&self.options.globals)?;
 
-    let environments = serde_json::to_value(&self.options.environments)
-      .map_err(|e| rspack_error::Error::from_error(e))?;
+    let environments = serde_json::to_value(&self.options.environments)?;
+
+    let ignore = serde_json::to_value(&self.options.ignore)?;
 
     let config = json!({
       "plugins": [
@@ -242,7 +243,7 @@ impl OxLintLoader {
       "env":environments,
       "globals": globals,
       "overrides":[],
-      "ignorePatterns":[]
+      "ignorePatterns":ignore
     });
 
     Ok(config)
@@ -304,7 +305,9 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let source_code = source_code.try_into_string()?;
 
-    let config = self.get_config()?;
+    let config = self
+      .get_config()
+      .map_err(|e| rspack_error::Error::from_error(e))?;
 
     let config =
       serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
