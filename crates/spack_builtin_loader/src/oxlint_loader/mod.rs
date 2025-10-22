@@ -326,7 +326,7 @@ impl Loader<RunnerContext> for OxLintLoader {
       LintOptions {
         fix: FixKind::None,
         framework_hints: FrameworkFlags::empty(),
-        report_unused_directive: Some(AllowWarnDeny::Allow),
+        report_unused_directive: Some(AllowWarnDeny::Deny),
       },
       config_store,
       None,
@@ -358,11 +358,13 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
 
-    let messages = linter.run(
+    let (messages, disable_directives) = linter.run_with_disable_directives(
       resource_path.as_std_path(),
       vec![context_sub_hosts],
       &allocator,
     );
+
+    println!("disable_directives--->{:?}", disable_directives);
 
     if messages.is_empty() {
       loader_context.finish_with((source_code, sm));
