@@ -67,9 +67,9 @@ impl OxLintLoader {
   }
 
   fn get_config(&self) -> Result<serde_json::Value> {
-    let restricted_imports = serde_json::to_value(self.options.restricted_imports.clone())
+    let restricted_imports = serde_json::to_value(&self.options.restricted_imports)
       .map_err(|e| rspack_error::Error::from_error(e))?;
-    let restricted_globals = serde_json::to_value(self.options.restricted_globals.clone())
+    let restricted_globals = serde_json::to_value(&self.options.restricted_globals)
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
     let config = json!({
