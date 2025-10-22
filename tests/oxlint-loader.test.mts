@@ -41,6 +41,9 @@ const plugin = new UnifiedPlugin({
     globals: {
       Hello: true,
     },
+    environments: {
+      browser: true,
+    },
   },
 });
 

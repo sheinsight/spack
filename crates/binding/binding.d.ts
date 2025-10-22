@@ -124,6 +124,15 @@ export interface RawDuplicateDependencyPluginOpts {
   onDetected?: (response: JsDuplicateDependencyPluginResp) => void|Promise<void>
 }
 
+export interface RawEnvironment {
+  browser?: boolean
+  node?: boolean
+  commonjs?: boolean
+  es2024?: boolean
+  amd?: boolean
+  sharedNodeBrowser?: boolean
+}
+
 export interface RawOxLintLoaderPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   outputDir: string
@@ -131,6 +140,7 @@ export interface RawOxLintLoaderPluginOpts {
   restrictedImports?: Array<RawRestricted>
   restrictedGlobals?: Array<RawRestricted>
   globals?: Record<string, boolean>
+  environments?: RawEnvironment
 }
 
 export interface RawRestricted {

@@ -23,8 +23,10 @@ use rspack_util::fx_hash::FxHashMap;
 use serde::Serialize;
 use serde_json::json;
 
+use crate::oxlint_loader::environments::Environment;
 use crate::oxlint_loader::restricted::Restricted;
 
+pub mod environments;
 pub mod restricted;
 
 pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
@@ -37,6 +39,7 @@ pub struct OxLintLoaderOpts {
   pub restricted_imports: Vec<Restricted>,
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
+  pub environments: Environment,
 }
 
 #[cacheable]
@@ -74,6 +77,9 @@ impl OxLintLoader {
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
     let globals = serde_json::to_value(&self.options.globals)
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let environments = serde_json::to_value(&self.options.environments)
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
     let config = json!({
@@ -233,11 +239,7 @@ impl OxLintLoader {
         "eslint/no-unreachable":[2]
       },
       "settings":{},
-      "env":{
-        "browser": true,
-        "es2024": true,
-        "node": true
-      },
+      "env":environments,
       "globals": globals,
       "overrides":[],
       "ignorePatterns":[]

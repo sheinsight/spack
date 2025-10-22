@@ -413,8 +413,11 @@
   "settings": {},
   "env": {
     "browser": true,
+    "node": true,
+    "commonjs": false,
     "es2024": true,
-    "node": true
+    "amd": false,
+    "shared-node-browser": false
   },
   "globals": {
     "Hello": true
