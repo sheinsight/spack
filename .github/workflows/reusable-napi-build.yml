@@ -91,7 +91,9 @@ jobs:
             echo "=== Installing LLVM Dependencies ==="
             if [[ "${{ inputs.docker }}" == *"alpine"* ]]; then
               echo "Installing for Alpine..."
-              apk add --no-cache llvm15-dev llvm15-static clang15-dev clang15-static libffi-dev
+              # apk add --no-cache llvm15-dev llvm15-static clang15-dev clang15-static libffi-dev
+              apk add --no-cache llvm-dev llvm-static clang-dev clang-static libffi-dev
+
               
               # 设置 Alpine 的 LLVM 环境变量
               export LLVM_CONFIG_PATH=/usr/bin/llvm15-config

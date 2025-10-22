@@ -44,6 +44,7 @@ const plugin = new UnifiedPlugin({
     environments: {
       browser: true,
     },
+    ignore: ['**/*.(j|t)s'],
   },
 });
 
