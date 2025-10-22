@@ -282,6 +282,83 @@ impl OxLintLoader {
     // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
     error.with_source_code(named_source.clone())
   }
+
+  /// 创建美化的 disable directives 诊断输出
+  fn print_disable_directives_info(
+    &self,
+    disable_directives: &Option<oxc_linter::DisableDirectives>,
+    source_code: &str,
+  ) -> Result<()> {
+    // 如果没有 disable directives,直接返回
+    let Some(directives) = disable_directives else {
+      return Ok(());
+    };
+    let handler = GraphicalReportHandler::new()
+      .with_links(true)
+      .with_theme(GraphicalTheme::unicode());
+
+    // 统计信息
+    let disable_rule_count = directives.disable_rule_comments().len();
+    let unused_enable_count = directives.unused_enable_comments().len();
+
+    // 创建主诊断信息
+    let mut diagnostic = OxcDiagnostic::warn("Disable Directives Analysis")
+      .with_help(format!(
+        "Found {} disable-rule comments, {} unused-enable comments",
+        disable_rule_count, unused_enable_count
+      ));
+
+    // 添加 disable-rule 注释的标签
+    for comment in directives.disable_rule_comments().iter().take(5) {
+      use oxc_linter::RuleCommentType;
+      let label_text = match &comment.r#type {
+        RuleCommentType::All => "disable all rules".to_string(),
+        RuleCommentType::Single(rules) => {
+          let rules_text = rules
+            .iter()
+            .map(|r| r.rule_name.as_str())
+            .collect::<Vec<_>>()
+            .join(", ");
+          format!("disable: {}", rules_text)
+        }
+      };
+      diagnostic = diagnostic.with_label(oxc::diagnostics::LabeledSpan::at(
+        comment.span,
+        label_text,
+      ));
+    }
+
+    // 添加未使用的 enable 注释的标签
+    for (rule_name, span) in directives.unused_enable_comments().iter().take(5) {
+      let label_text = if let Some(name) = rule_name {
+        format!("unused enable: {}", name)
+      } else {
+        "unused enable (all)".to_string()
+      };
+      diagnostic = diagnostic.with_label(oxc::diagnostics::LabeledSpan::at(*span, label_text));
+    }
+
+    // 如果标签过多，添加省略提示
+    let total_labels = disable_rule_count + unused_enable_count;
+    if total_labels > 5 {
+      diagnostic = diagnostic.with_help(format!(
+        "Showing first 5 of {} total directives. Use detailed logging for full list.",
+        total_labels
+      ));
+    }
+
+    let named_source = NamedSource::new("disable_directives", source_code.to_string());
+    let diagnostic = diagnostic.with_source_code(named_source);
+
+    // 渲染并输出
+    let mut output = String::with_capacity(4096);
+    handler
+      .render_report(&mut output, diagnostic.as_ref())
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    eprintln!("{}", output);
+    Ok(())
+  }
 }
 
 #[async_trait]
@@ -364,7 +441,8 @@ impl Loader<RunnerContext> for OxLintLoader {
       &allocator,
     );
 
-    println!("disable_directives--->{:?}", disable_directives);
+    // 使用美化的诊断输出显示 disable directives 信息
+    self.print_disable_directives_info(&disable_directives, &source_code)?;
 
     if messages.is_empty() {
       loader_context.finish_with((source_code, sm));
