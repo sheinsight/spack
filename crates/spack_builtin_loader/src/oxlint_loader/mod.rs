@@ -1,4 +1,4 @@
-use std::{ops::Not, sync::Arc};
+use std::{collections::HashMap, ops::Not, sync::Arc};
 
 use async_trait::async_trait;
 use oxc::{
@@ -36,6 +36,7 @@ pub struct OxLintLoaderOpts {
   pub show_warning: bool,
   pub restricted_imports: Vec<Restricted>,
   pub restricted_globals: Vec<Restricted>,
+  pub globals: HashMap<String, bool>,
 }
 
 #[cacheable]
@@ -70,6 +71,9 @@ impl OxLintLoader {
     let restricted_imports = serde_json::to_value(&self.options.restricted_imports)
       .map_err(|e| rspack_error::Error::from_error(e))?;
     let restricted_globals = serde_json::to_value(&self.options.restricted_globals)
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let globals = serde_json::to_value(&self.options.globals)
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
     let config = json!({
@@ -234,7 +238,7 @@ impl OxLintLoader {
         "es2024": true,
         "node": true
       },
-      "globals":{},
+      "globals": globals,
       "overrides":[],
       "ignorePatterns":[]
     });

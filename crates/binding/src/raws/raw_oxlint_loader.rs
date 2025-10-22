@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use napi_derive::napi;
 use spack_builtin_loader::{OxLintLoaderOpts, restricted::Restricted};
 
@@ -9,13 +11,16 @@ pub struct RawOxLintLoaderPluginOpts {
   pub output_dir: String,
 
   #[napi(js_name = "showWarning")]
-  pub show_warning: bool,
+  pub show_warning: Option<bool>,
 
   #[napi(js_name = "restrictedImports")]
-  pub restricted_imports: Vec<RawRestricted>,
+  pub restricted_imports: Option<Vec<RawRestricted>>,
 
   #[napi(js_name = "restrictedGlobals")]
-  pub restricted_globals: Vec<RawRestricted>,
+  pub restricted_globals: Option<Vec<RawRestricted>>,
+
+  #[napi(js_name = "globals")]
+  pub globals: Option<HashMap<String, bool>>,
 }
 
 #[derive(Debug)]
@@ -41,17 +46,20 @@ impl From<RawOxLintLoaderPluginOpts> for OxLintLoaderOpts {
   fn from(value: RawOxLintLoaderPluginOpts) -> Self {
     Self {
       output_dir: value.output_dir,
-      show_warning: value.show_warning,
+      show_warning: value.show_warning.unwrap_or(true),
       restricted_imports: value
         .restricted_imports
+        .unwrap_or_default()
         .into_iter()
         .map(From::from)
         .collect(),
       restricted_globals: value
         .restricted_globals
+        .unwrap_or_default()
         .into_iter()
         .map(From::from)
         .collect(),
+      globals: value.globals.unwrap_or_default(),
     }
   }
 }

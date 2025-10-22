@@ -127,9 +127,10 @@ export interface RawDuplicateDependencyPluginOpts {
 export interface RawOxLintLoaderPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   outputDir: string
-  showWarning: boolean
-  restrictedImports: Array<RawRestricted>
-  restrictedGlobals: Array<RawRestricted>
+  showWarning?: boolean
+  restrictedImports?: Array<RawRestricted>
+  restrictedGlobals?: Array<RawRestricted>
+  globals?: Record<string, boolean>
 }
 
 export interface RawRestricted {

@@ -416,7 +416,9 @@
     "es2024": true,
     "node": true
   },
-  "globals": {},
+  "globals": {
+    "Hello": true
+  },
   "overrides": [],
   "ignorePatterns": []
 }

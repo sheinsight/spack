@@ -38,6 +38,9 @@ const plugin = new UnifiedPlugin({
         message: 'window is not allowed',
       },
     ],
+    globals: {
+      Hello: true,
+    },
   },
 });
 
