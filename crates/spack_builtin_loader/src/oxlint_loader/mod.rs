@@ -12,9 +12,9 @@ use oxc::{
   span::SourceType,
 };
 use oxc_linter::{
-  AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, DisableRuleComment,
-  ExternalPluginStore, FixKind, FrameworkFlags, LintOptions, Linter, Message, Oxlintrc,
-  RuleCommentType,
+  AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, DisableDirectives,
+  DisableRuleComment, ExternalPluginStore, FixKind, FrameworkFlags, LintOptions, Linter, Message,
+  Oxlintrc, RuleCommentType,
 };
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
@@ -282,6 +282,44 @@ impl OxLintLoader {
     error.with_source_code(named_source.clone())
   }
 
+  fn print_disable_directives_info(&self, disable_directives: &DisableDirectives) -> Result<()> {
+    // 分组存储每个规则的所有出现位置
+    let mut rule_spans: FxHashMap<String, Vec<DisableRuleComment>> = FxHashMap::default();
+
+    for comment in disable_directives.disable_rule_comments() {
+      match &comment.r#type {
+        RuleCommentType::All => {
+          rule_spans
+            .entry("__ALL__".to_string())
+            .or_insert_with(Vec::new)
+            .push(comment.clone());
+        }
+        RuleCommentType::Single(rules) => {
+          for rule in rules {
+            rule_spans
+              .entry(rule.rule_name.to_string())
+              .or_insert_with(Vec::new)
+              .push(comment.clone());
+          }
+        }
+      };
+    }
+
+    if !rule_spans.is_empty() {
+      eprintln!(
+        r##"
+{:<4}{} times have you disable the eslint rules. 
+
+Though it be a compromise wrought by the moment, I hold faith that you shall, in the fullness of time, emerge unbound.{:>3}
+"##,
+        "⚔️",
+        rule_spans.len().red().bold(),
+        "✨"
+      );
+    }
+    Ok(())
+  }
+
   // 创建美化的 disable directives 诊断输出
   // fn print_disable_directives_info(
   //   &self,
@@ -437,41 +475,8 @@ impl Loader<RunnerContext> for OxLintLoader {
       &allocator,
     );
 
-    // 分组存储每个规则的所有出现位置
-    let mut rule_spans: FxHashMap<String, Vec<DisableRuleComment>> = FxHashMap::default();
-
     if let Some(disable_directives) = disable_directives {
-      for comment in disable_directives.disable_rule_comments() {
-        match &comment.r#type {
-          RuleCommentType::All => {
-            rule_spans
-              .entry("__ALL__".to_string())
-              .or_insert_with(Vec::new)
-              .push(comment.clone());
-          }
-          RuleCommentType::Single(rules) => {
-            for rule in rules {
-              rule_spans
-                .entry(rule.rule_name.to_string())
-                .or_insert_with(Vec::new)
-                .push(comment.clone());
-            }
-          }
-        };
-      }
-    }
-
-    if !rule_spans.is_empty() {
-      eprintln!(
-        r##"
-{:<4}{} times have you disable the eslint rules. 
-
-Though it be a compromise wrought by the moment, I hold faith that you shall, in the fullness of time, emerge unbound.{:>3}
-"##,
-        "⚔️",
-        rule_spans.len().red().bold(),
-        "✨"
-      );
+      self.print_disable_directives_info(&disable_directives)?;
     }
 
     if messages.is_empty() {
