@@ -242,7 +242,7 @@ impl OxLintLoader {
       "env":environments,
       "globals": globals,
       "overrides":[{
-        "files": ["**/*.{ts,tsx,cts,mts}"],
+        "files": ["*.{ts,tsx,cts,mts}"],
         "env": {},
         "globals": {},
         "plugins": [],
