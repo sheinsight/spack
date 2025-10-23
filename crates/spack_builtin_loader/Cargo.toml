@@ -47,6 +47,7 @@ strum_macros = { workspace = true }
 lazy_static  = { workspace = true }
 lightningcss = { workspace = true }
 miette       = { workspace = true }
+num-format   = { workspace = true }
 owo-colors   = { workspace = true }
 ustr         = { workspace = true }
 

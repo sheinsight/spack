@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ops::Not, sync::Arc};
 
 use async_trait::async_trait;
+use num_format::{Locale, ToFormattedString};
 use owo_colors::OwoColorize;
 use oxc::{
   allocator::Allocator,
@@ -423,6 +424,8 @@ impl OxLintLoader {
     let len = disable_directives.disable_rule_comments().len();
 
     if len > 0 {
+      let len = len.to_formatted_string(&Locale::en);
+
       eprintln!(
         r##"
 {:<4}{} times have you disable the eslint rules. 
