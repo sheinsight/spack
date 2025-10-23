@@ -369,32 +369,6 @@ impl OxLintLoader {
     Ok((messages, disable_directives))
   }
 
-  fn print_message_diagnostics(
-    &self,
-    resource_path: impl AsRef<str>,
-    source_code: &str,
-    messages: &Vec<Message>,
-  ) -> Result<()> {
-    // 配置带颜色和源代码上下文的 GraphicalReportHandler
-    let handler = GraphicalReportHandler::new()
-      .with_links(true)
-      .with_theme(GraphicalTheme::unicode());
-
-    let named_source = NamedSource::new(resource_path, source_code.to_string());
-
-    // 将 lint 诊断信息推送到 rspack 的诊断系统
-    for message in messages {
-      let mut output = String::with_capacity(4096);
-      let error = self.create_report(&named_source, &message);
-      handler
-        .render_report(&mut output, error.as_ref())
-        .map_err(|e| rspack_error::Error::from_error(e))?;
-      eprintln!("{}", output);
-    }
-
-    Ok(())
-  }
-
   fn print_disable_directives_info(&self, disable_directives: &DisableDirectives) -> Result<()> {
     let len = disable_directives.disable_rule_comments().len();
 
@@ -440,24 +414,35 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let (messages, disable_directives) = self.lint(&source_code, &resource_path)?;
 
-    let has_messages = !messages.is_empty();
+    let handler = GraphicalReportHandler::new()
+      .with_links(true)
+      .with_theme(GraphicalTheme::unicode());
 
-    if has_messages {
-      self.print_message_diagnostics(resource_path, &source_code, &messages)?;
-    }
+    let named_source = NamedSource::new(resource_path, source_code.to_string());
 
-    if has_messages {
+    if !messages.is_empty() {
       for message in messages {
-        let message_text = message.error.message.to_string();
+        // write to rspack diagnostics
+        {
+          let message_text = message.error.message.to_string();
+          let error = match message.error.severity {
+            Severity::Error => rspack_error::Error::error(message_text),
+            _ => rspack_error::Error::warning(message_text),
+          };
 
-        let error = match message.error.severity {
-          Severity::Error => rspack_error::Error::error(message_text),
-          _ => rspack_error::Error::warning(message_text),
-        };
-
-        loader_context
-          .diagnostics
-          .push(rspack_error::Diagnostic::from(error));
+          loader_context
+            .diagnostics
+            .push(rspack_error::Diagnostic::from(error));
+        }
+        // print to console
+        {
+          let mut output = String::with_capacity(4096);
+          let error = self.create_report(&named_source, &message);
+          handler
+            .render_report(&mut output, error.as_ref())
+            .map_err(|e| rspack_error::Error::from_error(e))?;
+          eprintln!("{}", output);
+        }
       }
     }
 
