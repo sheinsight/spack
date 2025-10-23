@@ -423,7 +423,5 @@
     "Hello": true
   },
   "overrides": [],
-  "ignorePatterns": [
-    "**/*.(j|t)s"
-  ]
+  "ignorePatterns": []
 }

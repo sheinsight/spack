@@ -40,7 +40,6 @@ pub struct OxLintLoaderOpts {
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
   pub environments: Environment,
-  pub ignore: Vec<String>,
 }
 
 #[cacheable]
@@ -80,8 +79,6 @@ impl OxLintLoader {
     let globals = serde_json::to_value(&self.options.globals)?;
 
     let environments = serde_json::to_value(&self.options.environments)?;
-
-    let ignore = serde_json::to_value(&self.options.ignore)?;
 
     let config = json!({
       "plugins": [
@@ -243,7 +240,7 @@ impl OxLintLoader {
       "env":environments,
       "globals": globals,
       "overrides":[],
-      "ignorePatterns":ignore
+      "ignorePatterns":[]
     });
 
     Ok(config)
@@ -302,11 +299,10 @@ impl OxLintLoader {
     let unused_enable_count = directives.unused_enable_comments().len();
 
     // 创建主诊断信息
-    let mut diagnostic = OxcDiagnostic::warn("Disable Directives Analysis")
-      .with_help(format!(
-        "Found {} disable-rule comments, {} unused-enable comments",
-        disable_rule_count, unused_enable_count
-      ));
+    let mut diagnostic = OxcDiagnostic::warn("Disable Directives Analysis").with_help(format!(
+      "Found {} disable-rule comments, {} unused-enable comments",
+      disable_rule_count, unused_enable_count
+    ));
 
     // 添加 disable-rule 注释的标签
     for comment in directives.disable_rule_comments().iter().take(5) {
@@ -322,10 +318,8 @@ impl OxLintLoader {
           format!("disable: {}", rules_text)
         }
       };
-      diagnostic = diagnostic.with_label(oxc::diagnostics::LabeledSpan::at(
-        comment.span,
-        label_text,
-      ));
+      diagnostic =
+        diagnostic.with_label(oxc::diagnostics::LabeledSpan::at(comment.span, label_text));
     }
 
     // 添加未使用的 enable 注释的标签
