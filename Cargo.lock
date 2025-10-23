@@ -6116,6 +6116,7 @@ dependencies = [
  "lazy_static",
  "lightningcss",
  "miette",
+ "owo-colors",
  "oxc",
  "oxc_linter",
  "rspack_binding_api",

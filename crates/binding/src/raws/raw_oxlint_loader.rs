@@ -77,27 +77,39 @@ impl From<RawRestricted> for Restricted {
 
 impl From<RawOxLintLoaderPluginOpts> for OxLintLoaderOpts {
   fn from(value: RawOxLintLoaderPluginOpts) -> Self {
+    let environments = value
+      .environments
+      .map(|e| e.into())
+      .unwrap_or(Environment::default())
+      .into();
+
+    let output_dir = value.output_dir;
+
+    let show_warning = value.show_warning.unwrap_or(true);
+
+    let restricted_imports = value
+      .restricted_imports
+      .unwrap_or_default()
+      .into_iter()
+      .map(From::from)
+      .collect();
+
+    let restricted_globals = value
+      .restricted_globals
+      .unwrap_or_default()
+      .into_iter()
+      .map(From::from)
+      .collect();
+
+    let globals = value.globals.unwrap_or_default();
+
     Self {
-      environments: value
-        .environments
-        .map(|e| e.into())
-        .unwrap_or(Environment::default())
-        .into(),
-      output_dir: value.output_dir,
-      show_warning: value.show_warning.unwrap_or(true),
-      restricted_imports: value
-        .restricted_imports
-        .unwrap_or_default()
-        .into_iter()
-        .map(From::from)
-        .collect(),
-      restricted_globals: value
-        .restricted_globals
-        .unwrap_or_default()
-        .into_iter()
-        .map(From::from)
-        .collect(),
-      globals: value.globals.unwrap_or_default(),
+      environments,
+      output_dir,
+      show_warning,
+      restricted_imports,
+      restricted_globals,
+      globals,
     }
   }
 }

@@ -23,8 +23,10 @@
     "softprops",
     "spack",
     "stylesheet",
+    "tera",
     "Threadsafe",
-    "ukey"
+    "ukey",
+    "ustr"
   ],
   "[toml]": {
     "editor.formatOnSave": true,
