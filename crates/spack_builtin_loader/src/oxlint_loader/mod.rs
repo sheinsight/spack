@@ -13,8 +13,7 @@ use oxc::{
 };
 use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, DisableDirectives,
-  DisableRuleComment, ExternalPluginStore, FixKind, FrameworkFlags, LintOptions, Linter, Message,
-  Oxlintrc, RuleCommentType,
+  ExternalPluginStore, FixKind, FrameworkFlags, LintOptions, Linter, Message, Oxlintrc,
 };
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
@@ -296,7 +295,6 @@ impl OxLintLoader {
 
   fn lint(
     &self,
-    // loader_context: &mut LoaderContext<RunnerContext>,
     source_code: &str,
     resource_path: &Utf8PathBuf,
   ) -> Result<(Vec<Message>, Option<DisableDirectives>)> {
