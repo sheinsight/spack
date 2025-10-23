@@ -241,7 +241,19 @@ impl OxLintLoader {
       "settings":{},
       "env":environments,
       "globals": globals,
-      "overrides":[],
+      "overrides":[{
+        "files": ["**/*.{ts,tsx,cts,mts}"],
+        "env": {},
+        "globals": {},
+        "plugins": [],
+        "rules":{}
+      },{
+        "files": ["*.{jsx,tsx}"],
+        "env": {},
+        "globals": {},
+        "plugins": [],
+        "rules":{}
+      }],
       "ignorePatterns":[]
     });
 
