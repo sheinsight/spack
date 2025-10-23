@@ -401,28 +401,30 @@ impl OxLintLoader {
 
   fn print_disable_directives_info(&self, disable_directives: &DisableDirectives) -> Result<()> {
     // 分组存储每个规则的所有出现位置
-    let mut rule_spans: FxHashMap<String, Vec<DisableRuleComment>> = FxHashMap::default();
+    // let mut rule_spans: FxHashMap<String, Vec<DisableRuleComment>> = FxHashMap::default();
 
-    for comment in disable_directives.disable_rule_comments() {
-      match &comment.r#type {
-        RuleCommentType::All => {
-          rule_spans
-            .entry("__ALL__".to_string())
-            .or_insert_with(Vec::new)
-            .push(comment.clone());
-        }
-        RuleCommentType::Single(rules) => {
-          for rule in rules {
-            rule_spans
-              .entry(rule.rule_name.to_string())
-              .or_insert_with(Vec::new)
-              .push(comment.clone());
-          }
-        }
-      };
-    }
+    // for comment in disable_directives.disable_rule_comments() {
+    //   match &comment.r#type {
+    //     RuleCommentType::All => {
+    //       rule_spans
+    //         .entry("__ALL__".to_string())
+    //         .or_insert_with(Vec::new)
+    //         .push(comment.clone());
+    //     }
+    //     RuleCommentType::Single(rules) => {
+    //       for rule in rules {
+    //         rule_spans
+    //           .entry(rule.rule_name.to_string())
+    //           .or_insert_with(Vec::new)
+    //           .push(comment.clone());
+    //       }
+    //     }
+    //   };
+    // }
 
-    if !rule_spans.is_empty() {
+    let len = disable_directives.disable_rule_comments().len();
+
+    if len > 0 {
       eprintln!(
         r##"
 {:<4}{} times have you disable the eslint rules. 
@@ -430,7 +432,7 @@ impl OxLintLoader {
 Though it be a compromise wrought by the moment, I hold faith that you shall, in the fullness of time, emerge unbound.{:>3}
 "##,
         "⚔️",
-        rule_spans.len().red().bold(),
+        len.red().bold(),
         "✨"
       );
     }
@@ -550,6 +552,7 @@ impl Loader<RunnerContext> for OxLintLoader {
           Severity::Error => rspack_error::Error::error(message_text),
           _ => rspack_error::Error::warning(message_text),
         };
+
         loader_context
           .diagnostics
           .push(rspack_error::Diagnostic::from(error));
