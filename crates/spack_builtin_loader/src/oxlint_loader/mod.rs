@@ -294,6 +294,111 @@ impl OxLintLoader {
     error.with_source_code(named_source.clone())
   }
 
+  fn lint(
+    &self,
+    // loader_context: &mut LoaderContext<RunnerContext>,
+    source_code: &str,
+    resource_path: &Utf8PathBuf,
+  ) -> Result<(Vec<Message>, Option<DisableDirectives>)> {
+    let config = self
+      .get_config()
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let config =
+      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let mut external_plugin_store = ExternalPluginStore::default();
+
+    let config =
+      ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
+        .unwrap()
+        .build(&external_plugin_store)
+        .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
+
+    let linter = Linter::new(
+      LintOptions {
+        fix: FixKind::None,
+        framework_hints: FrameworkFlags::empty(),
+        report_unused_directive: Some(AllowWarnDeny::Deny),
+      },
+      config_store,
+      None,
+    );
+
+    let allocator = Allocator::default();
+
+    let parser = Parser::new(&allocator, &source_code, SourceType::default());
+    let parser_return = parser.parse();
+
+    if parser_return.panicked {
+      return Ok((vec![], None));
+    }
+
+    let program = allocator.alloc(&parser_return.program);
+
+    let semantic_builder_return = SemanticBuilder::new()
+      .with_check_syntax_error(true)
+      .with_cfg(true)
+      .build(program);
+
+    let semantic = semantic_builder_return.semantic;
+
+    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
+      resource_path.as_std_path(),
+      &parser_return.module_record,
+      &semantic,
+    ));
+
+    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
+
+    let (messages, disable_directives) = linter.run_with_disable_directives(
+      resource_path.as_std_path(),
+      vec![context_sub_hosts],
+      &allocator,
+    );
+
+    let messages = messages
+      .into_iter()
+      .filter(|message| match message.error.severity {
+        Severity::Error => true,
+        _ => self.options.show_warning,
+      })
+      .collect();
+
+    Ok((messages, disable_directives))
+  }
+
+  fn print_message_diagnostics(
+    &self,
+    resource_path: &Utf8PathBuf,
+    source_code: &str,
+    messages: &Vec<Message>,
+  ) -> Result<()> {
+    // 配置带颜色和源代码上下文的 GraphicalReportHandler
+    let handler = GraphicalReportHandler::new()
+      .with_links(true)
+      .with_theme(GraphicalTheme::unicode());
+
+    let named_source = NamedSource::new(
+      &resource_path.as_std_path().to_string_lossy().to_string(),
+      source_code.to_string(),
+    );
+
+    // 将 lint 诊断信息推送到 rspack 的诊断系统
+    for message in messages {
+      let mut output = String::with_capacity(1024 * 1024);
+      let error = self.create_report(&named_source, &message);
+      handler
+        .render_report(&mut output, error.as_ref())
+        .map_err(|e| rspack_error::Error::from_error(e))?;
+      eprintln!("{}", output);
+    }
+
+    Ok(())
+  }
+
   fn print_disable_directives_info(&self, disable_directives: &DisableDirectives) -> Result<()> {
     // 分组存储每个规则的所有出现位置
     let mut rule_spans: FxHashMap<String, Vec<DisableRuleComment>> = FxHashMap::default();
@@ -416,6 +521,7 @@ impl Loader<RunnerContext> for OxLintLoader {
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     let source = loader_context.take_content();
+
     let sm = loader_context.take_source_map();
 
     let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
@@ -428,114 +534,30 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let source_code = source_code.try_into_string()?;
 
-    let config = self
-      .get_config()
-      .map_err(|e| rspack_error::Error::from_error(e))?;
+    let (messages, disable_directives) = self.lint(&source_code, &resource_path)?;
 
-    let config =
-      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
+    let has_messages = !messages.is_empty();
 
-    let mut external_plugin_store = ExternalPluginStore::default();
-
-    let config =
-      ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
-        .unwrap()
-        .build(&external_plugin_store)
-        .map_err(|e| rspack_error::Error::from_error(e))?;
-
-    let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
-
-    let linter = Linter::new(
-      LintOptions {
-        fix: FixKind::None,
-        framework_hints: FrameworkFlags::empty(),
-        report_unused_directive: Some(AllowWarnDeny::Deny),
-      },
-      config_store,
-      None,
-    );
-
-    let allocator = Allocator::default();
-
-    let parser = Parser::new(&allocator, &source_code, SourceType::default());
-    let parser_return = parser.parse();
-
-    if parser_return.panicked {
-      return Ok(());
+    if has_messages {
+      self.print_message_diagnostics(&resource_path, &source_code, &messages)?;
     }
 
-    let program = allocator.alloc(&parser_return.program);
+    if has_messages {
+      for message in messages {
+        let message_text = message.error.message.to_string();
 
-    let semantic_builder_return = SemanticBuilder::new()
-      .with_check_syntax_error(true)
-      .with_cfg(true)
-      .build(program);
-
-    let semantic = semantic_builder_return.semantic;
-
-    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-      resource_path.as_std_path(),
-      &parser_return.module_record,
-      &semantic,
-    ));
-
-    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
-
-    let (messages, disable_directives) = linter.run_with_disable_directives(
-      resource_path.as_std_path(),
-      vec![context_sub_hosts],
-      &allocator,
-    );
-
-    if let Some(disable_directives) = disable_directives {
-      self.print_disable_directives_info(&disable_directives)?;
-    }
-
-    if messages.is_empty() {
-      loader_context.finish_with((source_code, sm));
-      return Ok(());
-    }
-
-    // 配置带颜色和源代码上下文的 GraphicalReportHandler
-    let handler = GraphicalReportHandler::new()
-      .with_links(true)
-      .with_theme(GraphicalTheme::unicode());
-
-    let named_source = NamedSource::new(
-      &resource_path.as_std_path().to_string_lossy().to_string(),
-      source_code.to_string(),
-    );
-
-    // 将 lint 诊断信息推送到 rspack 的诊断系统
-    for message in messages {
-      let message_text = message.error.message.to_string();
-
-      let error = match message.error.severity {
-        Severity::Error => rspack_error::Error::error(message_text),
-        _ => rspack_error::Error::warning(message_text),
-      };
-
-      let should_output = match message.error.severity {
-        Severity::Error => true,
-        _ => self.options.show_warning,
-      };
-
-      if should_output {
+        let error = match message.error.severity {
+          Severity::Error => rspack_error::Error::error(message_text),
+          _ => rspack_error::Error::warning(message_text),
+        };
         loader_context
           .diagnostics
           .push(rspack_error::Diagnostic::from(error));
       }
+    }
 
-      if should_output {
-        let mut output = String::with_capacity(1024 * 1024);
-        let error = self.create_report(&named_source, &message);
-
-        handler
-          .render_report(&mut output, error.as_ref())
-          .map_err(|e| rspack_error::Error::from_error(e))?;
-
-        eprintln!("{}", output);
-      }
+    if let Some(disable_directives) = disable_directives {
+      self.print_disable_directives_info(&disable_directives)?;
     }
 
     loader_context.finish_with((source_code, sm));
