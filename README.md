@@ -15,11 +15,15 @@ const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], Raw
 );
 
 const plugin = new UnifiedPlugin({
+  baseDir: path.resolve(__dirname, 'src/.tmp'),
   styleLoader: {
     output: 'runtime',
   },
   caseSensitive: {
 
+  },
+  oxlintLoader: {
+    outputDir: 'lint',
   }
 });
 
