@@ -2,6 +2,7 @@
   "cSpell.words": [
     "bitflags",
     "cdylib",
+    "compariso",
     "contextify",
     "deadcode",
     "iarna",
@@ -9,6 +10,7 @@
     "itertools",
     "lightningcss",
     "miette",
+    "misrefactored",
     "msvc",
     "napi",
     "nonconstructor",
@@ -26,6 +28,7 @@
     "tera",
     "Threadsafe",
     "ukey",
+    "uninvoked",
     "ustr"
   ],
   "[toml]": {
