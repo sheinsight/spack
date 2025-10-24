@@ -491,7 +491,7 @@ impl Loader<RunnerContext> for OxLintLoader {
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
     let source = loader_context.take_content();
 
-    let sm = loader_context.take_source_map();
+    let source_map = loader_context.take_source_map();
 
     let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
       return Ok(());
@@ -503,7 +503,13 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let source_code = source_code.try_into_string()?;
 
-    let (messages, disable_directives) = self.lint(&source_code, &resource_path)?;
+    let lint_result = self.lint(&source_code, &resource_path);
+
+    let Ok((messages, disable_directives)) = lint_result else {
+      eprintln!("lint error file: {:?}", resource_path);
+      loader_context.finish_with((source_code, source_map));
+      return Ok(());
+    };
 
     let handler = GraphicalReportHandler::new()
       .with_links(true)
@@ -541,7 +547,7 @@ impl Loader<RunnerContext> for OxLintLoader {
       self.print_disable_directives_info(&disable_directives)?;
     }
 
-    loader_context.finish_with((source_code, sm));
+    loader_context.finish_with((source_code, source_map));
     Ok(())
   }
 }
