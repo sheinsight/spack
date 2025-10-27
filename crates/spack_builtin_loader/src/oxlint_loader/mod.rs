@@ -430,7 +430,10 @@ impl OxLintLoader {
 
     let allocator = Allocator::default();
 
-    let parser = Parser::new(&allocator, &source_code, SourceType::default());
+    let source_type = SourceType::from_path(resource_path.as_std_path())
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let parser = Parser::new(&allocator, &source_code, source_type);
     let parser_return = parser.parse();
 
     if parser_return.panicked {
