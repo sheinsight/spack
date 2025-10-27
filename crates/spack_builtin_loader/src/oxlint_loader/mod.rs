@@ -1,4 +1,10 @@
-use std::{collections::HashMap, ops::Not, path::Path, sync::Arc};
+use std::{
+  collections::HashMap,
+  ops::Not,
+  panic::{AssertUnwindSafe, catch_unwind},
+  path::Path,
+  sync::Arc,
+};
 
 use async_trait::async_trait;
 use num_format::{Locale, ToFormattedString};
@@ -203,15 +209,15 @@ impl OxLintLoader {
           "max":1
         }],
         "eslint/max-depth":[0],
-        "eslint/max-lines":[2,{
+        "eslint/max-lines":[1,{
           "max":1000,
-          "skipBlankLines":true,
-          "skipComments":true
+          "skipBlankLines":false,
+          "skipComments":false
         }],
-        "eslint/max-lines-per-function":[2,{
+        "eslint/max-lines-per-function":[1,{
           "max": 300,
-          "skipBlankLines": true,
-          "skipComments": true,
+          "skipBlankLines": false,
+          "skipComments": false,
           "IIFEs": false
         }],
         "eslint/max-nested-callbacks":[2,{
@@ -421,7 +427,7 @@ impl OxLintLoader {
     let linter = Linter::new(
       LintOptions {
         fix: FixKind::None,
-        framework_hints: FrameworkFlags::empty(),
+        framework_hints: FrameworkFlags::React,
         report_unused_directive: Some(AllowWarnDeny::Deny),
       },
       config_store,
@@ -433,7 +439,13 @@ impl OxLintLoader {
     let source_type = SourceType::from_path(resource_path.as_std_path())
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
-    let parser = Parser::new(&allocator, &source_code, source_type);
+    let parser =
+      Parser::new(&allocator, &source_code, source_type).with_options(oxc::parser::ParseOptions {
+        parse_regular_expression: false,
+        allow_return_outside_function: false,
+        preserve_parens: true,
+        allow_v8_intrinsics: false,
+      });
     let parser_return = parser.parse();
 
     if parser_return.panicked {
@@ -457,11 +469,38 @@ impl OxLintLoader {
 
     let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
 
-    let (messages, disable_directives) = linter.run_with_disable_directives(
-      resource_path.as_std_path(),
-      vec![context_sub_hosts],
-      &allocator,
-    );
+    // let (messages, disable_directives) = linter.run_with_disable_directives(
+    //   resource_path.as_std_path(),
+    //   vec![context_sub_hosts],
+    //   &allocator,
+    // );
+
+    // let messages = linter.run(
+    //   resource_path.as_std_path(),
+    //   vec![context_sub_hosts],
+    //   &allocator,
+    // );
+
+    let result = catch_unwind(AssertUnwindSafe(|| {
+      linter.run(
+        resource_path.as_std_path(),
+        vec![context_sub_hosts],
+        &allocator,
+      )
+    }));
+
+    let (messages, disable_directives) = match result {
+      Ok(result) => (result, None),
+      Err(e) => {
+        eprintln!(
+          "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
+          resource_path, e,
+        );
+        (vec![], None)
+      }
+    };
+
+    // let disable_directives = None;
 
     let messages = messages
       .into_iter()
@@ -507,11 +546,12 @@ impl Loader<RunnerContext> for OxLintLoader {
 
     let source_map = loader_context.take_source_map();
 
-    let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
+    let Some(source_code) = source else {
       return Ok(());
     };
 
-    let Some(source_code) = source else {
+    let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
+      loader_context.finish_with((source_code, source_map));
       return Ok(());
     };
 

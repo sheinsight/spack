@@ -318,19 +318,19 @@
       0
     ],
     "eslint/max-lines": [
-      2,
+      1,
       {
         "max": 1000,
-        "skipBlankLines": true,
-        "skipComments": true
+        "skipBlankLines": false,
+        "skipComments": false
       }
     ],
     "eslint/max-lines-per-function": [
-      2,
+      1,
       {
         "max": 300,
-        "skipBlankLines": true,
-        "skipComments": true,
+        "skipBlankLines": false,
+        "skipComments": false,
         "IIFEs": false
       }
     ],

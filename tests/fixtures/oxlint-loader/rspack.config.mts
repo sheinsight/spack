@@ -25,7 +25,13 @@ export default {
       {
         test: /\.(js|ts)x?$/,
         exclude: /node_modules/,
+        enforce: 'pre',
         use: ['builtin:oxlint-loader'],
+      },
+      {
+        test: /\.(js|ts)x?$/,
+        exclude: /node_modules/,
+        use: ['builtin:swc-loader'],
       },
     ],
   },
