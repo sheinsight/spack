@@ -24,6 +24,9 @@ pub struct RawOxLintLoaderPluginOpts {
 
   #[napi(js_name = "environments")]
   pub environments: Option<RawEnvironment>,
+
+  #[napi(js_name = "oxlintrcFilePath")]
+  pub oxlintrc_file_path: Option<String>,
 }
 
 #[derive(Debug)]
@@ -103,7 +106,10 @@ impl From<RawOxLintLoaderPluginOpts> for OxLintLoaderOpts {
 
     let globals = value.globals.unwrap_or_default();
 
+    let oxlintrc_file_path = value.oxlintrc_file_path;
+
     Self {
+      oxlintrc_file_path,
       environments,
       output_dir,
       show_warning,

@@ -141,6 +141,7 @@ export interface RawOxLintLoaderPluginOpts {
   restrictedGlobals?: Array<RawRestricted>
   globals?: Record<string, boolean>
   environments?: RawEnvironment
+  oxlintrcFilePath?: string
 }
 
 export interface RawRestricted {

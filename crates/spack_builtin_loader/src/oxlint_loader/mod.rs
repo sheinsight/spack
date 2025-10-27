@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Not, sync::Arc};
+use std::{collections::HashMap, ops::Not, path::Path, sync::Arc};
 
 use async_trait::async_trait;
 use num_format::{Locale, ToFormattedString};
@@ -42,6 +42,7 @@ pub struct OxLintLoaderOpts {
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
   pub environments: Environment,
+  pub oxlintrc_file_path: Option<String>,
 }
 
 #[cacheable]
@@ -390,12 +391,22 @@ impl OxLintLoader {
     source_code: &str,
     resource_path: &Utf8PathBuf,
   ) -> Result<(Vec<Message>, Option<DisableDirectives>)> {
-    let config = self
-      .get_config()
-      .map_err(|e| rspack_error::Error::from_error(e))?;
+    // let config = self
+    //   .get_config()
+    //   .map_err(|e| rspack_error::Error::from_error(e))?;
 
-    let config =
-      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
+    let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
+      Oxlintrc::from_file(Path::new(oxlintrc_file_path))
+        .map_err(|e| rspack_error::Error::from_error(e))?
+    } else {
+      let config = self
+        .get_config()
+        .map_err(|e| rspack_error::Error::from_error(e))?;
+      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?
+    };
+
+    // let config =
+    //   serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
 
     let mut external_plugin_store = ExternalPluginStore::default();
 
