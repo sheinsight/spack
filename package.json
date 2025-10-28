@@ -9,6 +9,7 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
+    "build": "pnpm --filter @shined/spack-binding run build",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "release": "node --experimental-strip-types --no-warnings release.mts ",

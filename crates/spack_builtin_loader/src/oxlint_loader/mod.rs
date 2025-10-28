@@ -205,8 +205,10 @@ impl OxLintLoader {
         "eqeqeq": [2, "always", {
           "null": "always"
         }],
-        "eslint/max-classes-per-file":[2,{
-          "max":1
+        "eslint/max-classes-per-file":[1,{
+          "max":1,
+          "skipBlankLines":false,
+          "skipComments":false
         }],
         "eslint/max-depth":[0],
         "eslint/max-lines":[1,{
@@ -429,6 +431,7 @@ impl OxLintLoader {
         fix: FixKind::None,
         framework_hints: FrameworkFlags::React,
         report_unused_directive: Some(AllowWarnDeny::Deny),
+        // report_unused_directive: None,
       },
       config_store,
       None,
@@ -441,11 +444,12 @@ impl OxLintLoader {
 
     let parser =
       Parser::new(&allocator, &source_code, source_type).with_options(oxc::parser::ParseOptions {
-        parse_regular_expression: false,
+        parse_regular_expression: true,
         allow_return_outside_function: false,
         preserve_parens: true,
         allow_v8_intrinsics: false,
       });
+
     let parser_return = parser.parse();
 
     if parser_return.panicked {
@@ -577,10 +581,11 @@ impl Loader<RunnerContext> for OxLintLoader {
         {
           let message_text = message.error.message.to_string();
           let error = match message.error.severity {
-            Severity::Error => rspack_error::Error::error(message_text),
-            _ => rspack_error::Error::warning(message_text),
+            Severity::Error => rspack_error::Error::error(message_text.clone()),
+            _ => rspack_error::Error::warning(message_text.clone()),
           };
 
+          // TODO 这里会导致奇怪的报错 , 是因为后续执行了 loader_context.finish_with((source_code, source_map)); 导致的。
           loader_context
             .diagnostics
             .push(rspack_error::Diagnostic::from(error));
@@ -595,6 +600,7 @@ impl Loader<RunnerContext> for OxLintLoader {
           eprintln!("{}", output);
         }
       }
+      return Ok(());
     }
 
     if let Some(disable_directives) = disable_directives {
