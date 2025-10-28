@@ -4,8 +4,8 @@ use rspack_core::BoxPlugin;
 use spack_plugin_unified::{UnifiedPlugin, UnifiedPluginOpts};
 
 use crate::raws::{
-  raw_case_sensitive_paths::RawCaseSensitivePathsPluginOpts,
-  raw_oxlint_loader::RawOxLintLoaderPluginOpts, raw_style_loader::RawStyleLoaderPluginOpts,
+  raw_case_sensitive_paths::RawCaseSensitivePathsPluginOpts, raw_oxlint::RawOxLintPluginOpts,
+  raw_style_loader::RawStyleLoaderPluginOpts,
 };
 
 #[derive(Debug)]
@@ -19,7 +19,7 @@ pub struct RawUnifiedPluginOpts {
   pub style_loader: Option<RawStyleLoaderPluginOpts>,
   /// oxlint-loader 的配置
   #[napi(js_name = "oxlintLoader")]
-  pub oxlint_loader: Option<RawOxLintLoaderPluginOpts>,
+  pub oxlint_loader: Option<RawOxLintPluginOpts>,
   /// case-sensitive-paths 的配置
   #[napi(js_name = "caseSensitive")]
   pub case_sensitive: Option<RawCaseSensitivePathsPluginOpts>,

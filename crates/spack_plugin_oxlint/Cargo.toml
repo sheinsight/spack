@@ -1,0 +1,31 @@
+[package]
+authors.workspace       = true
+categories.workspace    = true
+documentation.workspace = true
+edition.workspace       = true
+homepage.workspace      = true
+license.workspace       = true
+name                    = "spack_plugin_oxlint"
+repository.workspace    = true
+version.workspace       = true
+
+[lib]
+test = false
+
+[dependencies]
+rspack_cacheable = { workspace = true }
+rspack_core      = { workspace = true }
+rspack_error     = { workspace = true }
+rspack_hook      = { workspace = true }
+
+oxc        = { workspace = true }
+oxc_linter = { workspace = true }
+
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+
+ignore     = { workspace = true }
+rustc-hash = { workspace = true }

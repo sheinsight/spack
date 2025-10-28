@@ -8,13 +8,9 @@ use rspack_core::{
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_paths::Utf8PathBuf;
-// use rspack_resolver::AliasValue;
 use serde::Serialize;
 
-use crate::{
-  OXLINT_LOADER_IDENTIFIER, OxLintLoader, OxLintLoaderOpts,
-  style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
-};
+use crate::style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts};
 
 pub const UNIFIED_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedLoaderPlugin";
 
@@ -25,8 +21,6 @@ const ALIAS_NAME: &str = "@@";
 pub struct UnifiedLoaderPluginOpts {
   pub base_dir: String,
   pub style_loader: Option<StyleLoaderOpts>,
-  pub oxlint_loader: Option<OxLintLoaderOpts>,
-  // pub css_loader: Option<CssLoaderOpts>,
 }
 
 #[plugin]
@@ -120,7 +114,6 @@ pub(crate) async fn resolve_loader(
   l: &ModuleRuleUseLoader,
 ) -> Result<Option<BoxLoader>> {
   let loader_request = &l.loader;
-  let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
 
   if let Some(style_loader) = &self.options.style_loader {
     if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
@@ -128,14 +121,6 @@ pub(crate) async fn resolve_loader(
     }
   }
 
-  if let Some(oxlint_loader_opts) = &self.options.oxlint_loader {
-    if loader_request.starts_with(OXLINT_LOADER_IDENTIFIER) {
-      let path = base_dir.join(&oxlint_loader_opts.output_dir);
-      let oxlint_loader = OxLintLoader::new(oxlint_loader_opts.clone());
-      oxlint_loader.write_runtime(&path)?;
-      return Ok(Some(Arc::new(oxlint_loader)));
-    }
-  }
   // if loader_request.starts_with(CSS_LOADER_IDENTIFIER) {
   //   return Ok(Some(Arc::new(CssLoader::new(CssLoaderOpts {}))));
   // }

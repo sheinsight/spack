@@ -1,47 +1,32 @@
 use std::{
   collections::HashMap,
-  ops::Not,
   panic::{AssertUnwindSafe, catch_unwind},
   path::Path,
   sync::Arc,
 };
 
-use async_trait::async_trait;
-use num_format::{Locale, ToFormattedString};
-use owo_colors::OwoColorize;
 use oxc::{
   allocator::Allocator,
-  diagnostics::{
-    GraphicalReportHandler, GraphicalTheme, NamedSource, OxcCode, OxcDiagnostic, Severity,
-  },
+  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
   parser::Parser,
   semantic::SemanticBuilder,
   span::SourceType,
 };
 use oxc_linter::{
-  AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, DisableDirectives,
-  ExternalPluginStore, FixKind, FrameworkFlags, LintOptions, Linter, Message, Oxlintrc,
+  AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
+  FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
-use rspack_cacheable::{cacheable, cacheable_dyn};
-use rspack_collections::Identifier;
-use rspack_core::{Loader, LoaderContext, RunnerContext};
+use rspack_core::Plugin;
 use rspack_error::Result;
-use rspack_paths::Utf8PathBuf;
-use rspack_util::fx_hash::FxHashMap;
-use serde::Serialize;
+use rspack_hook::{plugin, plugin_hook};
+use rustc_hash::FxHashMap;
 use serde_json::json;
 
-use crate::oxlint_loader::environments::Environment;
-use crate::oxlint_loader::restricted::Restricted;
+use crate::{Environment, Restricted};
 
-pub mod environments;
-pub mod restricted;
-
-pub const OXLINT_LOADER_IDENTIFIER: &str = "builtin:oxlint-loader";
-
-#[cacheable]
-#[derive(Debug, Clone, Serialize)]
-pub struct OxLintLoaderOpts {
+#[derive(Debug, Clone)]
+pub struct OxLintPluginOpts {
+  pub base_dir: String,
   pub output_dir: String,
   pub show_warning: bool,
   pub restricted_imports: Vec<Restricted>,
@@ -51,36 +36,22 @@ pub struct OxLintLoaderOpts {
   pub oxlintrc_file_path: Option<String>,
 }
 
-#[cacheable]
-#[derive(Debug, Clone, Serialize)]
-pub struct OxLintLoader {
-  options: OxLintLoaderOpts,
+pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxLintPlugin";
+
+#[plugin]
+#[derive(Debug)]
+pub struct OxLintPlugin {
+  #[allow(unused)]
+  options: OxLintPluginOpts,
 }
 
-impl OxLintLoader {
-  pub fn new(options: OxLintLoaderOpts) -> Self {
-    Self { options }
+impl OxLintPlugin {
+  pub fn new(options: OxLintPluginOpts) -> Self {
+    Self::new_inner(options)
   }
+}
 
-  pub fn write_runtime(&self, dir: &Utf8PathBuf) -> Result<()> {
-    if dir.exists().not() {
-      std::fs::create_dir_all(dir)?;
-    }
-
-    let file = dir.join(".oxlintrc.json");
-
-    let config = self
-      .get_config()
-      .map_err(|e| rspack_error::Error::from_error(e))?;
-
-    std::fs::write(
-      file,
-      serde_json::to_string_pretty(&config).map_err(|e| rspack_error::Error::from_error(e))?,
-    )?;
-
-    Ok(())
-  }
-
+impl OxLintPlugin {
   fn get_config(&self) -> serde_json::Result<serde_json::Value> {
     let restricted_imports = serde_json::to_value(&self.options.restricted_imports)?;
     let restricted_globals = serde_json::to_value(&self.options.restricted_globals)?;
@@ -361,89 +332,113 @@ impl OxLintLoader {
   }
 }
 
-impl OxLintLoader {
-  fn create_report(
-    &self,
-    named_source: &NamedSource<String>,
-    message: &Message,
-  ) -> oxc::diagnostics::Error {
-    let msg = &message.error;
-
-    let message_text = msg.message.to_string();
-
-    // 使用引用解构，避免 clone
-    let OxcCode { number, .. } = &msg.code;
-    let number = number.clone(); // 只 clone number 字段
-    let error = match msg.severity {
-      Severity::Error => OxcDiagnostic::error(message_text.clone()),
-      Severity::Warning | Severity::Advice => OxcDiagnostic::warn(message_text.clone()),
-    };
-
-    // 直接使用引用
-    let mut error = error.with_error_code("LEGO", number.unwrap_or_else(|| "Unknown".into()));
-
-    if let Some(labels) = &msg.labels {
-      error = error.with_labels(labels.iter().cloned());
-    }
-
-    if let Some(help) = &msg.help {
-      error = error.with_help(help.to_string());
-    }
-
-    // 如果 API 允许，考虑用 Arc 包装 named_source 避免循环中 clone
-    error.with_source_code(named_source.clone())
+impl Plugin for OxLintPlugin {
+  fn name(&self) -> &'static str {
+    OX_LINT_PLUGIN_IDENTIFIER.into()
   }
 
-  fn lint(
-    &self,
-    source_code: &str,
-    resource_path: &Utf8PathBuf,
-  ) -> Result<(Vec<Message>, Option<DisableDirectives>)> {
-    // let config = self
-    //   .get_config()
-    //   .map_err(|e| rspack_error::Error::from_error(e))?;
+  fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
+    ctx.compiler_hooks.make.tap(compiler_make::new(self));
 
-    let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
-      Oxlintrc::from_file(Path::new(oxlintrc_file_path))
-        .map_err(|e| rspack_error::Error::from_error(e))?
-    } else {
-      let config = self
-        .get_config()
-        .map_err(|e| rspack_error::Error::from_error(e))?;
-      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?
-    };
+    Ok(())
+  }
 
-    // let config =
-    //   serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?;
+  fn clear_cache(&self, _id: rspack_core::CompilationId) {}
+}
 
-    let mut external_plugin_store = ExternalPluginStore::default();
+#[plugin_hook(rspack_core::CompilerMake for OxLintPlugin)]
+pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilation) -> Result<()> {
+  let base_dir = compilation
+    .options
+    .context
+    .as_path()
+    .join(self.options.base_dir.clone());
 
-    let config =
-      ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
-        .unwrap()
-        .build(&external_plugin_store)
-        .map_err(|e| rspack_error::Error::from_error(e))?;
+  println!("base_dir: {:?}", base_dir);
 
-    let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
+  let mut overrides = ignore::overrides::OverrideBuilder::new(&base_dir);
 
-    let linter = Linter::new(
-      LintOptions {
-        fix: FixKind::None,
-        framework_hints: FrameworkFlags::React,
-        report_unused_directive: Some(AllowWarnDeny::Deny),
-        // report_unused_directive: None,
-      },
-      config_store,
-      None,
-    );
+  // 排除目录
+  overrides.add("!node_modules/**").unwrap();
+  overrides.add("!dist/**").unwrap();
+  overrides.add("!build/**").unwrap();
+  overrides.add("!coverage/**").unwrap();
+  overrides.add("!.git/**").unwrap();
 
-    let allocator = Allocator::default();
+  // 包含特定扩展名（分别添加）
+  overrides.add("*.js").unwrap();
+  overrides.add("*.jsx").unwrap();
+  overrides.add("*.ts").unwrap();
+  overrides.add("*.tsx").unwrap();
+  overrides.add("*.mjs").unwrap();
+  overrides.add("*.cjs").unwrap();
+  overrides.add("*.cts").unwrap();
+  overrides.add("*.mts").unwrap();
 
-    let source_type = SourceType::from_path(resource_path.as_std_path())
+  // 排除特定文件
+  overrides.add("!*.d.ts").unwrap();
+  overrides.add("!*.min.js").unwrap();
+
+  let overrides = overrides.build().unwrap();
+
+  let files: Vec<_> = ignore::WalkBuilder::new(base_dir)
+    .overrides(overrides)
+    .build()
+    .filter_map(|e| e.ok())
+    .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
+    .map(|e| std::sync::Arc::new(e.path().to_path_buf()))
+    .collect::<Vec<_>>();
+
+  let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
+    Oxlintrc::from_file(Path::new(oxlintrc_file_path))
+      .map_err(|e| rspack_error::Error::from_error(e))?
+  } else {
+    let config = self
+      .get_config()
+      .map_err(|e| rspack_error::Error::from_error(e))?;
+    serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?
+  };
+
+  let mut external_plugin_store = ExternalPluginStore::default();
+
+  let config =
+    ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
+      .unwrap()
+      .build(&external_plugin_store)
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
+  let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
+
+  let linter = Linter::new(
+    LintOptions {
+      fix: FixKind::None,
+      framework_hints: FrameworkFlags::React,
+      report_unused_directive: Some(AllowWarnDeny::Deny),
+      // report_unused_directive: None,
+    },
+    config_store,
+    None,
+  );
+
+  let allocator = Allocator::default();
+
+  let handler = GraphicalReportHandler::new()
+    .with_links(true)
+    .with_theme(GraphicalTheme::unicode());
+
+  let mut is_panic = false;
+
+  for file in files {
+    let file_path = file.as_path().to_path_buf();
+
+    let source_type =
+      SourceType::from_path(&file_path).map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let file_content =
+      std::fs::read_to_string(&file_path).map_err(|e| rspack_error::Error::from_error(e))?;
+
     let parser =
-      Parser::new(&allocator, &source_code, source_type).with_options(oxc::parser::ParseOptions {
+      Parser::new(&allocator, &file_content, source_type).with_options(oxc::parser::ParseOptions {
         parse_regular_expression: true,
         allow_return_outside_function: false,
         preserve_parens: true,
@@ -453,7 +448,7 @@ impl OxLintLoader {
     let parser_return = parser.parse();
 
     if parser_return.panicked {
-      return Ok((vec![], None));
+      continue;
     }
 
     let program = allocator.alloc(&parser_return.program);
@@ -466,148 +461,53 @@ impl OxLintLoader {
     let semantic = semantic_builder_return.semantic;
 
     let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-      resource_path.as_std_path(),
+      &file_path,
       &parser_return.module_record,
       &semantic,
     ));
 
     let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
 
-    // let (messages, disable_directives) = linter.run_with_disable_directives(
-    //   resource_path.as_std_path(),
-    //   vec![context_sub_hosts],
-    //   &allocator,
-    // );
-
-    // let messages = linter.run(
-    //   resource_path.as_std_path(),
-    //   vec![context_sub_hosts],
-    //   &allocator,
-    // );
-
     let result = catch_unwind(AssertUnwindSafe(|| {
-      linter.run(
-        resource_path.as_std_path(),
-        vec![context_sub_hosts],
-        &allocator,
-      )
+      linter.run_with_disable_directives(&file_path, vec![context_sub_hosts], &allocator)
     }));
 
-    let (messages, disable_directives) = match result {
-      Ok(result) => (result, None),
+    let (messages, _disable_directives) = match result {
+      Ok(result) => result,
       Err(e) => {
         eprintln!(
           "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
-          resource_path, e,
+          &file_path, e,
         );
         (vec![], None)
       }
     };
 
-    // let disable_directives = None;
-
-    let messages = messages
-      .into_iter()
-      .filter(|message| match message.error.severity {
-        Severity::Error => true,
-        _ => self.options.show_warning,
-      })
-      .collect();
-
-    Ok((messages, disable_directives))
-  }
-
-  fn print_disable_directives_info(&self, disable_directives: &DisableDirectives) -> Result<()> {
-    let len = disable_directives.disable_rule_comments().len();
-
-    if len > 0 {
-      let len = len.to_formatted_string(&Locale::en);
-
-      eprintln!(
-        r##"
-{:<4}{} times have you disable the eslint rules. 
-
-Though it be a compromise wrought by the moment, I hold faith that you shall, in the fullness of time, emerge unbound.{:>3}
-"##,
-        "⚔️",
-        len.red().bold(),
-        "✨"
-      );
-    }
-    Ok(())
-  }
-}
-
-#[async_trait]
-#[cacheable_dyn]
-impl Loader<RunnerContext> for OxLintLoader {
-  fn identifier(&self) -> Identifier {
-    OXLINT_LOADER_IDENTIFIER.into()
-  }
-
-  async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
-    let source = loader_context.take_content();
-
-    let source_map = loader_context.take_source_map();
-
-    let Some(source_code) = source else {
-      return Ok(());
-    };
-
-    let Some(resource_path) = loader_context.resource_path().map(|p| p.to_path_buf()) else {
-      loader_context.finish_with((source_code, source_map));
-      return Ok(());
-    };
-
-    let source_code = source_code.try_into_string()?;
-
-    let lint_result = self.lint(&source_code, &resource_path);
-
-    let Ok((messages, disable_directives)) = lint_result else {
-      eprintln!("lint error file: {:?}", resource_path);
-      loader_context.finish_with((source_code, source_map));
-      return Ok(());
-    };
-
-    let handler = GraphicalReportHandler::new()
-      .with_links(true)
-      .with_theme(GraphicalTheme::unicode());
-
-    let named_source = NamedSource::new(resource_path, source_code.to_string());
+    let named_source = NamedSource::new(&file_path.to_string_lossy(), file_content.clone());
 
     if !messages.is_empty() {
+      is_panic = true;
       for message in messages {
-        // write to rspack diagnostics
-        {
-          let message_text = message.error.message.to_string();
-          let error = match message.error.severity {
-            Severity::Error => rspack_error::Error::error(message_text.clone()),
-            _ => rspack_error::Error::warning(message_text.clone()),
-          };
+        let mut output = String::with_capacity(4096);
 
-          // TODO 这里会导致奇怪的报错 , 是因为后续执行了 loader_context.finish_with((source_code, source_map)); 导致的。
-          loader_context
-            .diagnostics
-            .push(rspack_error::Diagnostic::from(error));
-        }
-        // print to console
-        {
-          let mut output = String::with_capacity(4096);
-          let error = self.create_report(&named_source, &message);
-          handler
-            .render_report(&mut output, error.as_ref())
-            .map_err(|e| rspack_error::Error::from_error(e))?;
-          eprintln!("{}", output);
-        }
+        let error = message.error;
+
+        let report = error.with_source_code(named_source.clone());
+
+        handler
+          .render_report(&mut output, report.as_ref())
+          .map_err(|e| rspack_error::Error::from_error(e))?;
+
+        eprintln!("{}", output);
       }
-      return Ok(());
     }
-
-    if let Some(disable_directives) = disable_directives {
-      self.print_disable_directives_info(&disable_directives)?;
-    }
-
-    loader_context.finish_with((source_code, source_map));
-    Ok(())
   }
+
+  if is_panic {
+    return Err(rspack_error::Error::error(
+      "Failed to process disable directives for some files".to_string(),
+    ));
+  }
+
+  Ok(())
 }

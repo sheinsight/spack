@@ -266,6 +266,7 @@ dependencies = [
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
  "spack_plugin_duplicate_dependency",
+ "spack_plugin_oxlint",
  "spack_plugin_unified",
  "swc_core 38.0.0",
 ]
@@ -6244,6 +6245,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "spack_plugin_oxlint"
+version = "0.1.0"
+dependencies = [
+ "ignore",
+ "oxc",
+ "oxc_linter",
+ "rspack_cacheable",
+ "rspack_core",
+ "rspack_error",
+ "rspack_hook",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "spack_plugin_unified"
 version = "0.1.0"
 dependencies = [
@@ -6252,6 +6271,7 @@ dependencies = [
  "rspack_hook",
  "spack_builtin_loader",
  "spack_plugin_case_sensitive_paths",
+ "spack_plugin_oxlint",
 ]
 
 [[package]]
