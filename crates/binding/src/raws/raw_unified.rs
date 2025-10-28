@@ -19,7 +19,7 @@ pub struct RawUnifiedPluginOpts {
   pub style_loader: Option<RawStyleLoaderPluginOpts>,
   /// oxlint-loader 的配置
   #[napi(js_name = "oxlintLoader")]
-  pub oxlint_loader: Option<RawOxLintPluginOpts>,
+  pub oxlint: Option<RawOxLintPluginOpts>,
   /// case-sensitive-paths 的配置
   #[napi(js_name = "caseSensitive")]
   pub case_sensitive: Option<RawCaseSensitivePathsPluginOpts>,
@@ -30,7 +30,7 @@ impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
     Self {
       base_dir: value.base_dir,
       style_loader: value.style_loader.map(From::from),
-      oxlint_loader: value.oxlint_loader.map(From::from),
+      oxlint: value.oxlint.map(From::from),
       case_sensitive: value.case_sensitive.map(From::from),
     }
   }

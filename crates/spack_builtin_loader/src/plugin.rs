@@ -59,29 +59,10 @@ impl UnifiedLoaderPlugin {
 
     let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
 
-    // for alias in aliases {
-    //   if let AliasValue::Path(path) = alias {
-    //     if let Some(style_loader) = &self.options.style_loader {
-    //       let path = base_dir.join(path.to_string()).join(&style_loader.output);
-    //       StyleLoader::write_runtime(&path)?;
-    //     }
-
-    //     if let Some(oxlint_loader) = &self.options.oxlint_loader {
-    //       let path = base_dir.join(path.to_string()).join(&oxlint_loader.output);
-    //       OxLintLoader::write_runtime(&path)?;
-    //     }
-    //   }
-    // }
-
     if let Some(style_loader) = &self.options.style_loader {
       let path = base_dir.join(&style_loader.output_dir);
       StyleLoader::write_runtime(&path)?;
     }
-
-    // if let Some(oxlint_loader) = &self.options.oxlint_loader {
-    //   let path = base_dir.join(&oxlint_loader.output_dir);
-    //   OxLintLoader::write_runtime(&path)?;
-    // }
 
     Ok(())
   }
@@ -121,8 +102,5 @@ pub(crate) async fn resolve_loader(
     }
   }
 
-  // if loader_request.starts_with(CSS_LOADER_IDENTIFIER) {
-  //   return Ok(Some(Arc::new(CssLoader::new(CssLoaderOpts {}))));
-  // }
   Ok(None)
 }

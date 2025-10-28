@@ -13,7 +13,7 @@ pub struct UnifiedPluginOpts {
   #[allow(unused)]
   pub case_sensitive: Option<CaseSensitivePathsPluginOpts>,
   #[allow(unused)]
-  pub oxlint_loader: Option<OxLintPluginOpts>,
+  pub oxlint: Option<OxLintPluginOpts>,
 }
 
 pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
@@ -47,8 +47,8 @@ impl Plugin for UnifiedPlugin {
       CaseSensitivePathsPlugin::new(case_sensitive).apply(ctx)?;
     }
 
-    if let Some(oxlint_loader) = self.options.oxlint_loader.clone() {
-      OxLintPlugin::new(oxlint_loader).apply(ctx)?;
+    if let Some(oxlint_ops) = self.options.oxlint.clone() {
+      OxLintPlugin::new(oxlint_ops).apply(ctx)?;
     }
     Ok(())
   }
