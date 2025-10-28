@@ -18,7 +18,7 @@ pub struct RawUnifiedPluginOpts {
   #[napi(js_name = "styleLoader")]
   pub style_loader: Option<RawStyleLoaderPluginOpts>,
   /// oxlint-loader 的配置
-  #[napi(js_name = "oxlintLoader")]
+  #[napi(js_name = "oxlint")]
   pub oxlint: Option<RawOxLintPluginOpts>,
   /// case-sensitive-paths 的配置
   #[napi(js_name = "caseSensitive")]

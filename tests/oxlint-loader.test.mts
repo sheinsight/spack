@@ -19,7 +19,7 @@ const plugin = new UnifiedPlugin({
   styleLoader: {
     outputDir: 'runtime',
   },
-  oxlintLoader: {
+  oxlint: {
     showWarning: true,
     outputDir: 'lint',
     restrictedImports: [

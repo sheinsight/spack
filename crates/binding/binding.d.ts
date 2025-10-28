@@ -133,7 +133,7 @@ export interface RawEnvironment {
   sharedNodeBrowser?: boolean
 }
 
-export interface RawOxLintLoaderPluginOpts {
+export interface RawOxLintPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   outputDir: string
   showWarning?: boolean
@@ -165,7 +165,7 @@ export interface RawUnifiedPluginOpts {
   /** style-loader 的配置 */
   styleLoader?: RawStyleLoaderPluginOpts
   /** oxlint-loader 的配置 */
-  oxlintLoader?: RawOxLintLoaderPluginOpts
+  oxlint?: RawOxLintPluginOpts
   /** case-sensitive-paths 的配置 */
   caseSensitive?: RawCaseSensitivePathsPluginOpts
 }
