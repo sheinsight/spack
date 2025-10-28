@@ -52,7 +52,7 @@ impl OxLintPlugin {
 }
 
 impl OxLintPlugin {
-  fn get_config(&self) -> serde_json::Result<serde_json::Value> {
+  fn get_inner_config(&self) -> serde_json::Result<serde_json::Value> {
     let restricted_imports = serde_json::to_value(&self.options.restricted_imports)?;
     let restricted_globals = serde_json::to_value(&self.options.restricted_globals)?;
 
@@ -330,6 +330,48 @@ impl OxLintPlugin {
 
     Ok(config)
   }
+
+  fn get_overrides(&self, dir: impl AsRef<Path>) -> ignore::overrides::Override {
+    let mut overrides = ignore::overrides::OverrideBuilder::new(&dir);
+
+    // 排除目录
+    overrides.add("!node_modules/**").unwrap();
+    overrides.add("!dist/**").unwrap();
+    overrides.add("!build/**").unwrap();
+    overrides.add("!coverage/**").unwrap();
+    overrides.add("!.git/**").unwrap();
+
+    // 包含特定扩展名（分别添加）
+    overrides.add("*.js").unwrap();
+    overrides.add("*.jsx").unwrap();
+    overrides.add("*.ts").unwrap();
+    overrides.add("*.tsx").unwrap();
+    overrides.add("*.mjs").unwrap();
+    overrides.add("*.cjs").unwrap();
+    overrides.add("*.cts").unwrap();
+    overrides.add("*.mts").unwrap();
+
+    // 排除特定文件
+    overrides.add("!*.d.ts").unwrap();
+    overrides.add("!*.min.js").unwrap();
+
+    let overrides = overrides.build().unwrap();
+
+    overrides
+  }
+
+  fn get_oxlintrc(&self) -> Result<Oxlintrc> {
+    let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
+      Oxlintrc::from_file(Path::new(oxlintrc_file_path))
+        .map_err(|e| rspack_error::Error::from_error(e))?
+    } else {
+      let config = self
+        .get_inner_config()
+        .map_err(|e| rspack_error::Error::from_error(e))?;
+      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?
+    };
+    Ok(config)
+  }
 }
 
 impl Plugin for OxLintPlugin {
@@ -339,7 +381,6 @@ impl Plugin for OxLintPlugin {
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
     ctx.compiler_hooks.make.tap(compiler_make::new(self));
-
     Ok(())
   }
 
@@ -348,62 +389,25 @@ impl Plugin for OxLintPlugin {
 
 #[plugin_hook(rspack_core::CompilerMake for OxLintPlugin)]
 pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilation) -> Result<()> {
-  let base_dir = compilation
-    .options
-    .context
-    .as_path()
-    .join(self.options.base_dir.clone());
+  let dir = compilation.options.context.as_path();
 
-  println!("base_dir: {:?}", base_dir);
+  let overrides = self.get_overrides(&dir);
 
-  let mut overrides = ignore::overrides::OverrideBuilder::new(&base_dir);
-
-  // 排除目录
-  overrides.add("!node_modules/**").unwrap();
-  overrides.add("!dist/**").unwrap();
-  overrides.add("!build/**").unwrap();
-  overrides.add("!coverage/**").unwrap();
-  overrides.add("!.git/**").unwrap();
-
-  // 包含特定扩展名（分别添加）
-  overrides.add("*.js").unwrap();
-  overrides.add("*.jsx").unwrap();
-  overrides.add("*.ts").unwrap();
-  overrides.add("*.tsx").unwrap();
-  overrides.add("*.mjs").unwrap();
-  overrides.add("*.cjs").unwrap();
-  overrides.add("*.cts").unwrap();
-  overrides.add("*.mts").unwrap();
-
-  // 排除特定文件
-  overrides.add("!*.d.ts").unwrap();
-  overrides.add("!*.min.js").unwrap();
-
-  let overrides = overrides.build().unwrap();
-
-  let files: Vec<_> = ignore::WalkBuilder::new(base_dir)
+  let files: Vec<_> = ignore::WalkBuilder::new(dir)
     .overrides(overrides)
     .build()
     .filter_map(|e| e.ok())
     .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
-    .map(|e| std::sync::Arc::new(e.path().to_path_buf()))
+    .map(|e| e.path().to_path_buf())
     .collect::<Vec<_>>();
 
-  let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
-    Oxlintrc::from_file(Path::new(oxlintrc_file_path))
-      .map_err(|e| rspack_error::Error::from_error(e))?
-  } else {
-    let config = self
-      .get_config()
-      .map_err(|e| rspack_error::Error::from_error(e))?;
-    serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?
-  };
+  let config = self.get_oxlintrc()?;
 
   let mut external_plugin_store = ExternalPluginStore::default();
 
   let config =
     ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
-      .unwrap()
+      .map_err(|e| rspack_error::Error::from_error(e))?
       .build(&external_plugin_store)
       .map_err(|e| rspack_error::Error::from_error(e))?;
 
@@ -414,7 +418,6 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
       fix: FixKind::None,
       framework_hints: FrameworkFlags::React,
       report_unused_directive: Some(AllowWarnDeny::Deny),
-      // report_unused_directive: None,
     },
     config_store,
     None,
