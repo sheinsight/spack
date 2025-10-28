@@ -2,7 +2,10 @@ use std::{
   collections::HashMap,
   panic::{AssertUnwindSafe, catch_unwind},
   path::Path,
-  sync::Arc,
+  sync::{
+    Arc,
+    atomic::{AtomicUsize, Ordering},
+  },
 };
 
 use oxc::{
@@ -16,6 +19,7 @@ use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -413,7 +417,7 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
 
   let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
 
-  let linter = Linter::new(
+  let linter = Arc::new(Linter::new(
     LintOptions {
       fix: FixKind::None,
       framework_hints: FrameworkFlags::React,
@@ -421,17 +425,25 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
     },
     config_store,
     None,
+  ));
+
+  let handler = Arc::new(
+    GraphicalReportHandler::new()
+      .with_links(true)
+      .with_theme(GraphicalTheme::unicode()),
   );
 
-  let allocator = Allocator::default();
+  // let mut is_panic = false;
 
-  let handler = GraphicalReportHandler::new()
-    .with_links(true)
-    .with_theme(GraphicalTheme::unicode());
+  let error_count = AtomicUsize::new(0);
+  let warning_count = AtomicUsize::new(0);
 
-  let mut is_panic = false;
+  files.par_iter().try_for_each(|file| -> Result<()> {
 
-  for file in files {
+    let linter = Arc::clone(&linter);
+    let handler = Arc::clone(&handler);
+
+    let allocator = Allocator::default();
     let file_path = file.as_path().to_path_buf();
 
     let source_type =
@@ -451,7 +463,8 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
     let parser_return = parser.parse();
 
     if parser_return.panicked {
-      continue;
+      // 跳过有语法错误的文件，避免后续处理崩溃
+      return Ok(());
     }
 
     let program = allocator.alloc(&parser_return.program);
@@ -486,11 +499,27 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
       }
     };
 
-    let named_source = NamedSource::new(&file_path.to_string_lossy(), file_content.clone());
+    let named_source = NamedSource::new(&file_path.to_string_lossy(), file_content);
 
     if !messages.is_empty() {
-      is_panic = true;
+
       for message in messages {
+
+        let show = match &message.error.severity {
+            oxc::diagnostics::Severity::Error => {
+                error_count.fetch_add(1, Ordering::Relaxed);
+                true
+            }
+            oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
+                warning_count.fetch_add(1, Ordering::Relaxed);
+                self.options.show_warning
+            }
+        };
+
+        if !show {
+            continue;
+        }
+
         let mut output = String::with_capacity(4096);
 
         let error = message.error;
@@ -504,12 +533,19 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
         eprintln!("{}", output);
       }
     }
-  }
 
-  if is_panic {
-    return Err(rspack_error::Error::error(
-      "Failed to process disable directives for some files".to_string(),
-    ));
+    Ok(())
+  })?;
+
+  let error_count = error_count.load(Ordering::Relaxed);
+
+  let warning_count = warning_count.load(Ordering::Relaxed);
+
+  if error_count > 0 || warning_count > 0 {
+    return Err(rspack_error::Error::error(format!(
+      "Found {} lint errors and {} lint warnings",
+      error_count, warning_count
+    )));
   }
 
   Ok(())
