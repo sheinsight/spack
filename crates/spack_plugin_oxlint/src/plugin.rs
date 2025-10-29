@@ -238,7 +238,7 @@ impl OxLintPlugin {
         "oxc/uninvoked-array-callback":[2],
         "oxc/no-accumulating-spread":[1],
         "oxc/bad-bitwise-operator":[0],
-        "oxc/no-async-await":[1],
+        "oxc/no-async-await":[0],
         "oxc/no-barrel-file":[1],
         "oxc/no-const-enum":[2],
         "oxc/no-optional-chaining":[0],
