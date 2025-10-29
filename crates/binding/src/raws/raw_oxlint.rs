@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
+use rspack_core::BoxPlugin;
 use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
 #[derive(Debug)]
