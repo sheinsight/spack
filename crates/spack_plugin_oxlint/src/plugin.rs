@@ -20,7 +20,7 @@ use oxc_linter::{
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use rspack_core::{BoxModule, Compilation, Plugin};
+use rspack_core::{Compilation, Plugin};
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
@@ -40,7 +40,7 @@ pub struct OxlintPluginOpts {
   pub oxlint_config_file_path: Option<String>,
 }
 
-pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxLintPlugin";
+pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 
 #[plugin]
 #[derive(Debug)]
