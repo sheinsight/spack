@@ -365,7 +365,6 @@ impl OxLintPlugin {
   }
 
   fn get_oxlintrc(&self) -> Result<Oxlintrc> {
-    println!("get_oxlintrc: {:#?}", self.options);
     let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
       Oxlintrc::from_file(Path::new(oxlintrc_file_path))
         .map_err(|e| rspack_error::Error::from_error(e))?
