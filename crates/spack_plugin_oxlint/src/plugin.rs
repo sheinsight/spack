@@ -145,7 +145,7 @@ impl OxLintPlugin {
         "eslint/default-case":[0],
         "eslint/no-alert":[1],
         "eslint/no-bitwise":[0],
-        "eslint/no-console":[1],
+        "eslint/no-console":[0],
         "eslint/no-div-regex":[1],
         "eslint/no-empty":[1],
         "eslint/no-empty-function":[1,{"allow":["constructors","arrowFunctions"]}],
@@ -161,7 +161,7 @@ impl OxLintPlugin {
         "no-restricted-imports": [2, {
           "paths": restricted_imports
         }],
-        "eslint/no-undefined":[1],
+        "eslint/no-undefined":[0],
         "eslint/no-var":[2],
         "eslint/no-void":[0],
         "eslint/unicode-bom":[2],
