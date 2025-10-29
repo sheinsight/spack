@@ -3,7 +3,7 @@ use rspack_error::Result;
 use rspack_hook::plugin;
 use spack_builtin_loader::{StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
-use spack_plugin_oxlint::{OxLintPlugin, OxLintPluginOpts};
+use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
 #[derive(Debug)]
 pub struct UnifiedPluginOpts {
@@ -13,7 +13,7 @@ pub struct UnifiedPluginOpts {
   #[allow(unused)]
   pub case_sensitive: Option<CaseSensitivePathsPluginOpts>,
   #[allow(unused)]
-  pub oxlint: Option<OxLintPluginOpts>,
+  pub oxlint: Option<OxlintPluginOpts>,
 }
 
 pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
@@ -48,7 +48,7 @@ impl Plugin for UnifiedPlugin {
     }
 
     if let Some(oxlint_ops) = self.options.oxlint.clone() {
-      OxLintPlugin::new(oxlint_ops).apply(ctx)?;
+      OxlintPlugin::new(oxlint_ops).apply(ctx)?;
     }
     Ok(())
   }

@@ -133,7 +133,7 @@ export interface RawEnvironment {
   sharedNodeBrowser?: boolean
 }
 
-export interface RawOxLintPluginOpts {
+export interface RawOxlintPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   outputDir: string
   showWarning?: boolean
@@ -141,7 +141,7 @@ export interface RawOxLintPluginOpts {
   restrictedGlobals?: Array<RawRestricted>
   globals?: Record<string, boolean>
   environments?: RawEnvironment
-  oxlintrcFilePath?: string
+  oxlintConfigFilePath?: string
 }
 
 export interface RawRestricted {
@@ -165,7 +165,7 @@ export interface RawUnifiedPluginOpts {
   /** style-loader 的配置 */
   styleLoader?: RawStyleLoaderPluginOpts
   /** oxlint-loader 的配置 */
-  oxlint?: RawOxLintPluginOpts
+  oxlint?: RawOxlintPluginOpts
   /** case-sensitive-paths 的配置 */
   caseSensitive?: RawCaseSensitivePathsPluginOpts
 }

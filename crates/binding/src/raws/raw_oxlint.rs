@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
-use spack_plugin_oxlint::{OxLintPlugin, OxLintPluginOpts};
+use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
 #[derive(Debug)]
 #[napi(object, object_to_js = false)]
-pub struct RawOxLintPluginOpts {
+pub struct RawOxlintPluginOpts {
   /// runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置
   #[napi(js_name = "outputDir")]
   pub output_dir: String,
@@ -27,8 +27,8 @@ pub struct RawOxLintPluginOpts {
   #[napi(js_name = "environments")]
   pub environments: Option<RawEnvironment>,
 
-  #[napi(js_name = "oxLintConfigFilePath")]
-  pub oxlintrc_file_path: Option<String>,
+  #[napi(js_name = "oxlintConfigFilePath")]
+  pub oxlint_config_file_path: Option<String>,
 }
 
 #[derive(Debug)]
@@ -80,8 +80,8 @@ impl From<RawRestricted> for spack_plugin_oxlint::Restricted {
   }
 }
 
-impl From<RawOxLintPluginOpts> for OxLintPluginOpts {
-  fn from(value: RawOxLintPluginOpts) -> Self {
+impl From<RawOxlintPluginOpts> for OxlintPluginOpts {
+  fn from(value: RawOxlintPluginOpts) -> Self {
     let environments = value
       .environments
       .map(|e| e.into())
@@ -108,7 +108,7 @@ impl From<RawOxLintPluginOpts> for OxLintPluginOpts {
 
     let globals = value.globals.unwrap_or_default();
 
-    let oxlintrc_file_path = value.oxlintrc_file_path;
+    let oxlint_config_file_path = value.oxlint_config_file_path;
 
     Self {
       base_dir: "src".to_string(),
@@ -118,13 +118,13 @@ impl From<RawOxLintPluginOpts> for OxLintPluginOpts {
       restricted_globals,
       globals,
       environments,
-      oxlintrc_file_path,
+      oxlint_config_file_path,
     }
   }
 }
 
 #[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
-  let options = RawOxLintPluginOpts::from_unknown(options)?;
-  Ok(Box::new(OxLintPlugin::new(options.into())) as BoxPlugin)
+  let options = RawOxlintPluginOpts::from_unknown(options)?;
+  Ok(Box::new(OxlintPlugin::new(options.into())) as BoxPlugin)
 }

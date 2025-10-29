@@ -29,7 +29,7 @@ use serde_json::json;
 use crate::{Environment, Restricted};
 
 #[derive(Debug, Clone)]
-pub struct OxLintPluginOpts {
+pub struct OxlintPluginOpts {
   pub base_dir: String,
   pub output_dir: String,
   pub show_warning: bool,
@@ -37,25 +37,25 @@ pub struct OxLintPluginOpts {
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
   pub environments: Environment,
-  pub oxlintrc_file_path: Option<String>,
+  pub oxlint_config_file_path: Option<String>,
 }
 
 pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxLintPlugin";
 
 #[plugin]
 #[derive(Debug)]
-pub struct OxLintPlugin {
+pub struct OxlintPlugin {
   #[allow(unused)]
-  options: OxLintPluginOpts,
+  options: OxlintPluginOpts,
 }
 
-impl OxLintPlugin {
-  pub fn new(options: OxLintPluginOpts) -> Self {
+impl OxlintPlugin {
+  pub fn new(options: OxlintPluginOpts) -> Self {
     Self::new_inner(options)
   }
 }
 
-impl OxLintPlugin {
+impl OxlintPlugin {
   fn get_inner_config(&self) -> serde_json::Result<serde_json::Value> {
     let restricted_imports = serde_json::to_value(&self.options.restricted_imports)?;
     let restricted_globals = serde_json::to_value(&self.options.restricted_globals)?;
@@ -365,7 +365,7 @@ impl OxLintPlugin {
   }
 
   fn get_oxlintrc(&self) -> Result<Oxlintrc> {
-    let config = if let Some(oxlintrc_file_path) = &self.options.oxlintrc_file_path {
+    let config = if let Some(oxlintrc_file_path) = &self.options.oxlint_config_file_path {
       Oxlintrc::from_file(Path::new(oxlintrc_file_path))
         .map_err(|e| rspack_error::Error::from_error(e))?
     } else {
@@ -378,7 +378,7 @@ impl OxLintPlugin {
   }
 }
 
-impl Plugin for OxLintPlugin {
+impl Plugin for OxlintPlugin {
   fn name(&self) -> &'static str {
     OX_LINT_PLUGIN_IDENTIFIER.into()
   }
@@ -391,7 +391,7 @@ impl Plugin for OxLintPlugin {
   fn clear_cache(&self, _id: rspack_core::CompilationId) {}
 }
 
-#[plugin_hook(rspack_core::CompilerMake for OxLintPlugin)]
+#[plugin_hook(rspack_core::CompilerMake for OxlintPlugin)]
 pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilation) -> Result<()> {
   let dir = compilation.options.context.as_path();
 
@@ -523,6 +523,8 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
         let mut output = String::with_capacity(4096);
 
         let error = message.error;
+
+
 
         let report = error.with_source_code(named_source.clone());
 
