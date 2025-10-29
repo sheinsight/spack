@@ -27,7 +27,7 @@ pub struct RawOxLintPluginOpts {
   #[napi(js_name = "environments")]
   pub environments: Option<RawEnvironment>,
 
-  #[napi(js_name = "oxlintrcFilePath")]
+  #[napi(js_name = "oxLintConfigFilePath")]
   pub oxlintrc_file_path: Option<String>,
 }
 
