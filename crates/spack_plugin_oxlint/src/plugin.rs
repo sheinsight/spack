@@ -20,7 +20,7 @@ use oxc_linter::{
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use rspack_core::Plugin;
+use rspack_core::{BoxModule, Compilation, Plugin};
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
@@ -385,10 +385,30 @@ impl Plugin for OxlintPlugin {
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
     ctx.compiler_hooks.make.tap(compiler_make::new(self));
+
+    ctx
+      .compilation_hooks
+      .finish_modules
+      .tap(finish_modules::new(self));
+
     Ok(())
   }
 
   fn clear_cache(&self, _id: rspack_core::CompilationId) {}
+}
+
+#[plugin_hook(rspack_core::CompilationFinishModules for OxlintPlugin)]
+pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Result<()> {
+  let module_graph = compilation.get_module_graph();
+
+  let files = module_graph.modules();
+
+  for (_, module) in files {
+    let identifier = module.identifier().to_string();
+    println!("identifier: {}", identifier);
+  }
+
+  Ok(())
 }
 
 #[plugin_hook(rspack_core::CompilerMake for OxlintPlugin)]
