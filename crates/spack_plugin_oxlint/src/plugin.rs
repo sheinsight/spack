@@ -542,10 +542,13 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
   let warning_count = warning_count.load(Ordering::Relaxed);
 
   if error_count > 0 || warning_count > 0 {
-    return Err(rspack_error::Error::error(format!(
+    eprintln!(
       "Found {} lint errors and {} lint warnings",
       error_count, warning_count
-    )));
+    );
+    if error_count > 0 {
+      return Err(rspack_error::Error::error("Found lint errors".to_string()));
+    }
   }
 
   Ok(())
