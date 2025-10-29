@@ -1,11 +1,8 @@
 use std::{
-  collections::HashMap,
-  panic::{AssertUnwindSafe, catch_unwind},
-  path::Path,
-  sync::{
+  borrow::Cow, collections::HashMap, panic::{AssertUnwindSafe, catch_unwind}, path::Path, sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
-  },
+  }
 };
 
 use oxc::{
@@ -20,7 +17,7 @@ use oxc_linter::{
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use rspack_core::{Compilation, Plugin};
+use rspack_core::{Module, Plugin};
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
@@ -384,12 +381,12 @@ impl Plugin for OxlintPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    ctx.compiler_hooks.make.tap(compiler_make::new(self));
+    // ctx.compiler_hooks.make.tap(compiler_make::new(self));
 
     ctx
       .compilation_hooks
-      .finish_modules
-      .tap(finish_modules::new(self));
+      .succeed_module
+      .tap(succeed_module::new(self));
 
     Ok(())
   }
@@ -397,16 +394,31 @@ impl Plugin for OxlintPlugin {
   fn clear_cache(&self, _id: rspack_core::CompilationId) {}
 }
 
-#[plugin_hook(rspack_core::CompilationFinishModules for OxlintPlugin)]
-pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Result<()> {
-  let module_graph = compilation.get_module_graph();
+#[plugin_hook(rspack_core::CompilationSucceedModule for OxlintPlugin)]
+pub(crate) async fn succeed_module(&self,
+  _compiler_id: rspack_core::CompilerId,
+  _compilation_id: rspack_core::CompilationId,
+  module: &mut rspack_core::BoxModule) -> Result<()> {
 
-  let files = module_graph.modules();
+    // 尝试获取 NormalModule（最常见的模块类型）
+    if let Some(normal_module) = module.as_normal_module() {
+      // 获取文件的绝对路径
+      if let Some(path) = normal_module.resource_resolved_data().path() {
+        println!("文件路径: {}", path);
+      }
 
-  for (_, module) in files {
-    let identifier = module.identifier().to_string();
-    println!("identifier: {}", identifier);
-  }
+      // 获取用户可读的标识符（相对路径）
+      let readable_id = normal_module.readable_identifier(&self.options.base_dir.as_str().into());
+      println!("可读标识符: {}", readable_id);
+
+      // 获取源代码
+      if let Some(source) = normal_module.source() {
+        let source_code = source.source();
+        println!("源码长度: {} bytes", source_code.len());
+        // 如果需要查看源码内容，可以使用：
+        // println!("源码内容:\n{}", source_code);
+      }
+    }
 
   Ok(())
 }
@@ -450,6 +462,7 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
   let handler = Arc::new(
     GraphicalReportHandler::new()
       .with_links(true)
+      // .with_break_words(true)
       .with_theme(GraphicalTheme::unicode()),
   );
 
@@ -542,15 +555,23 @@ pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilat
 
         let mut output = String::with_capacity(4096);
 
-        let error = message.error;
+        let number = message.error.as_ref().code.number.as_ref().unwrap_or(&Cow::from("")).to_string();
 
 
+        
 
-        let report = error.with_source_code(named_source.clone());
-
-        handler
-          .render_report(&mut output, report.as_ref())
+        if ["max-lines-per-function","max-lines"].into_iter().any(|v| v == number)  {
+          handler
+          .render_report(&mut output, &message.error)
           .map_err(|e| rspack_error::Error::from_error(e))?;
+        }else{
+          let report = message.error.with_source_code(named_source.clone());
+          handler
+            .render_report(&mut output, report.as_ref())
+            .map_err(|e| rspack_error::Error::from_error(e))?;
+        }
+
+       
 
         eprintln!("{}", output);
       }
