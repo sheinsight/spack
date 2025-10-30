@@ -139,6 +139,11 @@ export interface RawOxlintPluginOpts {
   /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
   outputDir: string
   showWarning?: boolean
+  /**
+   * 是否在有 lint 错误时阻塞构建，默认为 true
+   * 设置为 false 时，即使有 lint 错误也继续构建（仅在 dev 模式下推荐）
+   */
+  failOnError?: boolean
   restrictedImports?: Array<RawRestricted>
   restrictedGlobals?: Array<RawRestricted>
   globals?: Record<string, boolean>

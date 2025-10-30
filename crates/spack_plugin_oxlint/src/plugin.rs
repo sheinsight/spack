@@ -509,7 +509,7 @@ pub(crate) async fn succeed_module(
 
   if !messages.is_empty() {
     let mut error_count = 0;
-    let mut warning_count = 0;
+    let mut _warning_count = 0;
 
     for message in messages {
       let show = match &message.error.severity {
@@ -518,7 +518,7 @@ pub(crate) async fn succeed_module(
           true
         }
         oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-          warning_count += 1;
+          _warning_count += 1;
           self.options.show_warning
         }
       };
