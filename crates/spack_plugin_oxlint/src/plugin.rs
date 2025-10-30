@@ -444,13 +444,7 @@ pub(crate) async fn succeed_module(
         let source_type = SourceType::from_path(&path).unwrap();
 
         // 直接从文件系统读取原始源码，而不是从 module.source() 获取（后者是经过 loader 处理的）
-        let file_content = match std::fs::read_to_string(path.as_std_path()) {
-          Ok(content) => content,
-          Err(e) => {
-            eprintln!("Warning: Failed to read file {:?}: {}", path, e);
-            return Ok(());
-          }
-        };
+        let file_content = tokio::fs::read_to_string(path.as_std_path()).await?;
 
         let parser = Parser::new(&allocator, &file_content, source_type).with_options(
           oxc::parser::ParseOptions {
