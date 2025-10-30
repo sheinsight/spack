@@ -18,7 +18,7 @@ use oxc_linter::{
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
 use rspack_core::Plugin;
-use rspack_error::Result;
+use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
 use serde_json::json;
@@ -30,6 +30,7 @@ pub struct OxlintPluginOpts {
   pub base_dir: String,
   pub output_dir: String,
   pub show_warning: bool,
+  pub fail_on_error: bool,
   pub restricted_imports: Vec<Restricted>,
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
@@ -549,6 +550,21 @@ pub(crate) async fn succeed_module(
       }
 
       eprintln!("{}", output);
+    }
+
+    // 如果 fail_on_error 为 false，只打印错误信息，不阻塞构建
+    // 这在 dev 模式下很有用，允许用户修改代码后恢复编译
+    if self.options.fail_on_error {
+      // fail_on_error 为 false 时，只打印警告信息，不返回错误
+      eprintln!(
+        "Warning: Lint errors found in file: {} (build will continue due to failOnError=false)",
+        path.to_string_lossy()
+      );
+
+      return Err(rspack_error::Error::error(format!(
+        "Lint errors in file: {}",
+        path.to_string_lossy(),
+      )));
     }
   }
 

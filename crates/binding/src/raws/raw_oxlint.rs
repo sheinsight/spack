@@ -15,6 +15,11 @@ pub struct RawOxlintPluginOpts {
   #[napi(js_name = "showWarning")]
   pub show_warning: Option<bool>,
 
+  /// 是否在有 lint 错误时阻塞构建，默认为 true
+  /// 设置为 false 时，即使有 lint 错误也继续构建（仅在 dev 模式下推荐）
+  #[napi(js_name = "failOnError")]
+  pub fail_on_error: Option<bool>,
+
   #[napi(js_name = "restrictedImports")]
   pub restricted_imports: Option<Vec<RawRestricted>>,
 
@@ -92,6 +97,8 @@ impl From<RawOxlintPluginOpts> for OxlintPluginOpts {
 
     let show_warning = value.show_warning.unwrap_or(true);
 
+    let fail_on_error = value.fail_on_error.unwrap_or(true);
+
     let restricted_imports = value
       .restricted_imports
       .unwrap_or_default()
@@ -114,6 +121,7 @@ impl From<RawOxlintPluginOpts> for OxlintPluginOpts {
       base_dir: "src".to_string(),
       output_dir,
       show_warning,
+      fail_on_error,
       restricted_imports,
       restricted_globals,
       globals,
