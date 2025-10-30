@@ -432,136 +432,136 @@ pub(crate) async fn succeed_module(
   _compilation_id: rspack_core::CompilationId,
   module: &mut rspack_core::BoxModule,
 ) -> Result<()> {
-  // 尝试获取 NormalModule（最常见的模块类型）
-  if let Some(normal_module) = module.as_normal_module() {
-    // 获取文件的绝对路径
-    if let Some(path) = normal_module.resource_resolved_data().path() {
-      let x = &self.overrides.matched(path.as_std_path(), false);
+  let Some(normal_module) = module.as_normal_module() else {
+    return Ok(());
+  };
 
-      if x.is_whitelist() {
-        let allocator = Allocator::default();
+  let resource = normal_module.resource_resolved_data().resource();
 
-        let source_type = SourceType::from_path(&path).unwrap();
+  let path = Path::new(resource);
 
-        // 直接从文件系统读取原始源码，而不是从 module.source() 获取（后者是经过 loader 处理的）
-        let file_content = tokio::fs::read_to_string(path.as_std_path()).await?;
+  let matcher = &self.overrides.matched(path, false);
 
-        let parser = Parser::new(&allocator, &file_content, source_type).with_options(
-          oxc::parser::ParseOptions {
-            parse_regular_expression: true,
-            allow_return_outside_function: false,
-            preserve_parens: true,
-            allow_v8_intrinsics: false,
-          },
+  if matcher.is_whitelist() {
+    let allocator = Allocator::default();
+
+    let source_type =
+      SourceType::from_path(&path).map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let source_code = tokio::fs::read_to_string(path).await?;
+
+    let parse_options = oxc::parser::ParseOptions {
+      parse_regular_expression: true,
+      allow_return_outside_function: false,
+      preserve_parens: true,
+      allow_v8_intrinsics: false,
+    };
+
+    let parser = Parser::new(&allocator, &source_code, source_type).with_options(parse_options);
+
+    let parser_return = parser.parse();
+
+    if parser_return.panicked {
+      // 跳过有语法错误的文件，避免后续处理崩溃
+      return Ok(());
+    }
+
+    let program = allocator.alloc(&parser_return.program);
+
+    let semantic_builder_return = SemanticBuilder::new()
+      .with_check_syntax_error(true)
+      .with_cfg(true)
+      .build(program);
+
+    let semantic = semantic_builder_return.semantic;
+
+    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
+      path,
+      &parser_return.module_record,
+      &semantic,
+    ));
+
+    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
+
+    let result = catch_unwind(AssertUnwindSafe(|| {
+      self
+        .linter
+        .run_with_disable_directives(path, vec![context_sub_hosts], &allocator)
+    }));
+
+    let (messages, _disable_directives) = match result {
+      Ok(result) => result,
+      Err(e) => {
+        eprintln!(
+          "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
+          &path, e,
         );
+        (vec![], None)
+      }
+    };
 
-        let parser_return = parser.parse();
+    let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
 
-        if parser_return.panicked {
-          // 跳过有语法错误的文件，避免后续处理崩溃
-          return Ok(());
-        }
-
-        let program = allocator.alloc(&parser_return.program);
-
-        let semantic_builder_return = SemanticBuilder::new()
-          .with_check_syntax_error(true)
-          .with_cfg(true)
-          .build(program);
-
-        let semantic = semantic_builder_return.semantic;
-
-        let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-          path.as_std_path(),
-          &parser_return.module_record,
-          &semantic,
-        ));
-
-        let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
-
-        let result = catch_unwind(AssertUnwindSafe(|| {
-          self.linter.run_with_disable_directives(
-            path.as_std_path(),
-            vec![context_sub_hosts],
-            &allocator,
-          )
-        }));
-
-        let (messages, _disable_directives) = match result {
-          Ok(result) => result,
-          Err(e) => {
-            eprintln!(
-              "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
-              &path, e,
-            );
-            (vec![], None)
+    if !messages.is_empty() {
+      for message in messages {
+        let show = match &message.error.severity {
+          oxc::diagnostics::Severity::Error => {
+            // error_count.fetch_add(1, Ordering::Relaxed);
+            true
+          }
+          oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
+            // warning_count.fetch_add(1, Ordering::Relaxed);
+            self.options.show_warning
           }
         };
 
-        let named_source = NamedSource::new(path, file_content.clone());
-
-        if !messages.is_empty() {
-          for message in messages {
-            let show = match &message.error.severity {
-              oxc::diagnostics::Severity::Error => {
-                // error_count.fetch_add(1, Ordering::Relaxed);
-                true
-              }
-              oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-                // warning_count.fetch_add(1, Ordering::Relaxed);
-                self.options.show_warning
-              }
-            };
-
-            if !show {
-              continue;
-            }
-
-            let mut output = String::with_capacity(4096);
-
-            let number = message
-              .error
-              .as_ref()
-              .code
-              .number
-              .as_ref()
-              .unwrap_or(&Cow::from(""))
-              .to_string();
-
-            if ["max-lines-per-function", "max-lines"]
-              .into_iter()
-              .any(|v| v == number)
-            {
-              self
-                .handler
-                .render_report(&mut output, &message.error)
-                .unwrap();
-            } else {
-              let report = message.error.with_source_code(named_source.clone());
-              self
-                .handler
-                .render_report(&mut output, report.as_ref())
-                .unwrap();
-            }
-
-            eprintln!("{}", output);
-          }
+        if !show {
+          continue;
         }
+
+        let mut output = String::with_capacity(4096);
+
+        let number = message
+          .error
+          .as_ref()
+          .code
+          .number
+          .as_ref()
+          .unwrap_or(&Cow::from(""))
+          .to_string();
+
+        if ["max-lines-per-function", "max-lines"]
+          .into_iter()
+          .any(|v| v == number)
+        {
+          self
+            .handler
+            .render_report(&mut output, &message.error)
+            .unwrap();
+        } else {
+          let report = message.error.with_source_code(named_source.clone());
+          self
+            .handler
+            .render_report(&mut output, report.as_ref())
+            .unwrap();
+        }
+
+        eprintln!("{}", output);
       }
     }
-
-    // 获取用户可读的标识符（相对路径）
-    // let readable_id = normal_module.readable_identifier(&self.options.base_dir.as_str().into());
-    // println!("可读标识符: {}", readable_id);
-
-    // 获取源代码
-    // if let Some(source) = normal_module.source() {
-    // let source_code = source.source();
-    // println!("源码长度: {} bytes", source_code.len());
-    // 如果需要查看源码内容，可以使用：
-    // println!("源码内容:\n{}", source_code);
-    // }
   }
+
+  // 获取用户可读的标识符（相对路径）
+  // let readable_id = normal_module.readable_identifier(&self.options.base_dir.as_str().into());
+  // println!("可读标识符: {}", readable_id);
+
+  // 获取源代码
+  // if let Some(source) = normal_module.source() {
+  // let source_code = source.source();
+  // println!("源码长度: {} bytes", source_code.len());
+  // 如果需要查看源码内容，可以使用：
+  // println!("源码内容:\n{}", source_code);
+  // }
 
   Ok(())
 }
