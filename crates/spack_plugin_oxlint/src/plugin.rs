@@ -442,112 +442,113 @@ pub(crate) async fn succeed_module(
 
   let matcher = &self.overrides.matched(path, false);
 
-  if matcher.is_whitelist() {
-    let allocator = Allocator::default();
+  if !matcher.is_whitelist() {
+    return Ok(());
+  }
 
-    let source_type =
-      SourceType::from_path(&path).map_err(|e| rspack_error::Error::from_error(e))?;
+  let allocator = Allocator::default();
 
-    let source_code = tokio::fs::read_to_string(path).await?;
+  let source_type = SourceType::from_path(&path).map_err(|e| rspack_error::Error::from_error(e))?;
 
-    let parse_options = oxc::parser::ParseOptions {
-      parse_regular_expression: true,
-      allow_return_outside_function: false,
-      preserve_parens: true,
-      allow_v8_intrinsics: false,
-    };
+  let source_code = tokio::fs::read_to_string(path).await?;
 
-    let parser = Parser::new(&allocator, &source_code, source_type).with_options(parse_options);
+  let parse_options = oxc::parser::ParseOptions {
+    parse_regular_expression: true,
+    allow_return_outside_function: false,
+    preserve_parens: true,
+    allow_v8_intrinsics: false,
+  };
 
-    let parser_return = parser.parse();
+  let parser = Parser::new(&allocator, &source_code, source_type).with_options(parse_options);
 
-    if parser_return.panicked {
-      // 跳过有语法错误的文件，避免后续处理崩溃
-      return Ok(());
+  let parser_return = parser.parse();
+
+  if parser_return.panicked {
+    // 跳过有语法错误的文件，避免后续处理崩溃
+    return Ok(());
+  }
+
+  let program = allocator.alloc(&parser_return.program);
+
+  let semantic_builder_return = SemanticBuilder::new()
+    .with_check_syntax_error(true)
+    .with_cfg(true)
+    .build(program);
+
+  let semantic = semantic_builder_return.semantic;
+
+  let module_record = Arc::new(oxc_linter::ModuleRecord::new(
+    path,
+    &parser_return.module_record,
+    &semantic,
+  ));
+
+  let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
+
+  let result = catch_unwind(AssertUnwindSafe(|| {
+    self
+      .linter
+      .run_with_disable_directives(path, vec![context_sub_hosts], &allocator)
+  }));
+
+  let (messages, _disable_directives) = match result {
+    Ok(result) => result,
+    Err(e) => {
+      eprintln!(
+        "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
+        &path, e,
+      );
+      (vec![], None)
     }
+  };
 
-    let program = allocator.alloc(&parser_return.program);
+  let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
 
-    let semantic_builder_return = SemanticBuilder::new()
-      .with_check_syntax_error(true)
-      .with_cfg(true)
-      .build(program);
-
-    let semantic = semantic_builder_return.semantic;
-
-    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-      path,
-      &parser_return.module_record,
-      &semantic,
-    ));
-
-    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
-
-    let result = catch_unwind(AssertUnwindSafe(|| {
-      self
-        .linter
-        .run_with_disable_directives(path, vec![context_sub_hosts], &allocator)
-    }));
-
-    let (messages, _disable_directives) = match result {
-      Ok(result) => result,
-      Err(e) => {
-        eprintln!(
-          "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
-          &path, e,
-        );
-        (vec![], None)
-      }
-    };
-
-    let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
-
-    if !messages.is_empty() {
-      for message in messages {
-        let show = match &message.error.severity {
-          oxc::diagnostics::Severity::Error => {
-            // error_count.fetch_add(1, Ordering::Relaxed);
-            true
-          }
-          oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-            // warning_count.fetch_add(1, Ordering::Relaxed);
-            self.options.show_warning
-          }
-        };
-
-        if !show {
-          continue;
+  if !messages.is_empty() {
+    for message in messages {
+      let show = match &message.error.severity {
+        oxc::diagnostics::Severity::Error => {
+          // error_count.fetch_add(1, Ordering::Relaxed);
+          true
         }
-
-        let mut output = String::with_capacity(4096);
-
-        let number = message
-          .error
-          .as_ref()
-          .code
-          .number
-          .as_ref()
-          .unwrap_or(&Cow::from(""))
-          .to_string();
-
-        if ["max-lines-per-function", "max-lines"]
-          .into_iter()
-          .any(|v| v == number)
-        {
-          self
-            .handler
-            .render_report(&mut output, &message.error)
-            .unwrap();
-        } else {
-          let report = message.error.with_source_code(named_source.clone());
-          self
-            .handler
-            .render_report(&mut output, report.as_ref())
-            .unwrap();
+        oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
+          // warning_count.fetch_add(1, Ordering::Relaxed);
+          self.options.show_warning
         }
+      };
 
-        eprintln!("{}", output);
+      if !show {
+        continue;
       }
+
+      let mut output = String::with_capacity(4096);
+
+      let number = message
+        .error
+        .as_ref()
+        .code
+        .number
+        .as_ref()
+        .unwrap_or(&Cow::from(""))
+        .to_string();
+
+      if ["max-lines-per-function", "max-lines"]
+        .into_iter()
+        .any(|v| v == number)
+      {
+        self
+          .handler
+          .render_report(&mut output, &message.error)
+          .map_err(|e| rspack_error::Error::from_error(e))?;
+      } else {
+        let report = message.error.with_source_code(named_source.clone());
+        self
+          .handler
+          .render_report(&mut output, report.as_ref())
+          .map_err(|e| rspack_error::Error::from_error(e))?;
+      }
+
+      eprintln!("{}", output);
     }
   }
 
