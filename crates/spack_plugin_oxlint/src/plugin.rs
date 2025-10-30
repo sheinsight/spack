@@ -18,7 +18,7 @@ use oxc_linter::{
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
 use rspack_core::Plugin;
-use rspack_error::{Diagnostic, Result};
+use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
 use serde_json::json;
