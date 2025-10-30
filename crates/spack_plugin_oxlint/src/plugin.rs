@@ -508,14 +508,17 @@ pub(crate) async fn succeed_module(
   let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
 
   if !messages.is_empty() {
+    let mut error_count = 0;
+    let mut warning_count = 0;
+
     for message in messages {
       let show = match &message.error.severity {
         oxc::diagnostics::Severity::Error => {
-          // error_count.fetch_add(1, Ordering::Relaxed);
+          error_count += 1;
           true
         }
         oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-          // warning_count.fetch_add(1, Ordering::Relaxed);
+          warning_count += 1;
           self.options.show_warning
         }
       };
@@ -558,15 +561,16 @@ pub(crate) async fn succeed_module(
     // 这在 dev 模式下很有用，允许用户修改代码后恢复编译
     if self.options.fail_on_error {
       // fail_on_error 为 false 时，只打印警告信息，不返回错误
-      eprintln!(
-        "Warning: Lint errors found in file: {} (build will continue due to failOnError=false)",
-        path.to_string_lossy()
-      );
-
-      return Err(rspack_error::Error::error(format!(
-        "Lint errors in file: {}",
-        path.to_string_lossy(),
-      )));
+      // eprintln!(
+      //   "Warning: Lint errors found in file: {} (build will continue due to failOnError=false)",
+      //   path.to_string_lossy()
+      // );
+      if error_count > 0 {
+        return Err(rspack_error::Error::error(format!(
+          "Lint errors in file: {}",
+          path.to_string_lossy(),
+        )));
+      }
     }
   }
 
