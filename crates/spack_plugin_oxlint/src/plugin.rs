@@ -57,7 +57,7 @@ impl OxlintPlugin {
     let config = Self::get_oxlintrc(&options);
 
     // 2. 构建 overrides
-    let overrides = Self::build_overrides(&options.base_dir);
+    let overrides = Self::build_overrides(&options.base_dir).unwrap();
 
     // 3. 构建 linter
     let mut external_plugin_store = ExternalPluginStore::default();
@@ -367,35 +367,37 @@ impl OxlintPlugin {
     Ok(config)
   }
 
-  fn build_overrides(dir: impl AsRef<Path>) -> ignore::overrides::Override {
+  fn build_overrides(
+    dir: impl AsRef<Path>,
+  ) -> std::result::Result<ignore::overrides::Override, ignore::Error> {
     let mut overrides = ignore::overrides::OverrideBuilder::new(&dir);
 
     // 包含特定扩展名（分别添加）
-    overrides.add("*.js").unwrap();
-    overrides.add("*.jsx").unwrap();
-    overrides.add("*.ts").unwrap();
-    overrides.add("*.tsx").unwrap();
-    overrides.add("*.mjs").unwrap();
-    overrides.add("*.cjs").unwrap();
-    overrides.add("*.cts").unwrap();
-    overrides.add("*.mts").unwrap();
+    overrides.add("*.js")?;
+    overrides.add("*.jsx")?;
+    overrides.add("*.ts")?;
+    overrides.add("*.tsx")?;
+    overrides.add("*.mjs")?;
+    overrides.add("*.cjs")?;
+    overrides.add("*.cts")?;
+    overrides.add("*.mts")?;
 
     // 排除特定文件
-    overrides.add("!*.d.ts").unwrap();
-    overrides.add("!*.min.js").unwrap();
+    overrides.add("!*.d.ts")?;
+    overrides.add("!*.min.js")?;
 
     // 排除目录
-    overrides.add("!node_modules/**").unwrap();
-    overrides.add("!**/.lego/**").unwrap();
-    overrides.add("!**/node_modules/**").unwrap();
-    overrides.add("!dist/**").unwrap();
-    overrides.add("!build/**").unwrap();
-    overrides.add("!coverage/**").unwrap();
-    overrides.add("!.git/**").unwrap();
+    overrides.add("!node_modules/**")?;
+    overrides.add("!**/.lego/**")?;
+    overrides.add("!**/node_modules/**")?;
+    overrides.add("!dist/**")?;
+    overrides.add("!build/**")?;
+    overrides.add("!coverage/**")?;
+    overrides.add("!.git/**")?;
 
     let overrides = overrides.build().unwrap();
 
-    overrides
+    Ok(overrides)
   }
 
   fn get_oxlintrc(options: &OxlintPluginOpts) -> Oxlintrc {
