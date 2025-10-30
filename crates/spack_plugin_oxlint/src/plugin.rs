@@ -1,8 +1,9 @@
 use std::{
-  borrow::Cow, collections::HashMap, panic::{AssertUnwindSafe, catch_unwind}, path::Path, sync::{
-    Arc,
-    atomic::{AtomicUsize, Ordering},
-  }
+  borrow::Cow,
+  collections::HashMap,
+  panic::{AssertUnwindSafe, catch_unwind},
+  path::Path,
+  sync::Arc,
 };
 
 use oxc::{
@@ -16,8 +17,7 @@ use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use rspack_core::{Module, Plugin};
+use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
@@ -44,22 +44,56 @@ pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 pub struct OxlintPlugin {
   #[allow(unused)]
   options: OxlintPluginOpts,
+
+  linter: Arc<Linter>,
+  handler: Arc<GraphicalReportHandler>,
+  overrides: ignore::overrides::Override,
 }
 
 impl OxlintPlugin {
   pub fn new(options: OxlintPluginOpts) -> Self {
-    Self::new_inner(options)
+    // 1. 构建配置
+    let config = Self::get_oxlintrc(&options);
+
+    // 2. 构建 overrides
+    let overrides = Self::build_overrides(&options.base_dir);
+
+    // 3. 构建 linter
+    let mut external_plugin_store = ExternalPluginStore::default();
+    let config_store =
+      ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
+        .unwrap()
+        .build(&external_plugin_store)
+        .unwrap();
+
+    let linter = Arc::new(Linter::new(
+      LintOptions {
+        fix: FixKind::None,
+        framework_hints: FrameworkFlags::React,
+        report_unused_directive: Some(AllowWarnDeny::Deny),
+      },
+      ConfigStore::new(config_store, FxHashMap::default(), external_plugin_store),
+      None,
+    ));
+
+    // 4. 构建 handler
+    let handler = Arc::new(
+      GraphicalReportHandler::new()
+        .with_links(true)
+        .with_theme(GraphicalTheme::unicode()),
+    );
+    Self::new_inner(options, linter, handler, overrides)
   }
 }
 
 impl OxlintPlugin {
-  fn get_inner_config(&self) -> serde_json::Result<serde_json::Value> {
-    let restricted_imports = serde_json::to_value(&self.options.restricted_imports)?;
-    let restricted_globals = serde_json::to_value(&self.options.restricted_globals)?;
+  fn build_config(options: &OxlintPluginOpts) -> serde_json::Result<serde_json::Value> {
+    let restricted_imports = serde_json::to_value(&options.restricted_imports)?;
+    let restricted_globals = serde_json::to_value(&options.restricted_globals)?;
 
-    let globals = serde_json::to_value(&self.options.globals)?;
+    let globals = serde_json::to_value(&options.globals)?;
 
-    let environments = serde_json::to_value(&self.options.environments)?;
+    let environments = serde_json::to_value(&options.environments)?;
 
     let config = json!({
       "plugins": [
@@ -332,15 +366,8 @@ impl OxlintPlugin {
     Ok(config)
   }
 
-  fn get_overrides(&self, dir: impl AsRef<Path>) -> ignore::overrides::Override {
+  fn build_overrides(dir: impl AsRef<Path>) -> ignore::overrides::Override {
     let mut overrides = ignore::overrides::OverrideBuilder::new(&dir);
-
-    // 排除目录
-    overrides.add("!node_modules/**").unwrap();
-    overrides.add("!dist/**").unwrap();
-    overrides.add("!build/**").unwrap();
-    overrides.add("!coverage/**").unwrap();
-    overrides.add("!.git/**").unwrap();
 
     // 包含特定扩展名（分别添加）
     overrides.add("*.js").unwrap();
@@ -356,22 +383,28 @@ impl OxlintPlugin {
     overrides.add("!*.d.ts").unwrap();
     overrides.add("!*.min.js").unwrap();
 
+    // 排除目录
+    overrides.add("!node_modules/**").unwrap();
+    overrides.add("!**/.lego/**").unwrap();
+    overrides.add("!**/node_modules/**").unwrap();
+    overrides.add("!dist/**").unwrap();
+    overrides.add("!build/**").unwrap();
+    overrides.add("!coverage/**").unwrap();
+    overrides.add("!.git/**").unwrap();
+
     let overrides = overrides.build().unwrap();
 
     overrides
   }
 
-  fn get_oxlintrc(&self) -> Result<Oxlintrc> {
-    let config = if let Some(oxlintrc_file_path) = &self.options.oxlint_config_file_path {
-      Oxlintrc::from_file(Path::new(oxlintrc_file_path))
-        .map_err(|e| rspack_error::Error::from_error(e))?
+  fn get_oxlintrc(options: &OxlintPluginOpts) -> Oxlintrc {
+    let config = if let Some(oxlintrc_file_path) = &options.oxlint_config_file_path {
+      Oxlintrc::from_file(Path::new(oxlintrc_file_path)).unwrap()
     } else {
-      let config = self
-        .get_inner_config()
-        .map_err(|e| rspack_error::Error::from_error(e))?;
-      serde_json::from_value::<Oxlintrc>(config).map_err(|e| rspack_error::Error::from_error(e))?
+      let config = Self::build_config(options).unwrap();
+      serde_json::from_value::<Oxlintrc>(config).unwrap()
     };
-    Ok(config)
+    config
   }
 }
 
@@ -381,8 +414,6 @@ impl Plugin for OxlintPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    // ctx.compiler_hooks.make.tap(compiler_make::new(self));
-
     ctx
       .compilation_hooks
       .succeed_module
@@ -395,203 +426,147 @@ impl Plugin for OxlintPlugin {
 }
 
 #[plugin_hook(rspack_core::CompilationSucceedModule for OxlintPlugin)]
-pub(crate) async fn succeed_module(&self,
+pub(crate) async fn succeed_module(
+  &self,
   _compiler_id: rspack_core::CompilerId,
   _compilation_id: rspack_core::CompilationId,
-  module: &mut rspack_core::BoxModule) -> Result<()> {
+  module: &mut rspack_core::BoxModule,
+) -> Result<()> {
+  // 尝试获取 NormalModule（最常见的模块类型）
+  if let Some(normal_module) = module.as_normal_module() {
+    // 获取文件的绝对路径
+    if let Some(path) = normal_module.resource_resolved_data().path() {
+      let x = &self.overrides.matched(path.as_std_path(), false);
 
-    // 尝试获取 NormalModule（最常见的模块类型）
-    if let Some(normal_module) = module.as_normal_module() {
-      // 获取文件的绝对路径
-      if let Some(path) = normal_module.resource_resolved_data().path() {
-        println!("文件路径: {}", path);
-      }
+      if x.is_whitelist() {
+        let allocator = Allocator::default();
 
-      // 获取用户可读的标识符（相对路径）
-      let readable_id = normal_module.readable_identifier(&self.options.base_dir.as_str().into());
-      println!("可读标识符: {}", readable_id);
+        let source_type = SourceType::from_path(&path).unwrap();
 
-      // 获取源代码
-      if let Some(source) = normal_module.source() {
-        let source_code = source.source();
-        println!("源码长度: {} bytes", source_code.len());
-        // 如果需要查看源码内容，可以使用：
-        // println!("源码内容:\n{}", source_code);
-      }
-    }
-
-  Ok(())
-}
-
-#[plugin_hook(rspack_core::CompilerMake for OxlintPlugin)]
-pub(crate) async fn compiler_make(&self, compilation: &mut rspack_core::Compilation) -> Result<()> {
-  let dir = compilation.options.context.as_path();
-
-  let overrides = self.get_overrides(&dir);
-
-  let files: Vec<_> = ignore::WalkBuilder::new(dir)
-    .overrides(overrides)
-    .build()
-    .filter_map(|e| e.ok())
-    .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
-    .map(|e| e.path().to_path_buf())
-    .collect::<Vec<_>>();
-
-  let config = self.get_oxlintrc()?;
-
-  let mut external_plugin_store = ExternalPluginStore::default();
-
-  let config =
-    ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
-      .map_err(|e| rspack_error::Error::from_error(e))?
-      .build(&external_plugin_store)
-      .map_err(|e| rspack_error::Error::from_error(e))?;
-
-  let config_store = ConfigStore::new(config, FxHashMap::default(), external_plugin_store);
-
-  let linter = Arc::new(Linter::new(
-    LintOptions {
-      fix: FixKind::None,
-      framework_hints: FrameworkFlags::React,
-      report_unused_directive: Some(AllowWarnDeny::Deny),
-    },
-    config_store,
-    None,
-  ));
-
-  let handler = Arc::new(
-    GraphicalReportHandler::new()
-      .with_links(true)
-      // .with_break_words(true)
-      .with_theme(GraphicalTheme::unicode()),
-  );
-
-  // let mut is_panic = false;
-
-  let error_count = AtomicUsize::new(0);
-  let warning_count = AtomicUsize::new(0);
-
-  files.par_iter().try_for_each(|file| -> Result<()> {
-
-    let linter = Arc::clone(&linter);
-    let handler = Arc::clone(&handler);
-
-    let allocator = Allocator::default();
-    let file_path = file.as_path().to_path_buf();
-
-    let source_type =
-      SourceType::from_path(&file_path).map_err(|e| rspack_error::Error::from_error(e))?;
-
-    let file_content =
-      std::fs::read_to_string(&file_path).map_err(|e| rspack_error::Error::from_error(e))?;
-
-    let parser =
-      Parser::new(&allocator, &file_content, source_type).with_options(oxc::parser::ParseOptions {
-        parse_regular_expression: true,
-        allow_return_outside_function: false,
-        preserve_parens: true,
-        allow_v8_intrinsics: false,
-      });
-
-    let parser_return = parser.parse();
-
-    if parser_return.panicked {
-      // 跳过有语法错误的文件，避免后续处理崩溃
-      return Ok(());
-    }
-
-    let program = allocator.alloc(&parser_return.program);
-
-    let semantic_builder_return = SemanticBuilder::new()
-      .with_check_syntax_error(true)
-      .with_cfg(true)
-      .build(program);
-
-    let semantic = semantic_builder_return.semantic;
-
-    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-      &file_path,
-      &parser_return.module_record,
-      &semantic,
-    ));
-
-    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
-
-    let result = catch_unwind(AssertUnwindSafe(|| {
-      linter.run_with_disable_directives(&file_path, vec![context_sub_hosts], &allocator)
-    }));
-
-    let (messages, _disable_directives) = match result {
-      Ok(result) => result,
-      Err(e) => {
-        eprintln!(
-          "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
-          &file_path, e,
-        );
-        (vec![], None)
-      }
-    };
-
-    let named_source = NamedSource::new(&file_path.to_string_lossy(), file_content);
-
-    if !messages.is_empty() {
-
-      for message in messages {
-
-        let show = match &message.error.severity {
-            oxc::diagnostics::Severity::Error => {
-                error_count.fetch_add(1, Ordering::Relaxed);
-                true
-            }
-            oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-                warning_count.fetch_add(1, Ordering::Relaxed);
-                self.options.show_warning
-            }
+        // 直接从文件系统读取原始源码，而不是从 module.source() 获取（后者是经过 loader 处理的）
+        let file_content = match std::fs::read_to_string(path.as_std_path()) {
+          Ok(content) => content,
+          Err(e) => {
+            eprintln!("Warning: Failed to read file {:?}: {}", path, e);
+            return Ok(());
+          }
         };
 
-        if !show {
-            continue;
+        let parser = Parser::new(&allocator, &file_content, source_type).with_options(
+          oxc::parser::ParseOptions {
+            parse_regular_expression: true,
+            allow_return_outside_function: false,
+            preserve_parens: true,
+            allow_v8_intrinsics: false,
+          },
+        );
+
+        let parser_return = parser.parse();
+
+        if parser_return.panicked {
+          // 跳过有语法错误的文件，避免后续处理崩溃
+          return Ok(());
         }
 
-        let mut output = String::with_capacity(4096);
+        let program = allocator.alloc(&parser_return.program);
 
-        let number = message.error.as_ref().code.number.as_ref().unwrap_or(&Cow::from("")).to_string();
+        let semantic_builder_return = SemanticBuilder::new()
+          .with_check_syntax_error(true)
+          .with_cfg(true)
+          .build(program);
 
+        let semantic = semantic_builder_return.semantic;
 
-        
+        let module_record = Arc::new(oxc_linter::ModuleRecord::new(
+          path.as_std_path(),
+          &parser_return.module_record,
+          &semantic,
+        ));
 
-        if ["max-lines-per-function","max-lines"].into_iter().any(|v| v == number)  {
-          handler
-          .render_report(&mut output, &message.error)
-          .map_err(|e| rspack_error::Error::from_error(e))?;
-        }else{
-          let report = message.error.with_source_code(named_source.clone());
-          handler
-            .render_report(&mut output, report.as_ref())
-            .map_err(|e| rspack_error::Error::from_error(e))?;
+        let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
+
+        let result = catch_unwind(AssertUnwindSafe(|| {
+          self.linter.run_with_disable_directives(
+            path.as_std_path(),
+            vec![context_sub_hosts],
+            &allocator,
+          )
+        }));
+
+        let (messages, _disable_directives) = match result {
+          Ok(result) => result,
+          Err(e) => {
+            eprintln!(
+              "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
+              &path, e,
+            );
+            (vec![], None)
+          }
+        };
+
+        let named_source = NamedSource::new(path, file_content.clone());
+
+        if !messages.is_empty() {
+          for message in messages {
+            let show = match &message.error.severity {
+              oxc::diagnostics::Severity::Error => {
+                // error_count.fetch_add(1, Ordering::Relaxed);
+                true
+              }
+              oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
+                // warning_count.fetch_add(1, Ordering::Relaxed);
+                self.options.show_warning
+              }
+            };
+
+            if !show {
+              continue;
+            }
+
+            let mut output = String::with_capacity(4096);
+
+            let number = message
+              .error
+              .as_ref()
+              .code
+              .number
+              .as_ref()
+              .unwrap_or(&Cow::from(""))
+              .to_string();
+
+            if ["max-lines-per-function", "max-lines"]
+              .into_iter()
+              .any(|v| v == number)
+            {
+              self
+                .handler
+                .render_report(&mut output, &message.error)
+                .unwrap();
+            } else {
+              let report = message.error.with_source_code(named_source.clone());
+              self
+                .handler
+                .render_report(&mut output, report.as_ref())
+                .unwrap();
+            }
+
+            eprintln!("{}", output);
+          }
         }
-
-       
-
-        eprintln!("{}", output);
       }
     }
 
-    Ok(())
-  })?;
+    // 获取用户可读的标识符（相对路径）
+    // let readable_id = normal_module.readable_identifier(&self.options.base_dir.as_str().into());
+    // println!("可读标识符: {}", readable_id);
 
-  let error_count = error_count.load(Ordering::Relaxed);
-
-  let warning_count = warning_count.load(Ordering::Relaxed);
-
-  if error_count > 0 || warning_count > 0 {
-    eprintln!(
-      "Found {} lint errors and {} lint warnings",
-      error_count, warning_count
-    );
-    if error_count > 0 {
-      return Err(rspack_error::Error::error("Found lint errors".to_string()));
-    }
+    // 获取源代码
+    // if let Some(source) = normal_module.source() {
+    // let source_code = source.source();
+    // println!("源码长度: {} bytes", source_code.len());
+    // 如果需要查看源码内容，可以使用：
+    // println!("源码内容:\n{}", source_code);
+    // }
   }
 
   Ok(())
