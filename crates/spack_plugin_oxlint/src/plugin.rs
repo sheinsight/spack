@@ -1,5 +1,4 @@
 use std::{
-  borrow::Cow,
   collections::HashMap,
   panic::{AssertUnwindSafe, catch_unwind},
   path::Path,
@@ -10,7 +9,7 @@ use ignore::{WalkBuilder, overrides::Override};
 use lazy_static::lazy_static;
 use oxc::{
   allocator::Allocator,
-  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
+  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcCode},
   parser::Parser,
   semantic::SemanticBuilder,
   span::SourceType,
@@ -492,7 +491,9 @@ impl OxlintPlugin {
     let mut _warning_count = 0;
 
     for message in messages {
-      let show = match &message.error.severity {
+      let error = message.error;
+
+      let show = match error.severity {
         oxc::diagnostics::Severity::Error => {
           error_count += 1;
           true
@@ -507,16 +508,14 @@ impl OxlintPlugin {
         continue;
       }
 
-      let mut output = String::with_capacity(4096);
+      let mut output = String::with_capacity(128);
 
-      let number = message
-        .error
+      let OxcCode { number, .. } = &error.code;
+
+      let number = number
         .as_ref()
-        .code
-        .number
-        .as_ref()
-        .unwrap_or(&Cow::from(""))
-        .to_string();
+        .map(|v| v.to_string())
+        .unwrap_or("Unknown".to_string());
 
       if ["max-lines-per-function", "max-lines"]
         .into_iter()
@@ -524,10 +523,10 @@ impl OxlintPlugin {
       {
         self
           .handler
-          .render_report(&mut output, &message.error)
+          .render_report(&mut output, &error)
           .map_err(|e| rspack_error::Error::from_error(e))?;
       } else {
-        let report = message.error.with_source_code(named_source.clone());
+        let report = error.with_source_code(named_source.clone());
         self
           .handler
           .render_report(&mut output, report.as_ref())
