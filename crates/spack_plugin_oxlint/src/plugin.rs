@@ -28,7 +28,6 @@ use crate::{Environment, Restricted};
 
 #[derive(Debug, Clone)]
 pub struct OxlintPluginOpts {
-  pub base_dir: String,
   pub output_dir: String,
   pub show_warning: bool,
   pub fail_on_error: bool,
@@ -60,9 +59,10 @@ impl OxlintPlugin {
     // 1. 构建配置
     let config = Self::get_oxlintrc(&options);
 
+    let root = Path::new("/");
+
     // 2. 构建 overrides
-    let overrides =
-      Self::build_overrides(&options.base_dir).expect("Failed to build ignore overrides.");
+    let overrides = Self::build_overrides(&root).expect("Failed to build ignore overrides.");
 
     // 3. 构建 linter
     let mut external_plugin_store = ExternalPluginStore::default();
@@ -407,10 +407,33 @@ impl OxlintPlugin {
 
   fn get_oxlintrc(options: &OxlintPluginOpts) -> Oxlintrc {
     let config = if let Some(oxlintrc_file_path) = &options.oxlint_config_file_path {
-      Oxlintrc::from_file(Path::new(oxlintrc_file_path)).unwrap()
+      Oxlintrc::from_file(Path::new(oxlintrc_file_path)).expect(&format!(
+        "Failed to load oxlintrc file: {}",
+        oxlintrc_file_path
+      ))
     } else {
-      let config = Self::build_config(options).unwrap();
-      serde_json::from_value::<Oxlintrc>(config).unwrap()
+      let config = Self::build_config(options).expect("Failed to build inner oxlintrc config.");
+
+      let pretty_config =
+        serde_json::to_string_pretty(&config).expect("Failed to pretty print oxlintrc config.");
+
+      let config_output_file_path = Path::new(&options.output_dir).join(".oxlintrc.json");
+
+      if !Path::new(&options.output_dir).exists() {
+        std::fs::create_dir_all(&options.output_dir).expect(&format!(
+          "Failed to create output directory: {:?}",
+          &options.output_dir
+        ));
+      }
+
+      std::fs::write(&config_output_file_path, pretty_config).expect(&format!(
+        "Failed to write oxlintrc file to: {:?}",
+        config_output_file_path
+      ));
+
+      serde_json::from_value::<Oxlintrc>(config).expect(&format!(
+        "Failed to build inner oxlintrc config store builder."
+      ))
     };
     config
   }

@@ -118,7 +118,6 @@ impl From<RawOxlintPluginOpts> for OxlintPluginOpts {
     let oxlint_config_file_path = value.oxlint_config_file_path;
 
     Self {
-      base_dir: "src".to_string(),
       output_dir,
       show_warning,
       fail_on_error,
