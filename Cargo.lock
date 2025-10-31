@@ -6249,6 +6249,7 @@ name = "spack_plugin_oxlint"
 version = "0.1.0"
 dependencies = [
  "ignore",
+ "lazy_static",
  "oxc",
  "oxc_linter",
  "rayon",

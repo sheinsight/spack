@@ -3,10 +3,11 @@ use std::{
   collections::HashMap,
   panic::{AssertUnwindSafe, catch_unwind},
   path::Path,
-  sync::Arc,
+  sync::{Arc, Mutex},
 };
 
 use ignore::{WalkBuilder, overrides::Override};
+use lazy_static::lazy_static;
 use oxc::{
   allocator::Allocator,
   diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
@@ -21,7 +22,7 @@ use oxc_linter::{
 use rspack_core::{Compilation, CompilationParams, Plugin};
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 
 use crate::{Environment, Restricted};
@@ -41,12 +42,15 @@ pub struct OxlintPluginOpts {
 
 pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 
+lazy_static! {
+  static ref CACHE: Mutex<FxHashSet<String>> = Mutex::new(FxHashSet::default());
+}
+
 #[plugin]
 #[derive(Debug)]
 pub struct OxlintPlugin {
   #[allow(unused)]
   options: OxlintPluginOpts,
-
   linter: Arc<Linter>,
   handler: Arc<GraphicalReportHandler>,
   overrides: ignore::overrides::Override,
@@ -58,15 +62,16 @@ impl OxlintPlugin {
     let config = Self::get_oxlintrc(&options);
 
     // 2. 构建 overrides
-    let overrides = Self::build_overrides(&options.base_dir).unwrap();
+    let overrides =
+      Self::build_overrides(&options.base_dir).expect("Failed to build ignore overrides.");
 
     // 3. 构建 linter
     let mut external_plugin_store = ExternalPluginStore::default();
-    let config_store =
+    let config =
       ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
-        .unwrap()
+        .expect("Failed to build inner oxlintrc config store builder.")
         .build(&external_plugin_store)
-        .unwrap();
+        .expect("Failed to build oxlintrc config.");
 
     let linter = Arc::new(Linter::new(
       LintOptions {
@@ -74,7 +79,7 @@ impl OxlintPlugin {
         framework_hints: FrameworkFlags::React,
         report_unused_directive: Some(AllowWarnDeny::Deny),
       },
-      ConfigStore::new(config_store, FxHashMap::default(), external_plugin_store),
+      ConfigStore::new(config, FxHashMap::default(), external_plugin_store),
       None,
     ));
 
@@ -396,7 +401,7 @@ impl OxlintPlugin {
     overrides.add("!coverage/**")?;
     overrides.add("!.git/**")?;
 
-    let overrides = overrides.build().unwrap();
+    let overrides = overrides.build()?;
 
     Ok(overrides)
   }
@@ -411,12 +416,7 @@ impl OxlintPlugin {
     config
   }
 
-  async fn lint(
-    &self,
-    resource: impl AsRef<Path>,
-    overrides: &Override,
-    throw_fail_error: bool,
-  ) -> Result<i32> {
+  async fn lint(&self, resource: impl AsRef<Path>, overrides: &Override) -> Result<i32> {
     let path = resource.as_ref();
 
     let matcher = overrides.matched(path, false);
@@ -537,22 +537,6 @@ impl OxlintPlugin {
       eprintln!("{}", output);
     }
 
-    // 如果 fail_on_error 为 false，只打印错误信息，不阻塞构建
-    // 这在 dev 模式下很有用，允许用户修改代码后恢复编译
-    if self.options.fail_on_error && throw_fail_error {
-      // fail_on_error 为 false 时，只打印警告信息，不返回错误
-      // eprintln!(
-      //   "Warning: Lint errors found in file: {} (build will continue due to failOnError=false)",
-      //   path.to_string_lossy()
-      // );
-      // if error_count > 0 {
-      //   return Err(rspack_error::Error::error(format!(
-      //     "Lint errors in file: {}",
-      //     path.to_string_lossy(),
-      //   )));
-      // }
-    }
-
     return Ok(error_count);
   }
 }
@@ -587,21 +571,28 @@ pub(crate) async fn this_compilation(
 ) -> Result<()> {
   let context = compilation.options.context.as_path();
 
-  let files: Vec<_> = WalkBuilder::new(context)
+  let files = WalkBuilder::new(context)
     .build()
     .filter_map(|e| e.ok())
     .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
-    .map(|e| e.path().to_path_buf())
+    .map(|e| e.path().to_owned())
     .collect::<Vec<_>>();
 
   let mut error_count = 0;
 
   for file in files {
-    let count = self.lint(file, &self.overrides, true).await?;
+    let resource = file.to_string_lossy().into_owned();
+
+    if let Ok(mut cache) = CACHE.lock() {
+      cache.insert(resource);
+    };
+
+    let count = self.lint(&file, &self.overrides).await?;
+
     error_count += count;
   }
 
-  if error_count > 0 && !compilation.options.mode.is_development() {
+  if error_count > 0 && !compilation.options.mode.is_development() && self.options.fail_on_error {
     return Err(rspack_error::Error::error(format!(
       "Lint errors in total: {}",
       error_count
@@ -624,7 +615,20 @@ pub(crate) async fn succeed_module(
 
   let resource = normal_module.resource_resolved_data().resource();
 
-  self.lint(resource, &self.overrides, false).await?;
+  let is_lint = if let Ok(mut cache) = CACHE.lock() {
+    if cache.contains(resource) {
+      cache.remove(resource);
+      false
+    } else {
+      true
+    }
+  } else {
+    true
+  };
+
+  if is_lint {
+    self.lint(resource, &self.overrides).await?;
+  }
 
   Ok(())
 }
