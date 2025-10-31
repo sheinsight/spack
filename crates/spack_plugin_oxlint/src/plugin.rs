@@ -6,6 +6,7 @@ use std::{
   sync::Arc,
 };
 
+use ignore::{WalkBuilder, overrides::Override};
 use oxc::{
   allocator::Allocator,
   diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
@@ -17,7 +18,7 @@ use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
   FrameworkFlags, LintOptions, Linter, Oxlintrc,
 };
-use rspack_core::Plugin;
+use rspack_core::{Compilation, CompilationParams, Plugin};
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::FxHashMap;
@@ -409,105 +410,84 @@ impl OxlintPlugin {
     };
     config
   }
-}
 
-impl Plugin for OxlintPlugin {
-  fn name(&self) -> &'static str {
-    OX_LINT_PLUGIN_IDENTIFIER.into()
-  }
+  async fn lint(
+    &self,
+    resource: impl AsRef<Path>,
+    overrides: &Override,
+    throw_fail_error: bool,
+  ) -> Result<i32> {
+    let path = resource.as_ref();
 
-  fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    ctx
-      .compilation_hooks
-      .succeed_module
-      .tap(succeed_module::new(self));
+    let matcher = overrides.matched(path, false);
 
-    Ok(())
-  }
-
-  fn clear_cache(&self, _id: rspack_core::CompilationId) {}
-}
-
-#[plugin_hook(rspack_core::CompilationSucceedModule for OxlintPlugin)]
-pub(crate) async fn succeed_module(
-  &self,
-  _compiler_id: rspack_core::CompilerId,
-  _compilation_id: rspack_core::CompilationId,
-  module: &mut rspack_core::BoxModule,
-) -> Result<()> {
-  let Some(normal_module) = module.as_normal_module() else {
-    return Ok(());
-  };
-
-  let resource = normal_module.resource_resolved_data().resource();
-
-  let path = Path::new(resource);
-
-  let matcher = &self.overrides.matched(path, false);
-
-  if !matcher.is_whitelist() {
-    return Ok(());
-  }
-
-  let allocator = Allocator::default();
-
-  let source_type = SourceType::from_path(&path).map_err(|e| rspack_error::Error::from_error(e))?;
-
-  let source_code = tokio::fs::read_to_string(path).await?;
-
-  let parse_options = oxc::parser::ParseOptions {
-    parse_regular_expression: true,
-    allow_return_outside_function: false,
-    preserve_parens: true,
-    allow_v8_intrinsics: false,
-  };
-
-  let parser = Parser::new(&allocator, &source_code, source_type).with_options(parse_options);
-
-  let parser_return = parser.parse();
-
-  if parser_return.panicked {
-    // 跳过有语法错误的文件，避免后续处理崩溃
-    return Ok(());
-  }
-
-  let program = allocator.alloc(&parser_return.program);
-
-  let semantic_builder_return = SemanticBuilder::new()
-    .with_check_syntax_error(true)
-    .with_cfg(true)
-    .build(program);
-
-  let semantic = semantic_builder_return.semantic;
-
-  let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-    path,
-    &parser_return.module_record,
-    &semantic,
-  ));
-
-  let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
-
-  let result = catch_unwind(AssertUnwindSafe(|| {
-    self
-      .linter
-      .run_with_disable_directives(path, vec![context_sub_hosts], &allocator)
-  }));
-
-  let (messages, _disable_directives) = match result {
-    Ok(result) => result,
-    Err(e) => {
-      eprintln!(
-        "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
-        &path, e,
-      );
-      (vec![], None)
+    if !matcher.is_whitelist() {
+      return Ok(0);
     }
-  };
 
-  let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
+    let allocator = Allocator::default();
 
-  if !messages.is_empty() {
+    let source_type =
+      SourceType::from_path(&path).map_err(|e| rspack_error::Error::from_error(e))?;
+
+    let source_code = tokio::fs::read_to_string(path).await?;
+
+    let parse_options = oxc::parser::ParseOptions {
+      parse_regular_expression: true,
+      allow_return_outside_function: false,
+      preserve_parens: true,
+      allow_v8_intrinsics: false,
+    };
+
+    let parser = Parser::new(&allocator, &source_code, source_type).with_options(parse_options);
+
+    let parser_return = parser.parse();
+
+    if parser_return.panicked {
+      eprintln!("Warning: Failed to parse file: {:?}", path);
+      return Ok(0);
+    }
+
+    let program = allocator.alloc(&parser_return.program);
+
+    let semantic_builder_return = SemanticBuilder::new()
+      .with_check_syntax_error(true)
+      .with_cfg(true)
+      .build(program);
+
+    let semantic = semantic_builder_return.semantic;
+
+    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
+      path,
+      &parser_return.module_record,
+      &semantic,
+    ));
+
+    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
+
+    let result = catch_unwind(AssertUnwindSafe(|| {
+      self
+        .linter
+        .run_with_disable_directives(path, vec![context_sub_hosts], &allocator)
+    }));
+
+    let (messages, _disable_directives) = match result {
+      Ok(result) => result,
+      Err(e) => {
+        eprintln!(
+          "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
+          &path, e,
+        );
+        (vec![], None)
+      }
+    };
+
+    let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
+
+    if messages.is_empty() {
+      return Ok(0);
+    }
+
     let mut error_count = 0;
     let mut _warning_count = 0;
 
@@ -559,32 +539,92 @@ pub(crate) async fn succeed_module(
 
     // 如果 fail_on_error 为 false，只打印错误信息，不阻塞构建
     // 这在 dev 模式下很有用，允许用户修改代码后恢复编译
-    if self.options.fail_on_error {
+    if self.options.fail_on_error && throw_fail_error {
       // fail_on_error 为 false 时，只打印警告信息，不返回错误
       // eprintln!(
       //   "Warning: Lint errors found in file: {} (build will continue due to failOnError=false)",
       //   path.to_string_lossy()
       // );
-      if error_count > 0 {
-        return Err(rspack_error::Error::error(format!(
-          "Lint errors in file: {}",
-          path.to_string_lossy(),
-        )));
-      }
+      // if error_count > 0 {
+      //   return Err(rspack_error::Error::error(format!(
+      //     "Lint errors in file: {}",
+      //     path.to_string_lossy(),
+      //   )));
+      // }
     }
+
+    return Ok(error_count);
+  }
+}
+
+impl Plugin for OxlintPlugin {
+  fn name(&self) -> &'static str {
+    OX_LINT_PLUGIN_IDENTIFIER.into()
   }
 
-  // 获取用户可读的标识符（相对路径）
-  // let readable_id = normal_module.readable_identifier(&self.options.base_dir.as_str().into());
-  // println!("可读标识符: {}", readable_id);
+  fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
+    ctx
+      .compilation_hooks
+      .succeed_module
+      .tap(succeed_module::new(self));
 
-  // 获取源代码
-  // if let Some(source) = normal_module.source() {
-  // let source_code = source.source();
-  // println!("源码长度: {} bytes", source_code.len());
-  // 如果需要查看源码内容，可以使用：
-  // println!("源码内容:\n{}", source_code);
-  // }
+    ctx
+      .compiler_hooks
+      .this_compilation
+      .tap(this_compilation::new(self));
+
+    Ok(())
+  }
+
+  fn clear_cache(&self, _id: rspack_core::CompilationId) {}
+}
+
+#[plugin_hook(rspack_core::CompilerThisCompilation for OxlintPlugin)]
+pub(crate) async fn this_compilation(
+  &self,
+  compilation: &mut Compilation,
+  _params: &mut CompilationParams,
+) -> Result<()> {
+  let context = compilation.options.context.as_path();
+
+  let files: Vec<_> = WalkBuilder::new(context)
+    .build()
+    .filter_map(|e| e.ok())
+    .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
+    .map(|e| e.path().to_path_buf())
+    .collect::<Vec<_>>();
+
+  let mut error_count = 0;
+
+  for file in files {
+    let count = self.lint(file, &self.overrides, true).await?;
+    error_count += count;
+  }
+
+  if error_count > 0 && !compilation.options.mode.is_development() {
+    return Err(rspack_error::Error::error(format!(
+      "Lint errors in total: {}",
+      error_count
+    )));
+  }
+
+  Ok(())
+}
+
+#[plugin_hook(rspack_core::CompilationSucceedModule for OxlintPlugin)]
+pub(crate) async fn succeed_module(
+  &self,
+  _compiler_id: rspack_core::CompilerId,
+  _compilation_id: rspack_core::CompilationId,
+  module: &mut rspack_core::BoxModule,
+) -> Result<()> {
+  let Some(normal_module) = module.as_normal_module() else {
+    return Ok(());
+  };
+
+  let resource = normal_module.resource_resolved_data().resource();
+
+  self.lint(resource, &self.overrides, false).await?;
 
   Ok(())
 }
