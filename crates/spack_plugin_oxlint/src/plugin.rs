@@ -620,18 +620,12 @@ pub(crate) async fn succeed_module(
     return Ok(());
   }
 
-  let is_lint = if let Ok(mut cache) = CACHE.lock() {
-    if cache.contains(resource) {
-      cache.remove(resource);
-      false
-    } else {
-      true
-    }
-  } else {
-    true
-  };
+  let should_lint = CACHE
+    .lock()
+    .map(|mut cache| !cache.remove(resource))
+    .unwrap_or(true);
 
-  if is_lint {
+  if should_lint {
     self.lint(resource).await?;
   }
 
