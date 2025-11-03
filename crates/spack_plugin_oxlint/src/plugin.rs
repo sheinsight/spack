@@ -42,6 +42,7 @@ pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 
 lazy_static! {
   static ref CACHE: Mutex<FxHashSet<String>> = Mutex::new(FxHashSet::default());
+  static ref IS_INITIALIZED: Mutex<bool> = Mutex::new(true);
 }
 
 #[plugin]
@@ -563,6 +564,14 @@ pub(crate) async fn this_compilation(
   compilation: &mut Compilation,
   _params: &mut CompilationParams,
 ) -> Result<()> {
+  if let Ok(mut is_initialized) = IS_INITIALIZED.lock() {
+    if *is_initialized {
+      *is_initialized = false;
+    } else {
+      return Ok(());
+    }
+  }
+
   let context = compilation.options.context.as_path();
 
   let overrides = Self::build_overrides(context).expect("Failed to build ignore overrides.");
@@ -626,6 +635,7 @@ pub(crate) async fn succeed_module(
     .unwrap_or(true);
 
   if should_lint {
+    eprintln!("succeed_module done");
     self.lint(resource).await?;
   }
 
