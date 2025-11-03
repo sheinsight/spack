@@ -5,11 +5,11 @@ use std::{
   sync::{Arc, Mutex},
 };
 
-use ignore::{WalkBuilder, overrides::Override};
+use ignore::WalkBuilder;
 use lazy_static::lazy_static;
 use oxc::{
   allocator::Allocator,
-  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcCode},
+  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
   parser::Parser,
   semantic::SemanticBuilder,
   span::SourceType,
@@ -51,18 +51,12 @@ pub struct OxlintPlugin {
   options: OxlintPluginOpts,
   linter: Arc<Linter>,
   handler: Arc<GraphicalReportHandler>,
-  overrides: ignore::overrides::Override,
 }
 
 impl OxlintPlugin {
   pub fn new(options: OxlintPluginOpts) -> Self {
     // 1. 构建配置
     let config = Self::get_oxlintrc(&options);
-
-    let root = Path::new("/");
-
-    // 2. 构建 overrides
-    let overrides = Self::build_overrides(&root).expect("Failed to build ignore overrides.");
 
     // 3. 构建 linter
     let mut external_plugin_store = ExternalPluginStore::default();
@@ -86,9 +80,10 @@ impl OxlintPlugin {
     let handler = Arc::new(
       GraphicalReportHandler::new()
         .with_links(true)
+        .with_link_display_text("View in editor")
         .with_theme(GraphicalTheme::unicode()),
     );
-    Self::new_inner(options, linter, handler, overrides)
+    Self::new_inner(options, linter, handler)
   }
 }
 
@@ -438,14 +433,8 @@ impl OxlintPlugin {
     config
   }
 
-  async fn lint(&self, resource: impl AsRef<Path>, overrides: &Override) -> Result<i32> {
+  async fn lint(&self, resource: impl AsRef<Path>) -> Result<i32> {
     let path = resource.as_ref();
-
-    let matcher = overrides.matched(path, false);
-
-    if !matcher.is_whitelist() {
-      return Ok(0);
-    }
 
     let allocator = Allocator::default();
 
@@ -533,28 +522,11 @@ impl OxlintPlugin {
 
       let mut output = String::with_capacity(128);
 
-      let OxcCode { number, .. } = &error.code;
-
-      let number = number
-        .as_ref()
-        .map(|v| v.to_string())
-        .unwrap_or("Unknown".to_string());
-
-      if ["max-lines-per-function", "max-lines"]
-        .into_iter()
-        .any(|v| v == number)
-      {
-        self
-          .handler
-          .render_report(&mut output, &error)
-          .map_err(|e| rspack_error::Error::from_error(e))?;
-      } else {
-        let report = error.with_source_code(named_source.clone());
-        self
-          .handler
-          .render_report(&mut output, report.as_ref())
-          .map_err(|e| rspack_error::Error::from_error(e))?;
-      }
+      let report = error.with_source_code(named_source.clone());
+      self
+        .handler
+        .render_report(&mut output, report.as_ref())
+        .map_err(|e| rspack_error::Error::from_error(e))?;
 
       eprintln!("{}", output);
     }
@@ -593,7 +565,10 @@ pub(crate) async fn this_compilation(
 ) -> Result<()> {
   let context = compilation.options.context.as_path();
 
+  let overrides = Self::build_overrides(context).expect("Failed to build ignore overrides.");
+
   let files = WalkBuilder::new(context)
+    .overrides(overrides)
     .build()
     .filter_map(|e| e.ok())
     .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
@@ -609,7 +584,7 @@ pub(crate) async fn this_compilation(
       cache.insert(resource);
     };
 
-    let count = self.lint(&file, &self.overrides).await?;
+    let count = self.lint(&file).await?;
 
     error_count += count;
   }
@@ -637,6 +612,14 @@ pub(crate) async fn succeed_module(
 
   let resource = normal_module.resource_resolved_data().resource();
 
+  let overrides = Self::build_overrides("/").expect("Failed to build ignore overrides.");
+
+  let matcher = overrides.matched(resource, false);
+
+  if !matcher.is_whitelist() {
+    return Ok(());
+  }
+
   let is_lint = if let Ok(mut cache) = CACHE.lock() {
     if cache.contains(resource) {
       cache.remove(resource);
@@ -649,7 +632,7 @@ pub(crate) async fn succeed_module(
   };
 
   if is_lint {
-    self.lint(resource, &self.overrides).await?;
+    self.lint(resource).await?;
   }
 
   Ok(())
