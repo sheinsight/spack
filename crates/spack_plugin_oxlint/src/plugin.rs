@@ -6,7 +6,6 @@ use std::{
 };
 
 use ignore::WalkBuilder;
-use lazy_static::lazy_static;
 use oxc::{
   allocator::Allocator,
   diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
@@ -40,11 +39,6 @@ pub struct OxlintPluginOpts {
 
 pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 
-lazy_static! {
-  static ref CACHE: Mutex<FxHashSet<String>> = Mutex::new(FxHashSet::default());
-  static ref IS_INITIALIZED: Mutex<bool> = Mutex::new(true);
-}
-
 #[plugin]
 #[derive(Debug)]
 pub struct OxlintPlugin {
@@ -52,6 +46,8 @@ pub struct OxlintPlugin {
   options: OxlintPluginOpts,
   linter: Arc<Linter>,
   handler: Arc<GraphicalReportHandler>,
+  cache: Arc<Mutex<FxHashSet<String>>>,
+  initialized: Arc<Mutex<bool>>,
 }
 
 impl OxlintPlugin {
@@ -84,7 +80,10 @@ impl OxlintPlugin {
         .with_link_display_text("View in editor")
         .with_theme(GraphicalTheme::unicode()),
     );
-    Self::new_inner(options, linter, handler)
+
+    let cache = Arc::new(Mutex::new(FxHashSet::default()));
+
+    Self::new_inner(options, linter, handler, cache, Arc::new(Mutex::new(false)))
   }
 }
 
@@ -564,9 +563,9 @@ pub(crate) async fn this_compilation(
   compilation: &mut Compilation,
   _params: &mut CompilationParams,
 ) -> Result<()> {
-  if let Ok(mut is_initialized) = IS_INITIALIZED.lock() {
-    if *is_initialized {
-      *is_initialized = false;
+  if let Ok(mut initialized) = self.initialized.lock() {
+    if !*initialized {
+      *initialized = true;
     } else {
       return Ok(());
     }
@@ -589,7 +588,7 @@ pub(crate) async fn this_compilation(
   for file in files {
     let resource = file.to_string_lossy().into_owned();
 
-    if let Ok(mut cache) = CACHE.lock() {
+    if let Ok(mut cache) = self.cache.lock() {
       cache.insert(resource);
     };
 
@@ -629,7 +628,8 @@ pub(crate) async fn succeed_module(
     return Ok(());
   }
 
-  let should_lint = CACHE
+  let should_lint = self
+    .cache
     .lock()
     .map(|mut cache| !cache.remove(resource))
     .unwrap_or(true);
