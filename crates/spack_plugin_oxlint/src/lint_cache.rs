@@ -27,34 +27,41 @@ use oxc_linter::Message;
 /// - **无锁操作**: 读取计数无需加锁，零开销
 /// - **实时更新**: 在 `insert_cache`/`remove_from_cache` 时同步更新计数
 ///
+/// ### 使用 DashSet 替代 DashMap<String, ()>
+/// - **语义清晰**: `DashSet<String>` 明确表达集合语义，不需要 `()` 占位值
+/// - **API 简洁**: `insert(key)` 直接返回 bool，相比 `insert(key, ()).is_none()` 更直观
+/// - **无锁并发**: 与 DashMap 相同的性能优势
+///
 /// ### 使用 AtomicBool 替代 Mutex<bool>
-/// - **原子 CAS 操作**: `is_first_run()` 使用 compare_exchange 原子性地检查并修改
+/// - **原子 CAS 操作**: `mark_as_initialized_once()` 使用 compare_exchange 原子性地检查并修改
 /// - **无锁**: 不需要 Mutex，更轻量
 ///
 /// ## 缓存调度逻辑
 ///
-/// ### 首次启动流程（is_first_run() = true）
+/// ### 首次启动流程（mark_as_initialized_once() = true）
 /// ```text
 /// 1. this_compilation hook 触发
-///    ├─> is_first_run() 返回 true（首次启动）
+///    ├─> mark_as_initialized_once() 返回 true（首次启动）
 ///    ├─> clear_linted_files() 清空 linted_files
 ///    ├─> 遍历项目所有文件
 ///    │   ├─> mark_files_as_linted() 批量标记文件为已检查
 ///    │   ├─> 逐个调用 lint_runner.lint()
 ///    │   └─> insert_cache() 存储 lint 结果（自动更新计数器）
-///    └─> get_error_count() O(1) 读取计数器
+///    └─> 不在此处读取错误计数（等待 finish_modules）
 ///
 /// 2. succeed_module hook 触发（每个模块编译成功后）
-///    ├─> is_file_linted() 检查文件是否已处理
-///    └─> 返回 true（在步骤1已标记）→ 跳过，避免重复 lint
+///    ├─> try_mark_as_linted() 检查并标记文件
+///    └─> 返回 false（在步骤1已标记）→ 跳过，避免重复 lint
+///
+/// 3. finish_modules hook 触发（所有模块处理完成后）
+///    └─> get_error_count() O(1) 读取最终计数器
 /// ```
 ///
-/// ### 热更新流程（is_first_run() = false）
+/// ### 热更新流程（mark_as_initialized_once() = false）
 /// ```text
 /// 1. this_compilation hook 触发（文件变更后）
-///    ├─> is_first_run() 返回 false（非首次）
+///    ├─> mark_as_initialized_once() 返回 false（非首次）
 ///    ├─> clear_linted_files() 清空 linted_files（开启新周期）
-///    ├─> get_error_count() O(1) 原子读取（无需遍历）
 ///    └─> 不执行全量 lint（跳过遍历文件步骤）
 ///
 /// 2. succeed_module hook 触发（变更的模块重新编译）
@@ -64,13 +71,16 @@ use oxc_linter::Message;
 ///    └─> 更新 cache（自动更新计数器）
 ///        ├─> 有错误: insert_cache() → 计数器 +new -old
 ///        └─> 无错误: remove_from_cache() → 计数器 -old
+///
+/// 3. finish_modules hook 触发（所有模块处理完成后）
+///    └─> get_error_count() O(1) 读取最终计数器（准确反映本轮结果）
 /// ```
 ///
 /// ## 并发安全与性能
 ///
-/// - **DashMap**: 无锁并发读，细粒度写锁，适合高并发场景
+/// - **DashMap/DashSet**: 无锁并发读，细粒度写锁，适合高并发场景
 /// - **AtomicBool/AtomicUsize**: CPU 级别的原子操作，无需系统锁
-/// - **原子 CAS**: `try_mark_as_linted()` 使用原子操作防止竞态条件
+/// - **原子 CAS**: `try_mark_as_linted()` 使用 DashSet 的原子 insert 防止竞态条件
 #[derive(Debug)]
 pub struct LintCache {
   /// 初始化标志（应用级别）- 使用 AtomicBool 替代 Mutex<bool>
@@ -78,7 +88,7 @@ pub struct LintCache {
   /// - `false`: 插件首次运行，需要执行全量 lint
   /// - `true`: 后续运行，只需增量 lint
   ///
-  /// **优化**: 使用原子 bool，`is_first_run()` 通过 compare_exchange 实现无锁操作
+  /// **优化**: 使用原子 bool，`mark_as_initialized_once()` 通过 compare_exchange 实现无锁操作
   initialized: Arc<AtomicBool>,
 
   /// 当前编译周期已检查的文件集（周期级别）- 使用 DashSet 替代 Mutex<HashSet>
@@ -288,9 +298,13 @@ impl LintCache {
 
   /// 获取总错误数（O(1) 原子读取，无锁）
   ///
-  /// **时机**: 在 `this_compilation` 结束时调用，生成 rspack diagnostic
+  /// **时机**: 在 `finish_modules` hook 中调用，生成 rspack diagnostic
   ///
   /// **返回**: 错误数量（只统计 `Severity::Error`，不包括警告）
+  ///
+  /// **时序保证**:
+  /// - 在 `finish_modules` 中调用可确保所有 `succeed_module` 已完成
+  /// - 返回值准确反映当前编译周期的最终错误状态
   ///
   /// **性能对比**:
   /// - **旧实现**: O(n) 遍历所有文件的所有消息 + Mutex 锁
