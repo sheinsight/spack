@@ -1,25 +1,11 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use ignore::WalkBuilder;
 use rspack_core::{Compilation, CompilationParams, Plugin};
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 
-use crate::{
-  config::OxlintConfig, lint_cache::LintCache, lint_runner::LintRunner, Environment, Restricted,
-};
-
-#[derive(Debug, Clone)]
-pub struct OxlintPluginOpts {
-  pub output_dir: String,
-  pub show_warning: bool,
-  pub fail_on_error: bool,
-  pub restricted_imports: Vec<Restricted>,
-  pub restricted_globals: Vec<Restricted>,
-  pub globals: HashMap<String, bool>,
-  pub environments: Environment,
-  pub oxlint_config_file_path: Option<String>,
-}
+use crate::{lint_cache::LintCache, lint_runner::LintRunner, OxlintPluginOpts};
 
 pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 
@@ -34,20 +20,14 @@ pub struct OxlintPlugin {
 
 impl OxlintPlugin {
   pub fn new(options: OxlintPluginOpts) -> Self {
-    // 1. 构建配置（使用独立的 Config 模块）
-    let config = OxlintConfig::from_options(
-      &options.output_dir,
-      options.oxlint_config_file_path.as_deref(),
-      &options.restricted_imports,
-      &options.restricted_globals,
-      &options.globals,
-      &options.environments,
-    )
-    .expect("Failed to build oxlint config");
+    // 1. 构建配置
+    let oxlintrc = options
+      .build_oxlintrc()
+      .expect("Failed to build oxlint config");
 
     let lint_cache = Arc::new(LintCache::new());
 
-    let lint_runner = Arc::new(LintRunner::new(config.oxlintrc().clone(), options.show_warning));
+    let lint_runner = Arc::new(LintRunner::new(oxlintrc, options.show_warning));
 
     Self::new_inner(options, lint_runner, lint_cache)
   }
