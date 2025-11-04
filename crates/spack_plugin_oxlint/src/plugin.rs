@@ -102,23 +102,15 @@ pub(crate) async fn this_compilation(
   _params: &mut CompilationParams,
 ) -> Result<()> {
   // 检查并标记为已初始化（只有首次返回 true）
-  let is_initialized = self.lint_cache.mark_as_initialized_once();
+  let is_first_run = self.lint_cache.mark_as_initialized_once();
 
   // 每次 this_compilation 开始时，清空 linted_files（标记当前编译周期）
   // 这样后续热更新时，succeed_module 中的文件可以正常 lint
   self.lint_cache.clear_linted_files();
 
   // 只在首次启动时执行全量 lint
-  if !is_initialized {
-    // 后续热更新时，只更新 diagnostics，不执行全量 lint
-    let error_count = self.lint_cache.get_error_count();
-
-    let diagnostics = compilation.diagnostics_mut();
-    diagnostics.push(Diagnostic::error(
-      OX_LINT_PLUGIN_IDENTIFIER.into(),
-      format!("Lint errors in total: {}", error_count),
-    ));
-
+  // 热更新时跳过（succeed_module 会处理变更的文件）
+  if !is_first_run {
     return Ok(());
   }
 
@@ -159,6 +151,8 @@ pub(crate) async fn this_compilation(
 
 #[plugin_hook(rspack_core::CompilationFinishModules for OxlintPlugin)]
 pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Result<()> {
+  // 在所有 succeed_module 完成后，读取最终的错误计数
+  // 此时计数器已经包含了本轮编译的所有 lint 结果
   let error_count = self.lint_cache.get_error_count();
 
   let diagnostics = compilation.diagnostics_mut();
@@ -166,6 +160,14 @@ pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Resu
     OX_LINT_PLUGIN_IDENTIFIER.into(),
     format!("Lint errors in total: {}", error_count),
   ));
+
+  // 生产环境下，如果有错误且配置了 fail_on_error，则终止构建
+  if error_count > 0 && !compilation.options.mode.is_development() && self.options.fail_on_error {
+    return Err(rspack_error::Error::error(format!(
+      "Lint errors in total: {}",
+      error_count
+    )));
+  }
 
   Ok(())
 }
