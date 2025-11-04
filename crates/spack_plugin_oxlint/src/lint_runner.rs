@@ -161,4 +161,3 @@ impl LintRunner {
     return Ok(messages);
   }
 }
-

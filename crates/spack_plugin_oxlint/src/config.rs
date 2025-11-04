@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::Path};
 
 use oxc_linter::Oxlintrc;
-use serde_json::json;
+use serde_json::{Value, from_value, json, to_value};
 
 use crate::{Environment, Restricted};
 
@@ -27,7 +27,7 @@ impl OxlintPluginOpts {
     if let Some(file_path) = &self.oxlint_config_file_path {
       Self::load_from_file(file_path)
     } else {
-      self.generate_oxlintrc()
+      self.build_inner_oxlintrc()
     }
   }
 
@@ -42,9 +42,10 @@ impl OxlintPluginOpts {
   }
 
   /// 从选项生成配置
-  fn generate_oxlintrc(&self) -> Result<Oxlintrc, String> {
+  fn build_inner_oxlintrc(&self) -> Result<Oxlintrc, String> {
     // 1. 构建 JSON 配置
-    let config_json = self.build_config_json()
+    let config_json = self
+      .build_config_json()
       .map_err(|e| format!("Failed to build config JSON: {}", e))?;
 
     // 2. 写入配置文件（用于调试和审计）
@@ -52,18 +53,18 @@ impl OxlintPluginOpts {
     write_config_file(&config_json, &config_output_path, &self.output_dir)?;
 
     // 3. 反序列化为 Oxlintrc
-    serde_json::from_value::<Oxlintrc>(config_json)
+    from_value::<Oxlintrc>(config_json)
       .map_err(|e| format!("Failed to deserialize Oxlintrc: {}", e))
   }
 
   /// 构建 Oxlint 配置的 JSON 表示
   ///
   /// 包含所有 lint 规则、环境、全局变量等配置
-  fn build_config_json(&self) -> serde_json::Result<serde_json::Value> {
-    let restricted_imports = serde_json::to_value(&self.restricted_imports)?;
-    let restricted_globals = serde_json::to_value(&self.restricted_globals)?;
-    let globals = serde_json::to_value(&self.globals)?;
-    let environments = serde_json::to_value(&self.environments)?;
+  fn build_config_json(&self) -> serde_json::Result<Value> {
+    let restricted_imports = to_value(&self.restricted_imports)?;
+    let restricted_globals = to_value(&self.restricted_globals)?;
+    let globals = to_value(&self.globals)?;
+    let environments = to_value(&self.environments)?;
 
     let config = json!({
       "plugins": [
