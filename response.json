@@ -1,5 +1,5 @@
 {
-  "timestamp": 1762258531140,
+  "timestamp": 1762260194576,
   "buildTime": 0,
   "summary": {
     "totalModules": 3,
@@ -26,20 +26,6 @@
       "dependencies": []
     },
     {
-      "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
-      "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
-      "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
-      "size": {
-        "original": 7500,
-        "minified": 7500,
-        "gzipped": 2250
-      },
-      "moduleType": "javascript",
-      "source": "src",
-      "isEntry": false,
-      "dependencies": []
-    },
-    {
       "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
       "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
       "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
@@ -51,6 +37,20 @@
       "moduleType": "javascript",
       "source": "src",
       "isEntry": true,
+      "dependencies": []
+    },
+    {
+      "id": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "size": {
+        "original": 7500,
+        "minified": 7500,
+        "gzipped": 2250
+      },
+      "moduleType": "javascript",
+      "source": "src",
+      "isEntry": false,
       "dependencies": []
     }
   ],
@@ -94,11 +94,11 @@
       "dependencies": []
     },
     {
-      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
+      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
       "dependencies": []
     },
     {
-      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/utils.ts",
+      "moduleId": "/Users/10015448/Git/spack/tests/fixtures/bundle_analyzer_test/src/helper.ts",
       "dependencies": []
     }
   ],
@@ -177,15 +177,15 @@
         "moduleType": "javascript"
       },
       {
-        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
-        "size": 7500,
-        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
-        "moduleType": "javascript"
-      },
-      {
         "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
         "size": 7400,
         "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "moduleType": "javascript"
+      },
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "size": 7500,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
         "moduleType": "javascript"
       }
     ],
@@ -197,15 +197,15 @@
         "level": 6
       },
       {
-        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
-        "value": 7500,
-        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
-        "level": 6
-      },
-      {
         "name": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
         "value": 7400,
         "path": "./tests/fixtures/bundle_analyzer_test/src/utils.ts",
+        "level": 6
+      },
+      {
+        "name": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
+        "value": 7500,
+        "path": "./tests/fixtures/bundle_analyzer_test/src/helper.ts",
         "level": 6
       }
     ]

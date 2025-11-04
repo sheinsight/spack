@@ -60,6 +60,7 @@ swc_core = { version = "=38.0.0", default-features = false, features = [
 derive_more = { version = "1.0.0", features = ["debug"] }
 futures     = { version = "0.3.31" }
 rustc-hash  = { version = "2.1.1" }
+dashmap     = { version = "6.1.0" }
 
 ustr = { package = "ustr-fxhash", version = "1.0.1", default-features = false }
 

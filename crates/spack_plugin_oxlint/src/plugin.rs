@@ -189,19 +189,15 @@ pub(crate) async fn succeed_module(
     return Ok(());
   }
 
-  // 检查文件是否在当前编译周期中已经 lint 过
-  // 首次启动时：如果文件在全量 lint 中处理过，跳过（避免重复）
-  // 后续热更新时：linted_files 已在 this_compilation 中清空，所以会正常 lint
-  let should_lint = !self.lint_cache.is_file_linted(resource);
-
-  if should_lint {
-    // 执行 lint
+  // 原子性地检查并标记文件为已 lint
+  // - 首次标记（返回 true）：执行 lint
+  // - 已存在（返回 false）：跳过，避免重复 lint
+  // 使用 try_mark_as_linted 避免竞态条件（检查和标记是原子操作）
+  if self.lint_cache.try_mark_as_linted(resource.to_string()) {
+    // 首次标记，执行 lint
     let messages = self.lint_runner.lint(resource).await?;
 
-    // 标记为已 lint（避免同一个编译周期内重复 lint）
-    self.lint_cache.mark_file_as_linted(resource.to_string());
-
-    // 更新 cache
+    // 更新 cache（自动更新错误计数器）
     if !messages.is_empty() {
       self.lint_cache.insert_cache(resource.to_string(), messages);
     } else {

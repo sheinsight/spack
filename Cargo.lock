@@ -6248,6 +6248,7 @@ dependencies = [
 name = "spack_plugin_oxlint"
 version = "0.1.0"
 dependencies = [
+ "dashmap 6.1.0",
  "ignore",
  "oxc",
  "oxc_linter",
