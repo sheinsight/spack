@@ -102,7 +102,7 @@ pub(crate) async fn this_compilation(
   _params: &mut CompilationParams,
 ) -> Result<()> {
   // 检查并标记为已初始化（只有首次返回 true）
-  let is_first_run = self.lint_cache.mark_as_initialized_once();
+  let is_initialized = self.lint_cache.mark_as_initialized_once();
 
   // 每次 this_compilation 开始时，清空 linted_files（标记当前编译周期）
   // 这样后续热更新时，succeed_module 中的文件可以正常 lint
@@ -110,7 +110,7 @@ pub(crate) async fn this_compilation(
 
   // 只在首次启动时执行全量 lint
   // 热更新时跳过（succeed_module 会处理变更的文件）
-  if !is_first_run {
+  if !is_initialized {
     return Ok(());
   }
 
@@ -209,17 +209,6 @@ pub(crate) async fn succeed_module(
       self.lint_cache.remove_from_cache(resource);
     }
   }
-
-  // let should_lint = self
-  //   .cache
-  //   .lock()
-  //   .map(|mut cache| !cache.remove(resource))
-  //   .unwrap_or(true);
-
-  // if should_lint {
-  //   eprintln!("succeed_module done");
-  //   self.lint(resource).await?;
-  // }
 
   Ok(())
 }
