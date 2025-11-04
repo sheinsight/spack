@@ -15,10 +15,10 @@ use oxc::{
 };
 use oxc_linter::{
   AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
-  FrameworkFlags, LintOptions, Linter, Oxlintrc,
+  FrameworkFlags, LintOptions, Linter, Message, Oxlintrc,
 };
 use rspack_core::{Compilation, CompilationParams, Plugin};
-use rspack_error::Result;
+use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
@@ -46,7 +46,8 @@ pub struct OxlintPlugin {
   options: OxlintPluginOpts,
   linter: Arc<Linter>,
   handler: Arc<GraphicalReportHandler>,
-  cache: Arc<Mutex<FxHashSet<String>>>,
+  cache: Arc<Mutex<FxHashMap<String, Vec<Message>>>>,
+  linted_files: Arc<Mutex<FxHashSet<String>>>,
   initialized: Arc<Mutex<bool>>,
 }
 
@@ -81,9 +82,18 @@ impl OxlintPlugin {
         .with_theme(GraphicalTheme::unicode()),
     );
 
-    let cache = Arc::new(Mutex::new(FxHashSet::default()));
+    let cache = Arc::new(Mutex::new(FxHashMap::default()));
 
-    Self::new_inner(options, linter, handler, cache, Arc::new(Mutex::new(false)))
+    let linted_files = Arc::new(Mutex::new(FxHashSet::default()));
+
+    Self::new_inner(
+      options,
+      linter,
+      handler,
+      cache,
+      linted_files,
+      Arc::new(Mutex::new(false)),
+    )
   }
 }
 
@@ -433,7 +443,7 @@ impl OxlintPlugin {
     config
   }
 
-  async fn lint(&self, resource: impl AsRef<Path>) -> Result<i32> {
+  async fn lint(&self, resource: impl AsRef<Path>) -> Result<Vec<Message>> {
     let path = resource.as_ref();
 
     let allocator = Allocator::default();
@@ -456,7 +466,7 @@ impl OxlintPlugin {
 
     if parser_return.panicked {
       eprintln!("Warning: Failed to parse file: {:?}", path);
-      return Ok(0);
+      return Ok(vec![]);
     }
 
     let program = allocator.alloc(&parser_return.program);
@@ -496,18 +506,18 @@ impl OxlintPlugin {
     let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
 
     if messages.is_empty() {
-      return Ok(0);
+      return Ok(vec![]);
     }
 
-    let mut error_count = 0;
+    let mut _error_count = 0;
     let mut _warning_count = 0;
 
-    for message in messages {
+    for message in messages.clone() {
       let error = message.error;
 
       let show = match error.severity {
         oxc::diagnostics::Severity::Error => {
-          error_count += 1;
+          _error_count += 1;
           true
         }
         oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
@@ -531,7 +541,7 @@ impl OxlintPlugin {
       eprintln!("{}", output);
     }
 
-    return Ok(error_count);
+    return Ok(messages);
   }
 }
 
@@ -563,14 +573,48 @@ pub(crate) async fn this_compilation(
   compilation: &mut Compilation,
   _params: &mut CompilationParams,
 ) -> Result<()> {
-  if let Ok(mut initialized) = self.initialized.lock() {
+  // 检查是否是首次启动
+  let is_first_run = if let Ok(mut initialized) = self.initialized.lock() {
     if !*initialized {
       *initialized = true;
+      true
     } else {
-      return Ok(());
+      false
     }
+  } else {
+    return Ok(());
+  };
+
+  // 每次 this_compilation 开始时，清空 linted_files（标记当前编译周期）
+  // 这样后续热更新时，succeed_module 中的文件可以正常 lint
+  if let Ok(mut linted_files) = self.linted_files.lock() {
+    linted_files.clear();
   }
 
+  // 只在首次启动时执行全量 lint
+  if !is_first_run {
+    // 后续热更新时，只更新 diagnostics，不执行全量 lint
+    let error_count = self
+      .cache
+      .lock()
+      .map(|c| {
+        c.values()
+          .flatten()
+          .filter(|m| m.error.severity == oxc::diagnostics::Severity::Error)
+          .count()
+      })
+      .unwrap_or(0);
+
+    let diagnostics = compilation.diagnostics_mut();
+    diagnostics.push(Diagnostic::error(
+      OX_LINT_PLUGIN_IDENTIFIER.into(),
+      format!("Lint errors in total: {}", error_count),
+    ));
+
+    return Ok(());
+  }
+
+  // 首次启动：执行全量 lint
   let context = compilation.options.context.as_path();
 
   let overrides = Self::build_overrides(context).expect("Failed to build ignore overrides.");
@@ -583,19 +627,43 @@ pub(crate) async fn this_compilation(
     .map(|e| e.path().to_owned())
     .collect::<Vec<_>>();
 
-  let mut error_count = 0;
+  // 记录所有 lint 过的文件（首次启动时，避免 succeed_module 重复 lint）
+  if let Ok(mut linted_files) = self.linted_files.lock() {
+    for file in &files {
+      let resource = file.to_string_lossy().into_owned();
+      linted_files.insert(resource);
+    }
+  }
 
   for file in files {
     let resource = file.to_string_lossy().into_owned();
 
-    if let Ok(mut cache) = self.cache.lock() {
-      cache.insert(resource);
-    };
+    let messages = self.lint(&file).await?;
 
-    let count = self.lint(&file).await?;
-
-    error_count += count;
+    if !messages.is_empty() {
+      if let Ok(mut cache) = self.cache.lock() {
+        cache.insert(resource, messages);
+      };
+    }
   }
+
+  let error_count = self
+    .cache
+    .lock()
+    .map(|c| {
+      c.values()
+        .flatten()
+        .filter(|m| m.error.severity == oxc::diagnostics::Severity::Error)
+        .count()
+    })
+    .unwrap_or(0);
+
+  let diagnostics = compilation.diagnostics_mut();
+
+  diagnostics.push(Diagnostic::error(
+    OX_LINT_PLUGIN_IDENTIFIER.into(),
+    format!("Lint errors in total: {}", error_count),
+  ));
 
   if error_count > 0 && !compilation.options.mode.is_development() && self.options.fail_on_error {
     return Err(rspack_error::Error::error(format!(
@@ -628,16 +696,47 @@ pub(crate) async fn succeed_module(
     return Ok(());
   }
 
-  let should_lint = self
-    .cache
-    .lock()
-    .map(|mut cache| !cache.remove(resource))
-    .unwrap_or(true);
+  // 检查文件是否在当前编译周期中已经 lint 过
+  // 首次启动时：如果文件在全量 lint 中处理过，跳过（避免重复）
+  // 后续热更新时：linted_files 已在 this_compilation 中清空，所以会正常 lint
+  let should_lint = if let Ok(linted_files) = self.linted_files.lock() {
+    !linted_files.contains(resource)
+  } else {
+    true
+  };
 
   if should_lint {
-    eprintln!("succeed_module done");
-    self.lint(resource).await?;
+    // 执行 lint
+    let messages = self.lint(resource).await?;
+
+    // 标记为已 lint（避免同一个编译周期内重复 lint）
+    if let Ok(mut linted_files) = self.linted_files.lock() {
+      linted_files.insert(resource.to_string());
+    }
+
+    // 更新 cache
+    if !messages.is_empty() {
+      if let Ok(mut cache) = self.cache.lock() {
+        cache.insert(resource.to_string(), messages);
+      }
+    } else {
+      // 如果没有错误，从 cache 中移除（如果之前有的话）
+      if let Ok(mut cache) = self.cache.lock() {
+        cache.remove(resource);
+      }
+    }
   }
+
+  // let should_lint = self
+  //   .cache
+  //   .lock()
+  //   .map(|mut cache| !cache.remove(resource))
+  //   .unwrap_or(true);
+
+  // if should_lint {
+  //   eprintln!("succeed_module done");
+  //   self.lint(resource).await?;
+  // }
 
   Ok(())
 }
