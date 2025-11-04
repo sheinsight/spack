@@ -1,29 +1,13 @@
-use std::{
-  collections::HashMap,
-  panic::{AssertUnwindSafe, catch_unwind},
-  path::Path,
-  sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use ignore::WalkBuilder;
-use oxc::{
-  allocator::Allocator,
-  diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
-  parser::Parser,
-  semantic::SemanticBuilder,
-  span::SourceType,
-};
-use oxc_linter::{
-  AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind,
-  FrameworkFlags, LintOptions, Linter, Message, Oxlintrc,
-};
+use oxc_linter::Oxlintrc;
 use rspack_core::{Compilation, CompilationParams, Plugin};
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
-use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 
-use crate::{Environment, Restricted};
+use crate::{Environment, Restricted, lint_cache::LintCache, lint_runner::LintRunner};
 
 #[derive(Debug, Clone)]
 pub struct OxlintPluginOpts {
@@ -44,56 +28,20 @@ pub const OX_LINT_PLUGIN_IDENTIFIER: &'static str = "Spack.OxlintPlugin";
 pub struct OxlintPlugin {
   #[allow(unused)]
   options: OxlintPluginOpts,
-  linter: Arc<Linter>,
-  handler: Arc<GraphicalReportHandler>,
-  cache: Arc<Mutex<FxHashMap<String, Vec<Message>>>>,
-  linted_files: Arc<Mutex<FxHashSet<String>>>,
-  initialized: Arc<Mutex<bool>>,
+  lint_runner: Arc<LintRunner>,
+  lint_cache: Arc<LintCache>,
 }
 
 impl OxlintPlugin {
   pub fn new(options: OxlintPluginOpts) -> Self {
     // 1. 构建配置
-    let config = Self::get_oxlintrc(&options);
+    let oxlintrc = Self::get_oxlintrc(&options);
 
-    // 3. 构建 linter
-    let mut external_plugin_store = ExternalPluginStore::default();
-    let config =
-      ConfigStoreBuilder::from_oxlintrc(true, config.clone(), None, &mut external_plugin_store)
-        .expect("Failed to build inner oxlintrc config store builder.")
-        .build(&external_plugin_store)
-        .expect("Failed to build oxlintrc config.");
+    let lint_cache = Arc::new(LintCache::new());
 
-    let linter = Arc::new(Linter::new(
-      LintOptions {
-        fix: FixKind::None,
-        framework_hints: FrameworkFlags::React,
-        report_unused_directive: Some(AllowWarnDeny::Deny),
-      },
-      ConfigStore::new(config, FxHashMap::default(), external_plugin_store),
-      None,
-    ));
+    let lint_runner = Arc::new(LintRunner::new(oxlintrc, options.show_warning));
 
-    // 4. 构建 handler
-    let handler = Arc::new(
-      GraphicalReportHandler::new()
-        .with_links(true)
-        .with_link_display_text("View in editor")
-        .with_theme(GraphicalTheme::unicode()),
-    );
-
-    let cache = Arc::new(Mutex::new(FxHashMap::default()));
-
-    let linted_files = Arc::new(Mutex::new(FxHashSet::default()));
-
-    Self::new_inner(
-      options,
-      linter,
-      handler,
-      cache,
-      linted_files,
-      Arc::new(Mutex::new(false)),
-    )
+    Self::new_inner(options, lint_runner, lint_cache)
   }
 }
 
@@ -442,107 +390,6 @@ impl OxlintPlugin {
     };
     config
   }
-
-  async fn lint(&self, resource: impl AsRef<Path>) -> Result<Vec<Message>> {
-    let path = resource.as_ref();
-
-    let allocator = Allocator::default();
-
-    let source_type =
-      SourceType::from_path(&path).map_err(|e| rspack_error::Error::from_error(e))?;
-
-    let source_code = tokio::fs::read_to_string(path).await?;
-
-    let parse_options = oxc::parser::ParseOptions {
-      parse_regular_expression: true,
-      allow_return_outside_function: false,
-      preserve_parens: true,
-      allow_v8_intrinsics: false,
-    };
-
-    let parser = Parser::new(&allocator, &source_code, source_type).with_options(parse_options);
-
-    let parser_return = parser.parse();
-
-    if parser_return.panicked {
-      eprintln!("Warning: Failed to parse file: {:?}", path);
-      return Ok(vec![]);
-    }
-
-    let program = allocator.alloc(&parser_return.program);
-
-    let semantic_builder_return = SemanticBuilder::new()
-      .with_check_syntax_error(true)
-      .with_cfg(true)
-      .build(program);
-
-    let semantic = semantic_builder_return.semantic;
-
-    let module_record = Arc::new(oxc_linter::ModuleRecord::new(
-      path,
-      &parser_return.module_record,
-      &semantic,
-    ));
-
-    let context_sub_hosts = ContextSubHost::new(semantic, module_record, 0);
-
-    let result = catch_unwind(AssertUnwindSafe(|| {
-      self
-        .linter
-        .run_with_disable_directives(path, vec![context_sub_hosts], &allocator)
-    }));
-
-    let (messages, _disable_directives) = match result {
-      Ok(result) => result,
-      Err(e) => {
-        eprintln!(
-          "Warning: Failed to process disable directives for {:?}, falling back to basic linting: {:?}",
-          &path, e,
-        );
-        (vec![], None)
-      }
-    };
-
-    let named_source = NamedSource::new(path.to_string_lossy(), source_code.clone());
-
-    if messages.is_empty() {
-      return Ok(vec![]);
-    }
-
-    let mut _error_count = 0;
-    let mut _warning_count = 0;
-
-    for message in messages.clone() {
-      let error = message.error;
-
-      let show = match error.severity {
-        oxc::diagnostics::Severity::Error => {
-          _error_count += 1;
-          true
-        }
-        oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-          _warning_count += 1;
-          self.options.show_warning
-        }
-      };
-
-      if !show {
-        continue;
-      }
-
-      let mut output = String::with_capacity(128);
-
-      let report = error.with_source_code(named_source.clone());
-      self
-        .handler
-        .render_report(&mut output, report.as_ref())
-        .map_err(|e| rspack_error::Error::from_error(e))?;
-
-      eprintln!("{}", output);
-    }
-
-    return Ok(messages);
-  }
 }
 
 impl Plugin for OxlintPlugin {
@@ -574,36 +421,16 @@ pub(crate) async fn this_compilation(
   _params: &mut CompilationParams,
 ) -> Result<()> {
   // 检查是否是首次启动
-  let is_first_run = if let Ok(mut initialized) = self.initialized.lock() {
-    if !*initialized {
-      *initialized = true;
-      true
-    } else {
-      false
-    }
-  } else {
-    return Ok(());
-  };
+  let is_first_run = self.lint_cache.is_first_run();
 
   // 每次 this_compilation 开始时，清空 linted_files（标记当前编译周期）
   // 这样后续热更新时，succeed_module 中的文件可以正常 lint
-  if let Ok(mut linted_files) = self.linted_files.lock() {
-    linted_files.clear();
-  }
+  self.lint_cache.clear_linted_files();
 
   // 只在首次启动时执行全量 lint
   if !is_first_run {
     // 后续热更新时，只更新 diagnostics，不执行全量 lint
-    let error_count = self
-      .cache
-      .lock()
-      .map(|c| {
-        c.values()
-          .flatten()
-          .filter(|m| m.error.severity == oxc::diagnostics::Severity::Error)
-          .count()
-      })
-      .unwrap_or(0);
+    let error_count = self.lint_cache.get_error_count();
 
     let diagnostics = compilation.diagnostics_mut();
     diagnostics.push(Diagnostic::error(
@@ -627,36 +454,26 @@ pub(crate) async fn this_compilation(
     .map(|e| e.path().to_owned())
     .collect::<Vec<_>>();
 
+  // 收集所有文件路径用于批量标记
+  let file_paths: Vec<String> = files
+    .iter()
+    .map(|f| f.to_string_lossy().into_owned())
+    .collect();
+
   // 记录所有 lint 过的文件（首次启动时，避免 succeed_module 重复 lint）
-  if let Ok(mut linted_files) = self.linted_files.lock() {
-    for file in &files {
-      let resource = file.to_string_lossy().into_owned();
-      linted_files.insert(resource);
-    }
-  }
+  self.lint_cache.mark_files_as_linted(&file_paths);
 
   for file in files {
     let resource = file.to_string_lossy().into_owned();
 
-    let messages = self.lint(&file).await?;
+    let messages = self.lint_runner.lint(&file).await?;
 
     if !messages.is_empty() {
-      if let Ok(mut cache) = self.cache.lock() {
-        cache.insert(resource, messages);
-      };
+      self.lint_cache.insert_cache(resource, messages);
     }
   }
 
-  let error_count = self
-    .cache
-    .lock()
-    .map(|c| {
-      c.values()
-        .flatten()
-        .filter(|m| m.error.severity == oxc::diagnostics::Severity::Error)
-        .count()
-    })
-    .unwrap_or(0);
+  let error_count = self.lint_cache.get_error_count();
 
   let diagnostics = compilation.diagnostics_mut();
 
@@ -699,31 +516,21 @@ pub(crate) async fn succeed_module(
   // 检查文件是否在当前编译周期中已经 lint 过
   // 首次启动时：如果文件在全量 lint 中处理过，跳过（避免重复）
   // 后续热更新时：linted_files 已在 this_compilation 中清空，所以会正常 lint
-  let should_lint = if let Ok(linted_files) = self.linted_files.lock() {
-    !linted_files.contains(resource)
-  } else {
-    true
-  };
+  let should_lint = !self.lint_cache.is_file_linted(resource);
 
   if should_lint {
     // 执行 lint
-    let messages = self.lint(resource).await?;
+    let messages = self.lint_runner.lint(resource).await?;
 
     // 标记为已 lint（避免同一个编译周期内重复 lint）
-    if let Ok(mut linted_files) = self.linted_files.lock() {
-      linted_files.insert(resource.to_string());
-    }
+    self.lint_cache.mark_file_as_linted(resource.to_string());
 
     // 更新 cache
     if !messages.is_empty() {
-      if let Ok(mut cache) = self.cache.lock() {
-        cache.insert(resource.to_string(), messages);
-      }
+      self.lint_cache.insert_cache(resource.to_string(), messages);
     } else {
       // 如果没有错误，从 cache 中移除（如果之前有的话）
-      if let Ok(mut cache) = self.cache.lock() {
-        cache.remove(resource);
-      }
+      self.lint_cache.remove_from_cache(resource);
     }
   }
 
