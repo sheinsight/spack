@@ -96,8 +96,8 @@ pub(crate) async fn this_compilation(
   compilation: &mut Compilation,
   _params: &mut CompilationParams,
 ) -> Result<()> {
-  // 检查是否是首次启动
-  let is_first_run = self.lint_cache.is_first_run();
+  // 检查并标记为已初始化（只有首次返回 true）
+  let is_first_run = self.lint_cache.mark_as_initialized_once();
 
   // 每次 this_compilation 开始时，清空 linted_files（标记当前编译周期）
   // 这样后续热更新时，succeed_module 中的文件可以正常 lint

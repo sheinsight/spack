@@ -119,14 +119,18 @@ impl LintCache {
     }
   }
 
-  /// 检查是否是首次运行（原子操作，无锁）
+  /// 检查并标记为已初始化（原子 CAS 操作，无锁）
   ///
   /// **行为**:
-  /// - 第一次调用: 返回 `true`，并将 `initialized` 设置为 `true`
-  /// - 后续调用: 返回 `false`
+  /// - 第一次调用: 返回 `true`，并将 `initialized` 标记为 `true`
+  /// - 后续调用: 返回 `false`（已经初始化过）
+  ///
+  /// **语义**: 此方法不是纯查询方法，而是带副作用的状态转换操作
+  /// - 名字体现了"标记"的副作用
+  /// - 返回值表示是否成功完成了首次标记
   ///
   /// **实现细节**:
-  /// - 使用 `compare_exchange` 原子操作
+  /// - 使用 `compare_exchange` 原子 CAS (Compare-And-Swap) 操作
   /// - 如果当前值是 `false`，则设置为 `true` 并返回 `Ok(false)`（旧值）
   /// - 如果当前值是 `true`，则返回 `Err(true)`（当前值）
   ///
@@ -136,13 +140,13 @@ impl LintCache {
   ///
   /// **示例**:
   /// ```rust
-  /// // 首次调用
-  /// let is_first = cache.is_first_run(); // true
+  /// // 首次调用（完成初始化标记）
+  /// let is_first = cache.mark_as_initialized_once(); // true
   ///
-  /// // 再次调用（热更新时）
-  /// let is_first = cache.is_first_run(); // false
+  /// // 再次调用（已经初始化过）
+  /// let is_first = cache.mark_as_initialized_once(); // false
   /// ```
-  pub fn is_first_run(&self) -> bool {
+  pub fn mark_as_initialized_once(&self) -> bool {
     // compare_exchange: 原子性地比较并交换
     // 参数: (期望值, 新值, 成功时的内存顺序, 失败时的内存顺序)
     self
@@ -153,7 +157,7 @@ impl LintCache {
         Ordering::SeqCst,    // 成功时使用顺序一致性
         Ordering::SeqCst,    // 失败时使用顺序一致性
       )
-      .is_ok() // Ok 表示成功从 false 改为 true（首次运行）
+      .is_ok() // Ok 表示成功从 false 改为 true（首次标记）
   }
 
   /// 清空当前编译周期的已检查文件集
