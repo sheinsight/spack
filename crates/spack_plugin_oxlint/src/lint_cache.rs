@@ -3,7 +3,7 @@ use std::sync::{
   atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use oxc::diagnostics;
 use oxc_linter::Message;
 
@@ -81,14 +81,14 @@ pub struct LintCache {
   /// **优化**: 使用原子 bool，`is_first_run()` 通过 compare_exchange 实现无锁操作
   initialized: Arc<AtomicBool>,
 
-  /// 当前编译周期已检查的文件集（周期级别）- 使用 DashMap 替代 Mutex<HashSet>
+  /// 当前编译周期已检查的文件集（周期级别）- 使用 DashSet 替代 Mutex<HashSet>
   ///
   /// - 每次 `this_compilation` 开始时通过 `clear_linted_files()` 清空
   /// - 用于防止同一编译周期内重复 lint 同一文件
-  /// - 使用 `DashMap<String, ()>` 模拟 HashSet
+  /// - `DashSet` 是 `DashMap<K, ()>` 的语义化封装，API 更简洁
   ///
-  /// **优化**: DashMap 支持无锁并发读，细粒度写锁
-  linted_files: Arc<DashMap<String, ()>>,
+  /// **优化**: DashSet 支持无锁并发读，细粒度写锁
+  linted_files: Arc<DashSet<String>>,
 
   /// Lint 结果缓存（持久级别）- 使用 DashMap 替代 Mutex<HashMap>
   ///
@@ -113,7 +113,7 @@ impl LintCache {
   pub fn new() -> Self {
     Self {
       initialized: Arc::new(AtomicBool::new(false)),
-      linted_files: Arc::new(DashMap::new()),
+      linted_files: Arc::new(DashSet::new()),
       cache: Arc::new(DashMap::new()),
       error_count: Arc::new(AtomicUsize::new(0)),
     }
@@ -152,10 +152,10 @@ impl LintCache {
     self
       .initialized
       .compare_exchange(
-        false,               // 期望当前值是 false
-        true,                // 如果是，则设置为 true
-        Ordering::SeqCst,    // 成功时使用顺序一致性
-        Ordering::SeqCst,    // 失败时使用顺序一致性
+        false,            // 期望当前值是 false
+        true,             // 如果是，则设置为 true
+        Ordering::SeqCst, // 成功时使用顺序一致性
+        Ordering::SeqCst, // 失败时使用顺序一致性
       )
       .is_ok() // Ok 表示成功从 false 改为 true（首次标记）
   }
@@ -182,8 +182,9 @@ impl LintCache {
   /// - `false`: 已存在，跳过 lint（防止重复）
   ///
   /// **优势**:
-  /// - 原子操作：`insert` 返回旧值，如果是 `None` 则表示首次插入
+  /// - 原子操作：`DashSet::insert` 返回 bool，直接表示是否首次插入
   /// - 避免竞态：不需要先 `contains` 再 `insert`，一次操作完成
+  /// - 语义清晰：相比 `DashMap<K, ()>`，DashSet 的 API 更简洁直观
   ///
   /// **示例**:
   /// ```rust
@@ -196,10 +197,10 @@ impl LintCache {
   /// // 如果返回 false，则跳过（已经 lint 过了）
   /// ```
   pub fn try_mark_as_linted(&self, path: String) -> bool {
-    // DashMap 的 insert 返回旧值（Option）
-    // None 表示首次插入 → 返回 true（需要 lint）
-    // Some(_) 表示已存在 → 返回 false（跳过 lint）
-    self.linted_files.insert(path, ()).is_none()
+    // DashSet::insert 返回 bool
+    // true 表示首次插入（需要 lint）
+    // false 表示已存在（跳过 lint）
+    self.linted_files.insert(path)
   }
 
   /// 批量标记多个文件为已检查
@@ -208,10 +209,10 @@ impl LintCache {
   ///
   /// **作用**: 避免后续 `succeed_module` 重复 lint 这些文件
   ///
-  /// **性能**: DashMap 支持并发插入，多个线程可以同时标记不同文件
+  /// **性能**: DashSet 支持并发插入，多个线程可以同时标记不同文件
   pub fn mark_files_as_linted(&self, files: &[String]) {
     for file in files {
-      self.linted_files.insert(file.clone(), ());
+      self.linted_files.insert(file.clone());
     }
   }
 
@@ -248,11 +249,17 @@ impl LintCache {
         .count();
 
       // 更新计数器：先加新的，再减旧的（避免中间状态为负数）
-      self.error_count.fetch_add(new_error_count, Ordering::Relaxed);
-      self.error_count.fetch_sub(old_error_count, Ordering::Relaxed);
+      self
+        .error_count
+        .fetch_add(new_error_count, Ordering::Relaxed);
+      self
+        .error_count
+        .fetch_sub(old_error_count, Ordering::Relaxed);
     } else {
       // 没有旧消息，直接加上新错误数
-      self.error_count.fetch_add(new_error_count, Ordering::Relaxed);
+      self
+        .error_count
+        .fetch_add(new_error_count, Ordering::Relaxed);
     }
   }
 
@@ -273,7 +280,9 @@ impl LintCache {
         .count();
 
       // 从计数器中减去
-      self.error_count.fetch_sub(old_error_count, Ordering::Relaxed);
+      self
+        .error_count
+        .fetch_sub(old_error_count, Ordering::Relaxed);
     }
   }
 
