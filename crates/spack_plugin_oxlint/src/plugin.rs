@@ -155,11 +155,13 @@ pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Resu
   // 此时计数器已经包含了本轮编译的所有 lint 结果
   let error_count = self.lint_cache.get_error_count();
 
-  let diagnostics = compilation.diagnostics_mut();
-  diagnostics.push(Diagnostic::error(
-    OX_LINT_PLUGIN_IDENTIFIER.into(),
-    format!("Lint errors in total: {}", error_count),
-  ));
+  if error_count > 0 {
+    let diagnostics = compilation.diagnostics_mut();
+    diagnostics.push(Diagnostic::error(
+      OX_LINT_PLUGIN_IDENTIFIER.into(),
+      format!("Lint errors in total: {}", error_count),
+    ));
+  }
 
   // 生产环境下，如果有错误且配置了 fail_on_error，则终止构建
   if error_count > 0 && !compilation.options.mode.is_development() && self.options.fail_on_error {
