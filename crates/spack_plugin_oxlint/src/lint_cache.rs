@@ -14,6 +14,7 @@ use oxc_linter::Message;
 /// 2. **本轮已检查文件集** (`linted_files`): 跟踪当前编译周期内已经 lint 过的文件（周期级别，每次 compilation 开始时清空）
 /// 3. **Lint 结果缓存** (`cache`): 存储所有文件的 lint 错误信息（持久级别，跨编译周期保持）
 /// 4. **错误计数器** (`error_count`): 原子计数器，实时维护总错误数（O(1) 查询）
+/// 5. **警告计数器** (`warning_count`): 原子计数器，实时维护总警告数（O(1) 查询）
 ///
 /// ## 性能优化
 ///
@@ -116,6 +117,14 @@ pub struct LintCache {
   ///
   /// **优化**: 原子计数器，无需遍历所有文件，避免锁竞争
   error_count: Arc<AtomicUsize>,
+
+  /// 总警告数计数器（实时维护）
+  ///
+  /// - 在 `insert_cache`/`remove_from_cache` 时同步更新
+  /// - `get_warning_count()` 直接读取，O(1) 时间复杂度
+  ///
+  /// **优化**: 原子计数器，无需遍历所有文件，避免锁竞争
+  warning_count: Arc<AtomicUsize>,
 }
 
 impl LintCache {
@@ -126,6 +135,7 @@ impl LintCache {
       linted_files: Arc::new(DashSet::new()),
       cache: Arc::new(DashMap::new()),
       error_count: Arc::new(AtomicUsize::new(0)),
+      warning_count: Arc::new(AtomicUsize::new(0)),
     }
   }
 
@@ -246,36 +256,44 @@ impl LintCache {
     }
   }
 
-  /// 将文件的 lint 结果存入缓存，并更新错误计数器
+  /// 将文件的 lint 结果存入缓存，并更新错误和警告计数器
   ///
   /// **时机**: lint 完成后，发现有错误/警告时调用
   ///
   /// **作用**:
   /// - 持久化 lint 结果
-  /// - 同步更新 `error_count` 计数器（原子操作）
+  /// - 同步更新 `error_count` 和 `warning_count` 计数器（原子操作）
   ///
   /// **实现细节**:
-  /// 1. 计算新消息中的错误数量
+  /// 1. 计算新消息中的错误和警告数量
   /// 2. 插入新消息，获取旧消息（如果有）
-  /// 3. 如果有旧消息，计算旧错误数量
-  /// 4. 更新计数器：`+新错误数 -旧错误数`
+  /// 3. 如果有旧消息，计算旧错误和警告数量
+  /// 4. 更新计数器：`+新数量 -旧数量`
   ///
   /// **性能**:
   /// - DashMap 插入: 细粒度锁，只锁定单个分片
   /// - 原子计数: fetch_add/fetch_sub 无需额外锁
   pub fn insert_cache(&self, path: String, messages: Vec<Message>) {
-    // 计算新消息中的错误数量
+    // 计算新消息中的错误和警告数量
     let new_error_count = messages
       .iter()
       .filter(|m| m.error.severity == diagnostics::Severity::Error)
       .count();
+    let new_warning_count = messages
+      .iter()
+      .filter(|m| m.error.severity == diagnostics::Severity::Warning)
+      .count();
 
     // 插入新消息，获取旧消息
     if let Some(old_messages) = self.cache.insert(path, messages) {
-      // 有旧消息，计算旧错误数量
+      // 有旧消息，计算旧错误和警告数量
       let old_error_count = old_messages
         .iter()
         .filter(|m| m.error.severity == diagnostics::Severity::Error)
+        .count();
+      let old_warning_count = old_messages
+        .iter()
+        .filter(|m| m.error.severity == diagnostics::Severity::Warning)
         .count();
 
       // 更新计数器：先加新的，再减旧的（避免中间状态为负数）
@@ -285,34 +303,50 @@ impl LintCache {
       self
         .error_count
         .fetch_sub(old_error_count, Ordering::Relaxed);
+      self
+        .warning_count
+        .fetch_add(new_warning_count, Ordering::Relaxed);
+      self
+        .warning_count
+        .fetch_sub(old_warning_count, Ordering::Relaxed);
     } else {
-      // 没有旧消息，直接加上新错误数
+      // 没有旧消息，直接加上新错误和警告数
       self
         .error_count
         .fetch_add(new_error_count, Ordering::Relaxed);
+      self
+        .warning_count
+        .fetch_add(new_warning_count, Ordering::Relaxed);
     }
   }
 
-  /// 从缓存中移除文件的 lint 结果，并更新错误计数器
+  /// 从缓存中移除文件的 lint 结果，并更新错误和警告计数器
   ///
   /// **时机**: 热更新中 lint 某文件后，发现无错误时调用
   ///
-  /// **作用**: 清除该文件之前的旧错误（文件已修复），同步更新计数器
+  /// **作用**: 清除该文件之前的旧错误和警告（文件已修复），同步更新计数器
   ///
   /// **性能**: DashMap 的 remove 返回被移除的值，一次操作完成
   pub fn remove_from_cache(&self, path: &str) {
     // DashMap 的 remove 返回 Option<(K, V)>
     if let Some((_, old_messages)) = self.cache.remove(path) {
-      // 计算被移除消息的错误数量
+      // 计算被移除消息的错误和警告数量
       let old_error_count = old_messages
         .iter()
         .filter(|m| m.error.severity == diagnostics::Severity::Error)
+        .count();
+      let old_warning_count = old_messages
+        .iter()
+        .filter(|m| m.error.severity == diagnostics::Severity::Warning)
         .count();
 
       // 从计数器中减去
       self
         .error_count
         .fetch_sub(old_error_count, Ordering::Relaxed);
+      self
+        .warning_count
+        .fetch_sub(old_warning_count, Ordering::Relaxed);
     }
   }
 
@@ -357,5 +391,26 @@ impl LintCache {
     // Relaxed: 只保证原子性，不保证与其他操作的顺序
     // 对于计数器场景足够（最终一致性）
     self.error_count.load(Ordering::Relaxed)
+  }
+
+  /// 获取总警告数（O(1) 原子读取，无锁）
+  ///
+  /// **时机**: 在 `finish_modules` hook 中调用，生成 rspack diagnostic
+  ///
+  /// **返回**: 警告数量（只统计 `Severity::Warning`，不包括错误）
+  ///
+  /// **时序保证**:
+  /// - 在 `finish_modules` 中调用可确保所有 `succeed_module` 已完成
+  /// - 返回值准确反映当前编译周期的最终警告状态
+  ///
+  /// **性能对比**:
+  /// - **旧实现**: O(n) 遍历所有文件的所有消息 + Mutex 锁
+  /// - **新实现**: O(1) 原子读取 + 零锁开销
+  ///
+  /// **实现细节**:
+  /// - 计数器在 `insert_cache`/`remove_from_cache` 时实时维护
+  /// - 读取时只需一次原子 load 操作，无需遍历
+  pub fn get_warning_count(&self) -> usize {
+    self.warning_count.load(Ordering::Relaxed)
   }
 }
