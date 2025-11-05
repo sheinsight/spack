@@ -149,7 +149,16 @@ impl LintCache {
   /// - 避免了锁竞争和上下文切换
   ///
   /// **示例**:
-  /// ```rust,ignore
+  /// ```rust,no_run
+  /// # use std::sync::Arc;
+  /// # use std::sync::atomic::{AtomicBool, Ordering};
+  /// # struct LintCache { initialized: Arc<AtomicBool> }
+  /// # impl LintCache {
+  /// #     fn mark_as_initialized_once(&self) -> bool {
+  /// #         self.initialized.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_ok()
+  /// #     }
+  /// # }
+  /// # let cache = LintCache { initialized: Arc::new(AtomicBool::new(false)) };
   /// // 首次调用（完成初始化标记）
   /// let is_first = cache.mark_as_initialized_once(); // true
   ///
@@ -197,12 +206,23 @@ impl LintCache {
   /// - 语义清晰：相比 `DashMap<K, ()>`，DashSet 的 API 更简洁直观
   ///
   /// **示例**:
-  /// ```rust,ignore
+  /// ```rust,no_run
+  /// # use std::sync::Arc;
+  /// # use dashmap::DashSet;
+  /// # struct LintCache { linted_files: Arc<DashSet<String>> }
+  /// # impl LintCache {
+  /// #     fn try_mark_as_linted(&self, path: String) -> bool {
+  /// #         self.linted_files.insert(path)
+  /// #     }
+  /// # }
+  /// # let cache = LintCache { linted_files: Arc::new(DashSet::new()) };
+  /// # let resource = "file.rs";
   /// // 在 succeed_module 中
   /// if cache.try_mark_as_linted(resource.to_string()) {
-  ///   // 首次标记，执行 lint
-  ///   let messages = lint_runner.lint(resource).await?;
-  ///   cache.insert_cache(resource.to_string(), messages);
+  ///     // 首次标记，需要执行 lint
+  ///     // let messages = lint_runner.lint(resource).await?;
+  ///     // cache.insert_cache(resource.to_string(), messages);
+  ///     println!("File needs linting: {}", resource);
   /// }
   /// // 如果返回 false，则跳过（已经 lint 过了）
   /// ```
@@ -315,12 +335,22 @@ impl LintCache {
   /// - 读取时只需一次原子 load 操作，无需遍历
   ///
   /// **示例**:
-  /// ```rust,ignore
+  /// ```rust,no_run
+  /// # use std::sync::Arc;
+  /// # use std::sync::atomic::{AtomicUsize, Ordering};
+  /// # struct LintCache { error_count: Arc<AtomicUsize> }
+  /// # impl LintCache {
+  /// #     fn get_error_count(&self) -> usize {
+  /// #         self.error_count.load(Ordering::Relaxed)
+  /// #     }
+  /// # }
+  /// # let cache = LintCache { error_count: Arc::new(AtomicUsize::new(0)) };
   /// // 旧实现 (O(n) + 锁):
   /// // cache.lock().map(|c| c.values().flatten().filter(...).count())
   ///
   /// // 新实现 (O(1) + 无锁):
   /// let count = cache.get_error_count();
+  /// assert_eq!(count, 0);
   /// ```
   pub fn get_error_count(&self) -> usize {
     // 原子读取，使用 Relaxed 顺序（最低开销）
