@@ -149,7 +149,7 @@ impl LintCache {
   /// - 避免了锁竞争和上下文切换
   ///
   /// **示例**:
-  /// ```rust
+  /// ```rust,ignore
   /// // 首次调用（完成初始化标记）
   /// let is_first = cache.mark_as_initialized_once(); // true
   ///
@@ -197,7 +197,7 @@ impl LintCache {
   /// - 语义清晰：相比 `DashMap<K, ()>`，DashSet 的 API 更简洁直观
   ///
   /// **示例**:
-  /// ```rust
+  /// ```rust,ignore
   /// // 在 succeed_module 中
   /// if cache.try_mark_as_linted(resource.to_string()) {
   ///   // 首次标记，执行 lint
@@ -315,7 +315,7 @@ impl LintCache {
   /// - 读取时只需一次原子 load 操作，无需遍历
   ///
   /// **示例**:
-  /// ```rust
+  /// ```rust,ignore
   /// // 旧实现 (O(n) + 锁):
   /// // cache.lock().map(|c| c.values().flatten().filter(...).count())
   ///
