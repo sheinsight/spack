@@ -126,19 +126,12 @@ impl LintRunner {
       return Ok(vec![]);
     }
 
-    let mut _error_count = 0;
-    let mut _warning_count = 0;
-
     for message in messages.clone() {
       let error = message.error;
 
       let show = match error.severity {
-        oxc::diagnostics::Severity::Error => {
-          _error_count += 1;
-          true
-        }
+        oxc::diagnostics::Severity::Error => true,
         oxc::diagnostics::Severity::Warning | oxc::diagnostics::Severity::Advice => {
-          _warning_count += 1;
           self.show_warning
         }
       };
