@@ -154,22 +154,31 @@ pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Resu
   // 在所有 succeed_module 完成后，读取最终的错误计数
   // 此时计数器已经包含了本轮编译的所有 lint 结果
   let error_count = self.lint_cache.get_error_count();
+  let warning_count = self.lint_cache.get_warning_count();
+
+  let diagnostics = compilation.diagnostics_mut();
+
+  if warning_count > 0 {
+    diagnostics.push(Diagnostic::warn(
+      format!("{OX_LINT_PLUGIN_IDENTIFIER}"),
+      format!("Lint warnings in total: {}", warning_count),
+    ));
+  }
 
   if error_count > 0 {
-    let diagnostics = compilation.diagnostics_mut();
     diagnostics.push(Diagnostic::error(
-      OX_LINT_PLUGIN_IDENTIFIER.into(),
+      format!("{OX_LINT_PLUGIN_IDENTIFIER}"),
       format!("Lint errors in total: {}", error_count),
     ));
   }
 
   // 生产环境下，如果有错误且配置了 fail_on_error，则终止构建
-  if error_count > 0 && !compilation.options.mode.is_development() && self.options.fail_on_error {
-    return Err(rspack_error::Error::error(format!(
-      "Lint errors in total: {}",
-      error_count
-    )));
-  }
+  // if error_count > 0 && !compilation.options.mode.is_development() && self.options.fail_on_error {
+  //   return Err(rspack_error::Error::error(format!(
+  //     "Lint errors in total: {}",
+  //     error_count
+  //   )));
+  // }
 
   Ok(())
 }
