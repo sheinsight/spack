@@ -19,7 +19,7 @@ const ALIAS_NAME: &str = "@@";
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct UnifiedLoaderPluginOpts {
-  pub base_dir: String,
+  // pub base_dir: String,
   pub style_loader: Option<StyleLoaderOpts>,
 }
 
@@ -57,11 +57,11 @@ impl UnifiedLoaderPlugin {
       return Err(rspack_error::error!(err_msg.to_string()));
     }
 
-    let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
+    // let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
 
     if let Some(style_loader) = &self.options.style_loader {
-      let path = base_dir.join(&style_loader.output_dir);
-      StyleLoader::write_runtime(&path)?;
+      // let path = base_dir.join(&style_loader.output_dir);
+      StyleLoader::write_runtime(&Utf8PathBuf::from(&style_loader.output_dir))?;
     }
 
     Ok(())

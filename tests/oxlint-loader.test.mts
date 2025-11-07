@@ -12,16 +12,15 @@ const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], Raw
   (opt) => ({ ...opt })
 );
 
-const baseDir = path.resolve(__dirname, 'fixtures', 'oxlint-loader', 'src', '.lego');
+const outputDir = path.resolve(__dirname, 'fixtures', 'oxlint-loader', 'src', '.lego', 'lint');
 
 const plugin = new UnifiedPlugin({
-  baseDir,
-  styleLoader: {
-    outputDir: 'runtime',
-  },
+  // styleLoader: {
+  //   outputDir: 'runtime',
+  // },
   oxlint: {
     showWarning: true,
-    outputDir: 'lint',
+    outputDir,
     restrictedImports: [
       {
         name: 'lodash',

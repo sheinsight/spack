@@ -167,9 +167,10 @@ export interface RawStyleLoaderPluginOpts {
 }
 
 export interface RawUnifiedPluginOpts {
-  /** 输出目录 */
-  baseDir: string
-  /** style-loader 的配置 */
+  /**
+   * 输出目录
+   * style-loader 的配置
+   */
   styleLoader?: RawStyleLoaderPluginOpts
   /** oxlint-loader 的配置 */
   oxlint?: RawOxlintPluginOpts

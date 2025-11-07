@@ -7,7 +7,7 @@ use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
 #[derive(Debug)]
 pub struct UnifiedPluginOpts {
-  pub base_dir: String,
+  // pub base_dir: String,
   #[allow(unused)]
   pub style_loader: Option<StyleLoaderOpts>,
   #[allow(unused)]
@@ -39,7 +39,7 @@ impl Plugin for UnifiedPlugin {
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
     UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
       style_loader: self.options.style_loader.clone(),
-      base_dir: self.options.base_dir.clone(),
+      // base_dir: self.options.base_dir.clone(),
     })
     .apply(ctx)?;
 

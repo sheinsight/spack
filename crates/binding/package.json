@@ -33,7 +33,7 @@
     "create-npm-dirs": "napi create-npm-dirs",
     "artifacts": "napi artifacts ",
     "prepack": "clean-pkg-json",
-    "build": "napi build --platform --release",
+    "build": "napi build --platform --release --dts binding.d.ts",
     "build:dev": "node scripts/build.js",
     "build:debug": "node scripts/build.js --profile release-debug",
     "build:ci": "node scripts/build.js --profile ci",
