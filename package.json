@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "release": "node --experimental-strip-types --no-warnings release.mts ",
+    "prerelease": "node --experimental-strip-types --no-warnings release.mts prerelease",
     "oxlint:test": "bun run build:dev && bun run test ./tests/oxlint-loader.test.mts"
   },
   "homepage": "https://github.com/sheinsight/spack",
