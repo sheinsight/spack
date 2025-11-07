@@ -158,9 +158,9 @@ impl OxlintPluginOpts {
         "eslint/no-proto":[2],
         "eslint/no-regex-spaces":[2],
         // TODO: 添加 no-restricted-globals 规则
-        "no-restricted-globals": [2, restricted_globals],
+        "no-restricted-globals": [1, restricted_globals],
         // TODO: 添加 restricted-imports 规则
-        "no-restricted-imports": [2, {
+        "no-restricted-imports": [1, {
           "paths": restricted_imports
         }],
         "eslint/no-undefined":[0],
