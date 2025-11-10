@@ -33,10 +33,10 @@ rspack_util                   = "=0.5.8"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "0.6.0", default-features = false }
 
-oxc = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.23.0", package = "oxc", features = [
+oxc = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.26.0", package = "oxc", features = [
   "semantic",
 ] }
-oxc_linter = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.23.0", package = "oxc_linter" }
+oxc_linter = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.26.0", package = "oxc_linter" }
 
 napi                = { version = "=3.2.3", features = ["async", "tokio_rt", "serde-json", "anyhow", "napi7", "compat-mode"] }
 napi-build          = { version = "=2.2.3" }
@@ -57,10 +57,10 @@ swc_core = { version = "=38.0.0", default-features = false, features = [
   "__visit",
 ] }
 
+dashmap     = { version = "6.1.0" }
 derive_more = { version = "1.0.0", features = ["debug"] }
 futures     = { version = "0.3.31" }
 rustc-hash  = { version = "2.1.1" }
-dashmap     = { version = "6.1.0" }
 
 ustr = { package = "ustr-fxhash", version = "1.0.1", default-features = false }
 

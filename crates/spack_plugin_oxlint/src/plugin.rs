@@ -149,7 +149,7 @@ pub(crate) async fn this_compilation(
   Ok(())
 }
 
-#[plugin_hook(rspack_core::CompilationFinishModules for OxlintPlugin)]
+#[plugin_hook(rspack_core::CompilationFinishModules for OxlintPlugin,stage=rspack_core::Compilation::PROCESS_ASSETS_STAGE_REPORT)]
 pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Result<()> {
   // 在所有 succeed_module 完成后，读取最终的错误计数
   // 此时计数器已经包含了本轮编译的所有 lint 结果
