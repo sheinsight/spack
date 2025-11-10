@@ -6246,6 +6246,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "spack_plugin_friendly_errors"
+version = "0.1.0"
+dependencies = [
+ "rspack_core",
+ "rspack_error",
+ "rspack_hook",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "spack_plugin_oxlint"
 version = "0.1.0"
 dependencies = [

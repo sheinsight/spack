@@ -74,6 +74,7 @@ spack_plugin_bundle_analyzer      = { path = "crates/spack_plugin_bundle_analyze
 spack_plugin_case_sensitive_paths = { path = "crates/spack_plugin_case_sensitive_paths" }
 spack_plugin_demo                 = { path = "crates/spack_plugin_demo" }
 spack_plugin_duplicate_dependency = { path = "crates/spack_plugin_duplicate_dependency" }
+spack_plugin_friendly_errors      = { path = "crates/spack_plugin_friendly_errors" }
 spack_plugin_oxlint               = { path = "crates/spack_plugin_oxlint" }
 spack_plugin_unified              = { path = "crates/spack_plugin_unified" }
 

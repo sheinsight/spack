@@ -1,0 +1,18 @@
+[package]
+authors.workspace       = true
+categories.workspace    = true
+documentation.workspace = true
+edition.workspace       = true
+homepage.workspace      = true
+license.workspace       = true
+name                    = "spack_plugin_friendly_errors"
+repository.workspace    = true
+version.workspace       = true
+
+[dependencies]
+rspack_core  = { workspace = true }
+rspack_error = { workspace = true }
+rspack_hook  = { workspace = true }
+
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
