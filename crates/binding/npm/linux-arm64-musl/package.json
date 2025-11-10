@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-linux-arm64-musl",
-  "version": "0.5.8-0-canary.21",
+  "version": "0.5.8-0",
   "cpu": [
     "arm64"
   ],
