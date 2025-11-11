@@ -31,7 +31,7 @@ rspack_napi                   = "=0.6.1"
 rspack_paths                  = "=0.6.1"
 rspack_util                   = "=0.6.1"
 
-rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "=0.6.3", default-features = false }
+rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "=0.6.4", default-features = false }
 
 oxc = { git = "https://github.com/oxc-project/oxc.git", tag = "oxlint_v1.26.0", package = "oxc", features = [
   "semantic",

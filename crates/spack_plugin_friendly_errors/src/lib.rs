@@ -1,5 +1,5 @@
-use rspack_core::{ApplyContext, Plugin};
-use rspack_hook::plugin;
+use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
+use rspack_hook::{plugin, plugin_hook};
 
 const FRIENDLY_ERRORS_PLUGIN_IDENTIFIER: &str = "Spack.FriendlyErrorsPlugin";
 
@@ -24,7 +24,14 @@ impl Plugin for FriendlyErrorsPlugin {
     FRIENDLY_ERRORS_PLUGIN_IDENTIFIER
   }
 
-  fn apply(&self, _ctx: &mut ApplyContext) -> rspack_error::Result<()> {
+  fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
+    ctx.compiler_hooks.after_emit.tap(after_emit::new(self));
+
     Ok(())
   }
+}
+
+#[plugin_hook(CompilerAfterEmit for FriendlyErrorsPlugin)]
+async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Result<()> {
+  Ok(())
 }
