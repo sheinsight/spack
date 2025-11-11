@@ -31,8 +31,9 @@ impl Visit for ImportFinder {
       Str { value, .. } => value.as_str(),
     };
 
-    // 检查是否匹配目标 import
-    if import_source == self.target_request {
+    if let Some(import_source) = import_source
+      && import_source == self.target_request
+    {
       // 获取字符串字面量的位置
       let span = node.src.span();
       let start = span.lo.0 as usize;

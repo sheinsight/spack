@@ -14,22 +14,22 @@ repository    = "https://github.com/sheinsight/spack"
 version       = "0.1.0"
 
 [workspace.dependencies]
-rspack_binding_api            = "=0.5.8"
-rspack_binding_build          = "=0.5.8"
-rspack_binding_builder        = "=0.5.8"
-rspack_binding_builder_macros = "=0.5.8"
-rspack_cacheable              = "=0.5.8"
-rspack_collections            = "=0.5.8"
-rspack_core                   = "=0.5.8"
-rspack_error                  = "=0.5.8"
-rspack_fs                     = "=0.5.8"
-rspack_hash                   = "=0.5.8"
-rspack_hook                   = "=0.5.8"
-rspack_javascript_compiler    = "=0.5.8"
-rspack_loader_runner          = "=0.5.8"
-rspack_napi                   = "=0.5.8"
-rspack_paths                  = "=0.5.8"
-rspack_util                   = "=0.5.8"
+rspack_binding_api            = "=0.6.1"
+rspack_binding_build          = "=0.6.1"
+rspack_binding_builder        = "=0.6.1"
+rspack_binding_builder_macros = "=0.6.1"
+rspack_cacheable              = "=0.6.1"
+rspack_collections            = "=0.6.1"
+rspack_core                   = "=0.6.1"
+rspack_error                  = "=0.6.1"
+rspack_fs                     = "=0.6.1"
+rspack_hash                   = "=0.6.1"
+rspack_hook                   = "=0.6.1"
+rspack_javascript_compiler    = "=0.6.1"
+rspack_loader_runner          = "=0.6.1"
+rspack_napi                   = "=0.6.1"
+rspack_paths                  = "=0.6.1"
+rspack_util                   = "=0.6.1"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "=0.6.3", default-features = false }
 
@@ -47,7 +47,7 @@ lightningcss = { version = "1.0.0-alpha.67", default-features = false }
 
 rkyv = { version = "=0.8.8", default-features = false, features = ["std", "bytecheck"] }
 
-swc_core = { version = "=38.0.0", default-features = false, features = [
+swc_core = { version = "=46.0.3", default-features = false, features = [
   "parallel_rayon",
   "__base",
   "__ecma",
