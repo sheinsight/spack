@@ -197,7 +197,7 @@
       0
     ],
     "eslint/no-console": [
-      1
+      0
     ],
     "eslint/no-div-regex": [
       1
@@ -233,7 +233,7 @@
       2
     ],
     "no-restricted-globals": [
-      2,
+      1,
       [
         {
           "name": "window",
@@ -242,7 +242,7 @@
       ]
     ],
     "no-restricted-imports": [
-      2,
+      1,
       {
         "paths": [
           {
@@ -257,7 +257,7 @@
       }
     ],
     "eslint/no-undefined": [
-      1
+      0
     ],
     "eslint/no-var": [
       2
@@ -309,9 +309,11 @@
       }
     ],
     "eslint/max-classes-per-file": [
-      2,
+      1,
       {
-        "max": 1
+        "max": 1,
+        "skipBlankLines": false,
+        "skipComments": false
       }
     ],
     "eslint/max-depth": [
@@ -455,7 +457,7 @@
       0
     ],
     "oxc/no-async-await": [
-      1
+      0
     ],
     "oxc/no-barrel-file": [
       1
