@@ -17,6 +17,7 @@ const outputDir = path.resolve(__dirname, 'fixtures', 'css-loader', 'src', '.leg
 const plugin = new UnifiedPlugin({
   styleLoader: {
     outputDir,
+    importPrefix: '@@/runtime',
   },
 });
 

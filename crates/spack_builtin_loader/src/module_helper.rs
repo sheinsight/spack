@@ -1,26 +1,25 @@
-use std::path::PathBuf;
-
 use rspack_cacheable::cacheable;
 
 #[cacheable]
 #[derive(Debug, Clone)]
 pub struct ModuleHelper {
-  output_dir: String,
+  import_prefix: String,
 }
 
 impl ModuleHelper {
-  pub fn new(output_dir: &str) -> Self {
+  pub fn new(import_prefix: &str) -> Self {
     Self {
-      output_dir: output_dir.to_string(),
+      import_prefix: import_prefix.to_string(),
     }
   }
 
-  fn file_path_buf(&self, file_name: &str) -> PathBuf {
-    PathBuf::from("@@").join(&self.output_dir).join(file_name)
+  fn file_path(&self, file_name: &str) -> String {
+    // 使用正斜杠拼接路径，避免 Windows 反斜杠在 JS 字符串中被当作转义字符
+    format!("{}/{}", self.import_prefix, file_name)
   }
 
   pub fn file_name(&self, file_name: &str) -> String {
-    self.file_path_buf(file_name).to_string_lossy().to_string()
+    self.file_path(file_name)
   }
 
   pub fn file_name_with_bang(&self, file_name: &str) -> String {

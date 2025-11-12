@@ -66,6 +66,7 @@ pub struct StyleLoaderOpts {
   pub base: Option<i64>,
   pub insert: Option<String>,
   pub output_dir: String,
+  pub import_prefix: String,
   pub style_tag_transform: Option<String>,
   pub attributes: Option<HashMap<String, String>>,
 }
@@ -94,7 +95,7 @@ impl StyleLoader {
 
 impl StyleLoader {
   pub fn new(options: StyleLoaderOpts) -> Self {
-    let module_helper = ModuleHelper::new(&options.output_dir);
+    let module_helper = ModuleHelper::new(&options.import_prefix);
     Self {
       options,
       module_helper,
