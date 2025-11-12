@@ -12,7 +12,7 @@ const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], Raw
   (opt) => ({ ...opt })
 );
 
-const outputDir = path.resolve(__dirname, 'fixtures', 'css-loader', 'src', '.lego', 'runtime');
+const outputDir = path.resolve(__dirname, 'fixtures', 'style-loader', 'src', '.lego', 'runtime');
 
 const plugin = new UnifiedPlugin({
   styleLoader: {
