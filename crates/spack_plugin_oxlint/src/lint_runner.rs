@@ -142,7 +142,24 @@ impl LintRunner {
 
       let mut output = String::with_capacity(128);
 
-      let report = error.with_source_code(named_source.clone());
+      let number = error.as_ref().code.number.as_deref().unwrap_or_default();
+
+      let report = if [
+        "max-lines-per-function",
+        "max-classes-per-file",
+        "max-lines",
+      ]
+      .into_iter()
+      .any(|v| v == number)
+      {
+        error
+          .with_labels(Vec::<oxc::diagnostics::LabeledSpan>::new())
+          .with_source_code("code".to_string())
+      } else {
+        error.with_source_code(named_source.clone())
+      };
+
+      // let report = error.with_source_code(named_source.clone());
       self
         .handler
         .render_report(&mut output, report.as_ref())

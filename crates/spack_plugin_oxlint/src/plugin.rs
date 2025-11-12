@@ -160,14 +160,14 @@ pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Resu
 
   if warning_count > 0 {
     diagnostics.push(Diagnostic::warn(
-      format!("{OX_LINT_PLUGIN_IDENTIFIER}"),
+      OX_LINT_PLUGIN_IDENTIFIER.to_string(),
       format!("Lint warnings in total: {}", warning_count),
     ));
   }
 
   if error_count > 0 {
     diagnostics.push(Diagnostic::error(
-      format!("{OX_LINT_PLUGIN_IDENTIFIER}"),
+      OX_LINT_PLUGIN_IDENTIFIER.to_string(),
       format!("Lint errors in total: {}", error_count),
     ));
   }
