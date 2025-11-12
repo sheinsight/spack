@@ -130,7 +130,12 @@ impl StyleLoader {
     let resource = loader_context.resource();
     let request = loader_context.remaining_request();
     let request = request.display_with_suffix(resource);
+    let request = self.escape_for_js_string(request);
     format!("!!{request}")
+  }
+
+  fn escape_for_js_string(&self, s: String) -> String {
+    s.replace('\\', "\\\\")
   }
 
   fn get_attributes_module(&self) -> String {
