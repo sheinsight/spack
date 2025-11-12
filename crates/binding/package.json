@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding",
-  "version": "0.5.8-3",
+  "version": "0.5.8-4-canary.0",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
