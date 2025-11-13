@@ -165,7 +165,7 @@ pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Resu
     ));
   }
 
-  if error_count > 0 {
+  if error_count > 0 && self.options.fail_on_error {
     diagnostics.push(Diagnostic::error(
       OX_LINT_PLUGIN_IDENTIFIER.to_string(),
       format!("Lint errors in total: {}", error_count),
