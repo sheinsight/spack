@@ -1,6 +1,6 @@
 {
   "name": "@shined/monorepo",
-  "version": "0.5.8-4",
+  "version": "0.5.8-5-canary.0",
   "license": "MIT",
   "description": "Node binding for spack",
   "main": "binding.js",
