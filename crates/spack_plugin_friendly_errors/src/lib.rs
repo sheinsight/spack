@@ -33,7 +33,7 @@ impl Plugin for FriendlyErrorsPlugin {
 
 #[plugin_hook(CompilerAfterEmit for FriendlyErrorsPlugin)]
 async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Result<()> {
-  let diagnostics = compilation.diagnostics();
+  let _diagnostics = compilation.diagnostics();
 
   // for diagnostic in diagnostics.iter() {}
   Ok(())
