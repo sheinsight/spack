@@ -24,8 +24,37 @@ export default {
     rules: [
       {
         test: /\.css$/,
+        extractSourceMap: true,
         exclude: /node_modules/,
         use: ['builtin:style-loader', 'css-loader'],
+      },
+      {
+        test: /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts)$/,
+        type: 'javascript/auto',
+        extractSourceMap: true,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'builtin:swc-loader',
+            options: {
+              jsc: {
+                parser: {
+                  syntax: 'typescript',
+                  jsx: true,
+                  tsx: true,
+                  decorators: true,
+                },
+                // experimental: {
+                //   plugins: swc.plugins,
+                //   cacheRoot: 'node_modules/.cache/swc',
+                // },
+              },
+              // env: {
+              //   targets: targets,
+              // },
+            },
+          },
+        ],
       },
     ],
   },

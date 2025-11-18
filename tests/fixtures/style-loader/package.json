@@ -7,7 +7,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@shined/spack-binding": "workspace:*"
+    "@shined/spack-binding": "workspace:*",
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "css-loader": "catalog:"

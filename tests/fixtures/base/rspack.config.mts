@@ -16,4 +16,8 @@ export default {
   optimization: {
     minimize: false,
   },
+  stats: false,
+  infrastructureLogging: {
+    level: 'error',
+  },
 };
