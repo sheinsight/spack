@@ -106,6 +106,12 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
       }
     }
 
+    let banner_str = css_module_keys
+      .iter()
+      .map(|key| key.to_string())
+      .collect::<Vec<String>>()
+      .join(",");
+
     let dts_str = css_module_keys
       .iter()
       .map(|key| format!(r##"'{key}':string;"##))
@@ -114,6 +120,8 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
 
     let dts_str = format!(
       r#"
+// Please do not delete the comments, as they are used to determine content changes.
+// Banner: {banner_str}
 interface CssExports {{
   {dts_str}
 }}
@@ -125,10 +133,20 @@ export default cssExports;"#
       if dts_file_name.exists() {
         let existing_content = fs::read_to_string(&dts_file_name).await?;
 
-        let left_str = self.enforce_lf_line_separators(Some(&existing_content));
-        let right_str = self.enforce_lf_line_separators(Some(&dts_str));
+        // 提取出 banner 进行比较时忽略它
+        let banner_regex = regex::Regex::new(r"// Banner\s*:\s*(.*)").unwrap();
+        let existing_banner = banner_regex
+          .captures(&existing_content)
+          .and_then(|cap| cap.get(1).map(|m| m.as_str().trim().to_string()))
+          .unwrap_or_default();
 
-        if left_str != right_str {
+        let existing_keys = rspack_util::fx_hash::FxHashSet::from_iter(
+          existing_banner.split(',').map(|s| s.trim().to_string()),
+        );
+
+        let diff = css_module_keys.difference(&existing_keys);
+
+        if diff.count() > 0 {
           return Err(rspack_error::Error::error(format!(
             "TypeScript definitions do not match for {:?}. Please regenerate.",
             dts_file_name
