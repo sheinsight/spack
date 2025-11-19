@@ -5,6 +5,7 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::Result;
+use rspack_util::fx_hash::FxHashSet;
 use serde::Serialize;
 use strum_macros::EnumString;
 use tokio::fs;
@@ -65,11 +66,13 @@ impl CssModulesTsLoader {
     local_exports.to_string()
   }
 
-  pub fn enforce_lf_line_separators(&self, text: Option<&str>) -> Option<String> {
-    match text {
-      Some(s) => Some(s.replace("\r\n", "\n")),
-      None => None,
-    }
+  fn extract_banner_keys(&self, content: &str) -> FxHashSet<String> {
+    let banner_regex = regex::Regex::new(r"// Banner\s*:\s*(.*)").unwrap();
+    banner_regex
+      .captures(content)
+      .and_then(|cap| cap.get(1).map(|m| m.as_str().trim()))
+      .map(|banner| banner.split(',').map(|s| s.trim().to_string()).collect())
+      .unwrap_or_default()
   }
 }
 
@@ -94,9 +97,10 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
 
     let dts_file_name = self.filename_to_typings_filename(resource)?;
 
-    let mut css_module_keys = rspack_util::fx_hash::FxHashSet::default();
+    let mut css_module_keys = FxHashSet::default();
 
-    let key_regex = regex::Regex::new(r#""([^"\\]*(?:\\.[^"\\]*)*)""#).unwrap();
+    let key_regex = regex::Regex::new(r#""([^"\\]*(?:\\.[^"\\]*)*)""#)
+      .map_err(|e| rspack_error::Error::error(format!("Failed to compile regex: {}", e)))?;
 
     let local_exports = self.extract_local_exports(&source_str);
 
@@ -106,21 +110,18 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
       }
     }
 
-    let banner_str = css_module_keys
-      .iter()
-      .map(|key| key.to_string())
-      .collect::<Vec<String>>()
-      .join(",");
+    let keys_vec: Vec<String> = css_module_keys.iter().cloned().collect();
+
+    let banner_str = keys_vec.join(",");
 
     let dts_str = css_module_keys
       .iter()
       .map(|key| format!(r##"'{key}':string;"##))
-      .collect::<Vec<String>>()
+      .collect::<Vec<_>>()
       .join("\n");
 
-    let dts_str = format!(
-      r#"
-// Please do not delete the comments, as they are used to determine content changes.
+    let dts_content = format!(
+      r#"// Please do not delete the comments, as they are used to determine content changes.
 // Banner: {banner_str}
 interface CssExports {{
   {dts_str}
@@ -129,40 +130,34 @@ export const cssExports: CssExports;
 export default cssExports;"#
     );
 
-    if matches!(self.options.mode, Mode::VERIFY) {
-      if dts_file_name.exists() {
-        let existing_content = fs::read_to_string(&dts_file_name).await?;
+    if !matches!(self.options.mode, Mode::VERIFY) {
+      fs::write(&dts_file_name, dts_content).await?;
+      loader_context.finish_with((source, source_map));
+      return Ok(());
+    }
 
-        // 提取出 banner 进行比较时忽略它
-        let banner_regex = regex::Regex::new(r"// Banner\s*:\s*(.*)").unwrap();
-        let existing_banner = banner_regex
-          .captures(&existing_content)
-          .and_then(|cap| cap.get(1).map(|m| m.as_str().trim().to_string()))
-          .unwrap_or_default();
+    if !dts_file_name.exists() {
+      return Err(rspack_error::Error::error(format!(
+        "TypeScript definitions file {:?} does not exist. Please generate it.",
+        dts_file_name
+      )));
+    }
 
-        let existing_keys = rspack_util::fx_hash::FxHashSet::from_iter(
-          existing_banner.split(',').map(|s| s.trim().to_string()),
-        );
+    let existing_content = fs::read_to_string(&dts_file_name).await?;
 
-        let diff = css_module_keys.difference(&existing_keys);
+    let existing_keys = self.extract_banner_keys(&existing_content);
 
-        if diff.count() > 0 {
-          return Err(rspack_error::Error::error(format!(
-            "TypeScript definitions do not match for {:?}. Please regenerate.",
-            dts_file_name
-          )));
-        }
-      } else {
-        return Err(rspack_error::Error::error(format!(
-          "TypeScript definitions file {:?} does not exist. Please generate it.",
-          dts_file_name
-        )));
-      }
-    } else {
-      fs::write(&dts_file_name, dts_str).await?;
+    let diff = css_module_keys.difference(&existing_keys);
+
+    if diff.count() > 0 {
+      return Err(rspack_error::Error::error(format!(
+        "TypeScript definitions do not match for {:?}. Please regenerate.",
+        dts_file_name
+      )));
     }
 
     loader_context.finish_with((source, source_map));
+
     Ok(())
   }
 }

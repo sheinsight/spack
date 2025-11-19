@@ -10,7 +10,6 @@ use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
 #[derive(Debug)]
 pub struct UnifiedPluginOpts {
-  // pub base_dir: String,
   #[allow(unused)]
   pub style_loader: Option<StyleLoaderOpts>,
   #[allow(unused)]
@@ -45,7 +44,6 @@ impl Plugin for UnifiedPlugin {
     UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
       style_loader: self.options.style_loader.clone(),
       css_modules_ts: self.options.css_modules_ts.clone(),
-      // base_dir: self.options.base_dir.clone(),
     })
     .apply(ctx)?;
 
