@@ -10,7 +10,7 @@ use serde::Serialize;
 use strum_macros::EnumString;
 use tokio::fs;
 
-pub const CSS_MODULES_TS_LOADER_IDENTIFIER: &str = "builtin:css-modules-dts-loader";
+pub const CSS_MODULES_DTS_LOADER_IDENTIFIER: &str = "builtin:css-modules-dts-loader";
 
 #[cacheable]
 #[derive(EnumString, Debug, Clone, Serialize)]
@@ -80,7 +80,7 @@ impl CssModulesDtsLoader {
 #[cacheable_dyn]
 impl Loader<RunnerContext> for CssModulesDtsLoader {
   fn identifier(&self) -> Identifier {
-    CSS_MODULES_TS_LOADER_IDENTIFIER.into()
+    CSS_MODULES_DTS_LOADER_IDENTIFIER.into()
   }
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {

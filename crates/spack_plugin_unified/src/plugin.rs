@@ -43,7 +43,7 @@ impl Plugin for UnifiedPlugin {
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
     UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
       style_loader: self.options.style_loader.clone(),
-      css_modules_ts: self.options.css_modules_ts.clone(),
+      css_modules_dts_loader: self.options.css_modules_dts_loader.clone(),
     })
     .apply(ctx)?;
 

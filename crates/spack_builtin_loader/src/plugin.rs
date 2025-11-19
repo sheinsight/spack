@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use rspack_cacheable::cacheable;
 use rspack_core::{
-  Alias, ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader,
-  Plugin, Resolver,
+  ApplyContext, BoxLoader, Context, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, Plugin,
+  Resolver,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};
@@ -12,22 +12,18 @@ use serde::Serialize;
 
 use crate::{
   css_modules_dts_loader::{
-    CSS_MODULES_TS_LOADER_IDENTIFIER, CssModulesDtsLoader, CssModulesDtsLoaderOpts,
+    CSS_MODULES_DTS_LOADER_IDENTIFIER, CssModulesDtsLoader, CssModulesDtsLoaderOpts,
   },
   style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
 };
 
 pub const UNIFIED_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedLoaderPlugin";
 
-const ALIAS_NAME: &str = "@@";
-
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct UnifiedLoaderPluginOpts {
-  // pub base_dir: String,
   pub style_loader: Option<StyleLoaderOpts>,
-
-  pub css_modules_ts: Option<CssModulesDtsLoaderOpts>,
+  pub css_modules_dts_loader: Option<CssModulesDtsLoaderOpts>,
 }
 
 #[plugin]
@@ -42,32 +38,8 @@ impl UnifiedLoaderPlugin {
     Self::new_inner(options)
   }
 
-  pub fn write_runtime_by_alias(&self, alias_config: &Option<Alias>) -> Result<()> {
-    let err_msg = "UnifiedLoaderPlugin requires the alias '@@' to be configured.”";
-
-    let Some(alias) = alias_config else {
-      return Err(rspack_error::error!(err_msg.to_string()));
-    };
-
-    let tuple_aliases = match alias {
-      Alias::MergeAlias(items) => items,
-      Alias::OverwriteToNoAlias => {
-        return Err(rspack_error::error!(err_msg.to_string()));
-      }
-    };
-
-    let Some((_, aliases)) = tuple_aliases.iter().find(|(k, _v)| k == ALIAS_NAME) else {
-      return Err(rspack_error::error!(err_msg.to_string()));
-    };
-
-    if aliases.is_empty() {
-      return Err(rspack_error::error!(err_msg.to_string()));
-    }
-
-    // let base_dir = Utf8PathBuf::from(self.options.base_dir.clone());
-
+  pub fn write_runtime_by_alias(&self) -> Result<()> {
     if let Some(style_loader) = &self.options.style_loader {
-      // let path = base_dir.join(&style_loader.output_dir);
       StyleLoader::write_runtime(&Utf8PathBuf::from(&style_loader.output_dir))?;
     }
 
@@ -81,7 +53,7 @@ impl Plugin for UnifiedLoaderPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
-    self.write_runtime_by_alias(&ctx.compiler_options.resolve.alias)?;
+    self.write_runtime_by_alias()?;
 
     ctx
       .normal_module_factory_hooks
@@ -109,11 +81,11 @@ pub(crate) async fn resolve_loader(
     return Ok(Some(Arc::new(StyleLoader::new(style_loader.clone()))));
   }
 
-  if let Some(css_modules_ts) = &self.options.css_modules_ts
-    && loader_request.starts_with(CSS_MODULES_TS_LOADER_IDENTIFIER)
+  if let Some(css_modules_dts_loader_opts) = &self.options.css_modules_dts_loader
+    && loader_request.starts_with(CSS_MODULES_DTS_LOADER_IDENTIFIER)
   {
     return Ok(Some(Arc::new(CssModulesDtsLoader::new(
-      css_modules_ts.clone(),
+      css_modules_dts_loader_opts.clone(),
     ))));
   }
 

@@ -19,7 +19,7 @@ const plugin = new UnifiedPlugin({
     outputDir,
     importPrefix: '@@/runtime',
   },
-  cssModulesTs: {
+  cssModulesDtsLoader: {
     mode: binding.RawMode.VERIFY,
   },
 });
