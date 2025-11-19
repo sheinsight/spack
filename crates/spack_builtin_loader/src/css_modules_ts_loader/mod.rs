@@ -64,6 +64,13 @@ impl CssModulesTsLoader {
 
     local_exports.to_string()
   }
+
+  pub fn enforce_lf_line_separators(&self, text: Option<&str>) -> Option<String> {
+    match text {
+      Some(s) => Some(s.replace("\r\n", "\n")),
+      None => None,
+    }
+  }
 }
 
 #[async_trait]
@@ -87,7 +94,7 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
 
     let dts_file_name = self.filename_to_typings_filename(resource)?;
 
-    let mut css_module_keys = std::collections::HashSet::new();
+    let mut css_module_keys = rspack_util::fx_hash::FxHashSet::default();
 
     let key_regex = regex::Regex::new(r#""([^"\\]*(?:\\.[^"\\]*)*)""#).unwrap();
 
@@ -105,19 +112,37 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
       .collect::<Vec<String>>()
       .join("\n");
 
-    fs::write(
-      &dts_file_name,
-      format!(
-        r#"
-    interface CssExports {{
-      {dts_str}
-    }}
-    export const cssExports: CssExports;
-    export default cssExports;
-"#
-      ),
-    )
-    .await?;
+    let dts_str = format!(
+      r#"
+interface CssExports {{
+  {dts_str}
+}}
+export const cssExports: CssExports;
+export default cssExports;"#
+    );
+
+    if matches!(self.options.mode, Mode::VERIFY) {
+      if dts_file_name.exists() {
+        let existing_content = fs::read_to_string(&dts_file_name).await?;
+
+        let left_str = self.enforce_lf_line_separators(Some(&existing_content));
+        let right_str = self.enforce_lf_line_separators(Some(&dts_str));
+
+        if left_str != right_str {
+          return Err(rspack_error::Error::error(format!(
+            "TypeScript definitions do not match for {:?}. Please regenerate.",
+            dts_file_name
+          )));
+        }
+      } else {
+        return Err(rspack_error::Error::error(format!(
+          "TypeScript definitions file {:?} does not exist. Please generate it.",
+          dts_file_name
+        )));
+      }
+    } else {
+      fs::write(&dts_file_name, dts_str).await?;
+    }
 
     loader_context.finish_with((source, source_map));
     Ok(())

@@ -1,8 +1,8 @@
 
-    interface CssExports {
-      'hello':string;
-'button':string;
+interface CssExports {
+  'hello':string;
 'globalClass':string;
-    }
-    export const cssExports: CssExports;
-    export default cssExports;
+'button':string;
+}
+export const cssExports: CssExports;
+export default cssExports;
