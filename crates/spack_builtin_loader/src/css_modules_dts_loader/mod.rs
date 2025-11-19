@@ -10,7 +10,7 @@ use serde::Serialize;
 use strum_macros::EnumString;
 use tokio::fs;
 
-pub const CSS_MODULES_TS_LOADER_IDENTIFIER: &str = "builtin:css-modules-ts-loader";
+pub const CSS_MODULES_TS_LOADER_IDENTIFIER: &str = "builtin:css-modules-dts-loader";
 
 #[cacheable]
 #[derive(EnumString, Debug, Clone, Serialize)]

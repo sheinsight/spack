@@ -32,7 +32,7 @@ export default {
         exclude: /node_modules/,
         use: [
           'builtin:style-loader',
-          'builtin:css-modules-ts-loader',
+          'builtin:css-modules-dts-loader',
           {
             loader: 'css-loader',
             options: {
