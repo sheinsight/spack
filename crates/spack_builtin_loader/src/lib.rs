@@ -1,5 +1,6 @@
 #![recursion_limit = "1024"]
 mod css_loader;
+pub mod css_modules_ts_loader;
 mod module_helper;
 mod plugin;
 mod style_loader;

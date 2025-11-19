@@ -49,7 +49,9 @@ lightningcss = { workspace = true }
 miette       = { workspace = true }
 num-format   = { workspace = true }
 owo-colors   = { workspace = true }
+regex        = { workspace = true }
 ustr         = { workspace = true }
+
 
 [package.metadata.sailfish]
 template_dir = "templates"

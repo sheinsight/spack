@@ -22,10 +22,27 @@ export default {
   devtool: false,
   module: {
     rules: [
+      // {
+      //   test: /\.css$/,
+      //   exclude: /node_modules/,
+      //   use: ['builtin:style-loader', 'css-loader'],
+      // },
       {
         test: /\.css$/,
         exclude: /node_modules/,
-        use: ['builtin:style-loader', 'builtin:css-loader'],
+        use: [
+          'builtin:style-loader',
+          'builtin:css-modules-ts-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                namedExport: false,
+              },
+              esModule: true,
+            },
+          },
+        ],
       },
     ],
   },

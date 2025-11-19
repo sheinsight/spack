@@ -6117,6 +6117,7 @@ dependencies = [
  "owo-colors",
  "oxc",
  "oxc_linter",
+ "regex",
  "rspack_binding_api",
  "rspack_cacheable",
  "rspack_collections",

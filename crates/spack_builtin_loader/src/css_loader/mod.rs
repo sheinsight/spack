@@ -8,6 +8,8 @@ use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::Result;
 use serde::Serialize;
 
+pub const CSS_LOADER_IDENTIFIER: &str = "builtin:css-loader";
+
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
 pub struct CssLoaderOpts {}
@@ -73,8 +75,6 @@ impl CssLoader {
     Ok(())
   }
 }
-
-pub const CSS_LOADER_IDENTIFIER: &str = "builtin:css-loader";
 
 #[async_trait]
 #[cacheable_dyn]
