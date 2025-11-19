@@ -21,17 +21,17 @@ pub enum Mode {
 
 #[cacheable]
 #[derive(Debug, Clone, Serialize)]
-pub struct CssModulesTsLoaderOpts {
+pub struct CssModulesDtsLoaderOpts {
   pub mode: Mode,
 }
 
 #[cacheable]
-pub struct CssModulesTsLoader {
-  options: CssModulesTsLoaderOpts,
+pub struct CssModulesDtsLoader {
+  options: CssModulesDtsLoaderOpts,
 }
 
-impl CssModulesTsLoader {
-  pub fn new(options: CssModulesTsLoaderOpts) -> Self {
+impl CssModulesDtsLoader {
+  pub fn new(options: CssModulesDtsLoaderOpts) -> Self {
     Self { options }
   }
 
@@ -78,7 +78,7 @@ impl CssModulesTsLoader {
 
 #[async_trait]
 #[cacheable_dyn]
-impl Loader<RunnerContext> for CssModulesTsLoader {
+impl Loader<RunnerContext> for CssModulesDtsLoader {
   fn identifier(&self) -> Identifier {
     CSS_MODULES_TS_LOADER_IDENTIFIER.into()
   }
