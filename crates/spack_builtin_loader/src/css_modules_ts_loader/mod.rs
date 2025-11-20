@@ -14,7 +14,7 @@ pub const CSS_MODULES_DTS_LOADER_IDENTIFIER: &str = "builtin:css-modules-ts-load
 
 #[cacheable]
 #[derive(EnumString, Debug, Clone, Serialize)]
-#[strum(serialize_all = "kebab-case")]
+#[strum(serialize_all = "camelCase")]
 pub enum Mode {
   Verify,
   Emit,
