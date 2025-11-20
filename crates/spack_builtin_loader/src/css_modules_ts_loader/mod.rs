@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
-use rspack_error::Result;
+use rspack_error::{Diagnostic, Result};
 use rspack_util::fx_hash::FxHashSet;
 use serde::Serialize;
 use strum_macros::EnumString;
@@ -137,10 +137,17 @@ export default cssExports;"#
     }
 
     if !dts_file_name.exists() {
-      return Err(rspack_error::Error::error(format!(
-        "TypeScript definitions file {:?} does not exist. Please generate it.",
-        dts_file_name
-      )));
+      loader_context.diagnostics.push(Diagnostic::error(
+        CSS_MODULES_DTS_LOADER_IDENTIFIER.to_string(),
+        format!(
+          "TypeScript definitions file {:?} does not exist. Please generate it.",
+          dts_file_name
+        ),
+      ));
+      // return Err(rspack_error::Error::error(format!(
+      //   "TypeScript definitions file {:?} does not exist. Please generate it.",
+      //   dts_file_name
+      // )));
     }
 
     let existing_content = fs::read_to_string(&dts_file_name).await?;
@@ -150,10 +157,17 @@ export default cssExports;"#
     let diff = css_module_keys.difference(&existing_keys);
 
     if diff.count() > 0 {
-      return Err(rspack_error::Error::error(format!(
-        "TypeScript definitions do not match for {:?}. Please regenerate.",
-        dts_file_name
-      )));
+      loader_context.diagnostics.push(Diagnostic::error(
+        CSS_MODULES_DTS_LOADER_IDENTIFIER.to_string(),
+        format!(
+          "TypeScript definitions file {:?} does not exist. Please generate it.",
+          dts_file_name
+        ),
+      ));
+      // return Err(rspack_error::Error::error(format!(
+      //   "TypeScript definitions do not match for {:?}. Please regenerate.",
+      //   dts_file_name
+      // )));
     }
 
     loader_context.finish_with((source, source_map));
