@@ -20,7 +20,7 @@ const plugin = new UnifiedPlugin({
     importPrefix: '@@/runtime',
   },
   cssModulesTsLoader: {
-    mode: binding.RawMode.VERIFY,
+    mode: 'emit',
   },
 });
 
