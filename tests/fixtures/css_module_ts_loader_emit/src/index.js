@@ -1,4 +1,4 @@
-import style from './index.css';
+import style from './index.css?modules';
 console.error(style, style.button);
 
 // import a from '@/vm/isOldIE.js';

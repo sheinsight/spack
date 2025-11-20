@@ -41,6 +41,14 @@ impl CssModulesTsLoader {
       .file_name()
       .ok_or_else(|| rspack_error::Error::error("invalid file name".to_string()))?;
 
+    // file_name: "index.css?modules"
+    // file_name: "index.css"
+    let file_name = file_name.to_string_lossy();
+    let file_name = file_name
+      .split('?')
+      .next()
+      .ok_or_else(|| rspack_error::Error::error("invalid file name".to_string()))?;
+
     // let file_prefix = p
     //   .file_prefix()
     //   .ok_or_else(|| rspack_error::Error::error("invalid file prefix".to_string()))?;
@@ -49,7 +57,7 @@ impl CssModulesTsLoader {
       .parent()
       .ok_or_else(|| rspack_error::Error::error("invalid file prefix".to_string()))?;
 
-    let dts_file_name = dir.join(format!("{}.d.ts", file_name.to_string_lossy()));
+    let dts_file_name = dir.join(format!("{}.d.ts", file_name));
 
     Ok(dts_file_name)
   }
