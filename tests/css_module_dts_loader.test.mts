@@ -27,7 +27,7 @@ test('test css_module_ts_loader_emit', async () => {
       importPrefix: '@@/runtime',
     },
     cssModulesTsLoader: {
-      mode: binding.RawMode.EMIT,
+      mode: 'emit',
     },
   });
 
@@ -54,7 +54,7 @@ test('test css_module_ts_loader_verify', async () => {
       importPrefix: '@@/runtime',
     },
     cssModulesTsLoader: {
-      mode: binding.RawMode.VERIFY,
+      mode: 'verify',
     },
   });
 

@@ -14,9 +14,10 @@ pub const CSS_MODULES_DTS_LOADER_IDENTIFIER: &str = "builtin:css-modules-ts-load
 
 #[cacheable]
 #[derive(EnumString, Debug, Clone, Serialize)]
+#[strum(serialize_all = "kebab-case")]
 pub enum Mode {
-  VERIFY,
-  EMIT,
+  Verify,
+  Emit,
 }
 
 #[cacheable]
@@ -138,7 +139,7 @@ export const cssExports: CssExports;
 export default cssExports;"#
     );
 
-    if !matches!(self.options.mode, Mode::VERIFY) {
+    if !matches!(self.options.mode, Mode::Verify) {
       fs::write(&dts_file_name, dts_content).await?;
       loader_context.finish_with((source, source_map));
       return Ok(());

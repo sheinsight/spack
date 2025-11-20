@@ -121,7 +121,7 @@ export interface RawCaseSensitivePathsPluginOpts {
 }
 
 export interface RawCssModulesTsLoaderPluginOpts {
-  mode?: RawMode
+  mode?: 'verify' | 'emit'
 }
 
 export interface RawDuplicateDependencyPluginOpts {
@@ -135,11 +135,6 @@ export interface RawEnvironment {
   es2024?: boolean
   amd?: boolean
   sharedNodeBrowser?: boolean
-}
-
-export declare enum RawMode {
-  VERIFY = 'VERIFY',
-  EMIT = 'EMIT'
 }
 
 export interface RawOxlintPluginOpts {
