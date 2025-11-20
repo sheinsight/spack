@@ -3,7 +3,7 @@ use rspack_error::Result;
 use rspack_hook::plugin;
 use spack_builtin_loader::{
   StyleLoaderOpts, UnifiedLoaderPlugin, UnifiedLoaderPluginOpts,
-  css_modules_dts_loader::CssModulesDtsLoaderOpts,
+  css_modules_ts_loader::CssModulesTsLoaderOpts,
 };
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
 use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
@@ -17,7 +17,7 @@ pub struct UnifiedPluginOpts {
   #[allow(unused)]
   pub oxlint: Option<OxlintPluginOpts>,
   #[allow(unused)]
-  pub css_modules_dts_loader: Option<CssModulesDtsLoaderOpts>,
+  pub css_modules_ts_loader: Option<CssModulesTsLoaderOpts>,
 }
 
 pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
@@ -43,7 +43,7 @@ impl Plugin for UnifiedPlugin {
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
     UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
       style_loader: self.options.style_loader.clone(),
-      css_modules_dts_loader: self.options.css_modules_dts_loader.clone(),
+      css_modules_dts_loader: self.options.css_modules_ts_loader.clone(),
     })
     .apply(ctx)?;
 

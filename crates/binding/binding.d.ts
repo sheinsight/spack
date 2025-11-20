@@ -120,7 +120,7 @@ export interface RawCaseSensitivePathsPluginOpts {
 
 }
 
-export interface RawCssModulesDtsLoaderPluginOpts {
+export interface RawCssModulesTsLoaderPluginOpts {
   mode?: RawMode
 }
 
@@ -183,7 +183,7 @@ export interface RawUnifiedPluginOpts {
   /** case-sensitive-paths 的配置 */
   caseSensitive?: RawCaseSensitivePathsPluginOpts
   /** css-modules-dts-loader 的配置 */
-  cssModulesDtsLoader?: RawCssModulesDtsLoaderPluginOpts
+  cssModulesTsLoader?: RawCssModulesTsLoaderPluginOpts
 }
 
 export declare function registerBundleAnalyzerPlugin(): void

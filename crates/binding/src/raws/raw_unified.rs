@@ -5,7 +5,7 @@ use spack_plugin_unified::{UnifiedPlugin, UnifiedPluginOpts};
 
 use crate::raws::{
   raw_case_sensitive_paths::RawCaseSensitivePathsPluginOpts,
-  raw_css_modules_dts_loader::RawCssModulesDtsLoaderPluginOpts, raw_oxlint::RawOxlintPluginOpts,
+  raw_css_modules_dts_loader::RawCssModulesTsLoaderPluginOpts, raw_oxlint::RawOxlintPluginOpts,
   raw_style_loader::RawStyleLoaderPluginOpts,
 };
 
@@ -22,8 +22,8 @@ pub struct RawUnifiedPluginOpts {
   #[napi(js_name = "caseSensitive")]
   pub case_sensitive: Option<RawCaseSensitivePathsPluginOpts>,
   /// css-modules-dts-loader 的配置
-  #[napi(js_name = "cssModulesDtsLoader")]
-  pub css_modules_dts_loader: Option<RawCssModulesDtsLoaderPluginOpts>,
+  #[napi(js_name = "cssModulesTsLoader")]
+  pub css_modules_ts_loader: Option<RawCssModulesTsLoaderPluginOpts>,
 }
 
 impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
@@ -32,7 +32,7 @@ impl From<RawUnifiedPluginOpts> for UnifiedPluginOpts {
       style_loader: value.style_loader.map(From::from),
       oxlint: value.oxlint.map(From::from),
       case_sensitive: value.case_sensitive.map(From::from),
-      css_modules_dts_loader: value.css_modules_dts_loader.map(From::from),
+      css_modules_ts_loader: value.css_modules_ts_loader.map(From::from),
     }
   }
 }

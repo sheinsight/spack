@@ -12,11 +12,11 @@ const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], Raw
   (opt) => ({ ...opt })
 );
 
-test('test css_module_dts_loader_emit', async () => {
+test('test css_module_ts_loader_emit', async () => {
   const outputDir = path.resolve(
     __dirname,
     'fixtures',
-    'css_module_dts_loader_emit',
+    'css_module_ts_loader_emit',
     'src',
     '.lego',
     'runtime'
@@ -26,24 +26,24 @@ test('test css_module_dts_loader_emit', async () => {
       outputDir,
       importPrefix: '@@/runtime',
     },
-    cssModulesDtsLoader: {
+    cssModulesTsLoader: {
       mode: binding.RawMode.EMIT,
     },
   });
 
   const result = await runCompiler({
-    fixture: 'css_module_dts_loader_emit',
+    fixture: 'css_module_ts_loader_emit',
     plugins: [plugin],
   });
 
   expect(result.length).toBe(0);
 });
 
-test('test css_module_dts_loader_verify', async () => {
+test('test css_module_ts_loader_verify', async () => {
   const outputDir = path.resolve(
     __dirname,
     'fixtures',
-    'css_module_dts_loader_verify',
+    'css_module_ts_loader_verify',
     'src',
     '.lego',
     'runtime'
@@ -53,19 +53,15 @@ test('test css_module_dts_loader_verify', async () => {
       outputDir,
       importPrefix: '@@/runtime',
     },
-    cssModulesDtsLoader: {
+    cssModulesTsLoader: {
       mode: binding.RawMode.VERIFY,
     },
   });
 
   const result = await runCompiler({
-    fixture: 'css_module_dts_loader_verify',
+    fixture: 'css_module_ts_loader_verify',
     plugins: [plugin],
   });
 
   expect(result.length).toBe(1);
 });
-
-// test('x', () => {
-//   expect(1).toBe(1);
-// });

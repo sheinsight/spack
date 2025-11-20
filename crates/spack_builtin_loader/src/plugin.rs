@@ -11,8 +11,8 @@ use rspack_paths::Utf8PathBuf;
 use serde::Serialize;
 
 use crate::{
-  css_modules_dts_loader::{
-    CSS_MODULES_DTS_LOADER_IDENTIFIER, CssModulesDtsLoader, CssModulesDtsLoaderOpts,
+  css_modules_ts_loader::{
+    CSS_MODULES_DTS_LOADER_IDENTIFIER, CssModulesTsLoader, CssModulesTsLoaderOpts,
   },
   style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader, StyleLoaderOpts},
 };
@@ -23,7 +23,7 @@ pub const UNIFIED_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedLoaderPlugin";
 #[derive(Debug, Clone, Serialize)]
 pub struct UnifiedLoaderPluginOpts {
   pub style_loader: Option<StyleLoaderOpts>,
-  pub css_modules_dts_loader: Option<CssModulesDtsLoaderOpts>,
+  pub css_modules_dts_loader: Option<CssModulesTsLoaderOpts>,
 }
 
 #[plugin]
@@ -84,7 +84,7 @@ pub(crate) async fn resolve_loader(
   if let Some(css_modules_dts_loader_opts) = &self.options.css_modules_dts_loader
     && loader_request.starts_with(CSS_MODULES_DTS_LOADER_IDENTIFIER)
   {
-    return Ok(Some(Arc::new(CssModulesDtsLoader::new(
+    return Ok(Some(Arc::new(CssModulesTsLoader::new(
       css_modules_dts_loader_opts.clone(),
     ))));
   }
