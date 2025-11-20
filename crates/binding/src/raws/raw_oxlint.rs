@@ -32,8 +32,8 @@ pub struct RawOxlintPluginOpts {
   #[napi(js_name = "environments")]
   pub environments: Option<RawEnvironment>,
 
-  #[napi(js_name = "oxlintConfigFilePath")]
-  pub oxlint_config_file_path: Option<String>,
+  #[napi(js_name = "configFilePath")]
+  pub config_file_path: Option<String>,
 }
 
 #[derive(Debug)]
@@ -115,7 +115,7 @@ impl From<RawOxlintPluginOpts> for OxlintPluginOpts {
 
     let globals = value.globals.unwrap_or_default();
 
-    let oxlint_config_file_path = value.oxlint_config_file_path;
+    let config_file_path = value.config_file_path;
 
     Self {
       output_dir,
@@ -125,7 +125,7 @@ impl From<RawOxlintPluginOpts> for OxlintPluginOpts {
       restricted_globals,
       globals,
       environments,
-      oxlint_config_file_path,
+      config_file_path,
     }
   }
 }

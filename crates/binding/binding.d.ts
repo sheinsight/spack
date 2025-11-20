@@ -155,7 +155,7 @@ export interface RawOxlintPluginOpts {
   restrictedGlobals?: Array<RawRestricted>
   globals?: Record<string, boolean>
   environments?: RawEnvironment
-  oxlintConfigFilePath?: string
+  configFilePath?: string
 }
 
 export interface RawRestricted {

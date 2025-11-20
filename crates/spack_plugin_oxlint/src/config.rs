@@ -15,7 +15,7 @@ pub struct OxlintPluginOpts {
   pub restricted_globals: Vec<Restricted>,
   pub globals: HashMap<String, bool>,
   pub environments: Environment,
-  pub oxlint_config_file_path: Option<String>,
+  pub config_file_path: Option<String>,
 }
 
 impl OxlintPluginOpts {
@@ -24,7 +24,7 @@ impl OxlintPluginOpts {
   /// 如果提供了 `oxlint_config_file_path`，则从文件加载；
   /// 否则根据选项生成配置并写入 `output_dir/.oxlintrc.json`
   pub fn build_oxlintrc(&self) -> Result<Oxlintrc, String> {
-    if let Some(file_path) = &self.oxlint_config_file_path {
+    if let Some(file_path) = &self.config_file_path {
       Self::load_from_file(file_path)
     } else {
       self.build_inner_oxlintrc()
@@ -375,7 +375,7 @@ mod tests {
       restricted_globals: vec![],
       globals: HashMap::new(),
       environments: Environment::default(),
-      oxlint_config_file_path: None,
+      config_file_path: None,
     };
 
     let result = opts.build_config_json();
@@ -401,7 +401,7 @@ mod tests {
       restricted_globals: vec![],
       globals: HashMap::new(),
       environments: Environment::default(),
-      oxlint_config_file_path: None,
+      config_file_path: None,
     };
 
     let result = opts.build_oxlintrc();
