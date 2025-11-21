@@ -108,7 +108,7 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
 
     let mut css_module_keys = FxHashSet::default();
 
-    let key_regex = regex::Regex::new(r#""([^"\\]*(?:\\.[^"\\]*)*)""#)
+    let key_regex = regex::Regex::new(r#""([^"\\]*(?:\\.[^"\\]*)*)":"#)
       .map_err(|e| rspack_error::Error::error(format!("Failed to compile regex: {}", e)))?;
 
     let local_exports = self.extract_local_exports(&source_str);
