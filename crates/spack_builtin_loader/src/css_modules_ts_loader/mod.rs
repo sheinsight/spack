@@ -125,7 +125,7 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
 
     let dts_str = css_module_keys
       .iter()
-      .map(|key| format!(r##"'{key}':string;"##))
+      .map(|key| format!(r##"  '{key}':string;"##))
       .collect::<Vec<_>>()
       .join("\n");
 
@@ -133,7 +133,7 @@ impl Loader<RunnerContext> for CssModulesTsLoader {
       r#"// Please do not delete the comments, as they are used to determine content changes.
 // Banner: {banner_str}
 interface CssExports {{
-  {dts_str}
+{dts_str}
 }}
 export const cssExports: CssExports;
 export default cssExports;"#
