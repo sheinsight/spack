@@ -120,10 +120,6 @@ export interface RawCaseSensitivePathsPluginOpts {
 
 }
 
-export interface RawCssModulesTsLoaderPluginOpts {
-  mode?: 'verify' | 'emit'
-}
-
 export interface RawDuplicateDependencyPluginOpts {
   onDetected?: (response: JsDuplicateDependencyPluginResp) => void|Promise<void>
 }
@@ -158,27 +154,11 @@ export interface RawRestricted {
   message: string
 }
 
-export interface RawStyleLoaderPluginOpts {
-  base?: number
-  insert?: string
-  /** runtime 文件的生成目录 , 请保证存在 @@ 的 alias 配置 */
-  outputDir: string
-  /** 模块引用时的前缀路径，例如 "@@/runtime" */
-  importPrefix: string
-  styleTagTransform?: string
-  /** 为 style 标签添加的属性 */
-  attributes?: Record<string, string>
-}
-
 export interface RawUnifiedPluginOpts {
-  /** style-loader 的配置 */
-  styleLoader?: RawStyleLoaderPluginOpts
   /** oxlint-loader 的配置 */
   oxlint?: RawOxlintPluginOpts
   /** case-sensitive-paths 的配置 */
   caseSensitive?: RawCaseSensitivePathsPluginOpts
-  /** css-modules-dts-loader 的配置 */
-  cssModulesTsLoader?: RawCssModulesTsLoaderPluginOpts
 }
 
 export declare function registerBundleAnalyzerPlugin(): void

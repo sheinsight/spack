@@ -3,7 +3,6 @@ import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
 import type { RawUnifiedPluginOpts } from '@shined/spack-binding';
-import path from 'node:path';
 
 binding.registerUnifiedPlugin();
 
@@ -12,17 +11,7 @@ const UnifiedPlugin = experiments.createNativePlugin<[RawUnifiedPluginOpts], Raw
   (opt) => ({ ...opt })
 );
 
-const outputDir = path.resolve(__dirname, 'fixtures', 'css-loader', 'src', '.lego', 'runtime');
-
-const plugin = new UnifiedPlugin({
-  styleLoader: {
-    outputDir,
-    importPrefix: '@@/runtime',
-  },
-  cssModulesTsLoader: {
-    mode: 'emit',
-  },
-});
+const plugin = new UnifiedPlugin({});
 
 test('test css-loader', async () => {
   const result = await runCompiler({

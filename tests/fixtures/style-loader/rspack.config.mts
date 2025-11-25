@@ -1,6 +1,8 @@
 import path from 'node:path';
 // import { rspack } from '@rspack/core';
 
+const outputDir = path.join(__dirname, 'src', '.lego', 'runtime');
+
 export default {
   context: __dirname,
   entry: {
@@ -26,7 +28,16 @@ export default {
         test: /\.css$/,
         extractSourceMap: true,
         exclude: /node_modules/,
-        use: ['builtin:style-loader', 'css-loader'],
+        use: [
+          {
+            loader: 'builtin:style-loader',
+            options: {
+              outputDir: outputDir,
+              importPrefix: '@@/runtime',
+            },
+          },
+          'css-loader',
+        ],
       },
       {
         test: /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts)$/,

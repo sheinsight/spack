@@ -7,7 +7,7 @@ use rspack_core::{Loader, LoaderContext, RunnerContext, contextify};
 use rspack_error::Result;
 use rspack_loader_runner::DisplayWithSuffix;
 use rspack_paths::Utf8PathBuf;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::ModuleHelper;
 
@@ -43,10 +43,6 @@ lazy_static::lazy_static! {
       "setAttributesWithAttributesAndNonce.js",
       include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
     ),
-    // (
-    //   "setAttributesWithAttributesAndNonce.js",
-    //   include_str!("runtime/setAttributesWithAttributesAndNonce.js"),
-    // ),
     (
       "styleTagTransform.js",
       include_str!("runtime/styleTagTransform.js"),
@@ -61,7 +57,15 @@ lazy_static::lazy_static! {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone)]
+pub struct StyleLoader {
+  options: StyleLoaderOpts,
+  module_helper: ModuleHelper,
+}
+
+#[cacheable]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StyleLoaderOpts {
   pub base: Option<i64>,
   pub insert: Option<String>,
@@ -69,12 +73,6 @@ pub struct StyleLoaderOpts {
   pub import_prefix: String,
   pub style_tag_transform: Option<String>,
   pub attributes: Option<HashMap<String, String>>,
-}
-
-#[cacheable]
-pub struct StyleLoader {
-  options: StyleLoaderOpts,
-  module_helper: ModuleHelper,
 }
 
 impl StyleLoader {
@@ -96,6 +94,13 @@ impl StyleLoader {
 impl StyleLoader {
   pub fn new(options: StyleLoaderOpts) -> Self {
     let module_helper = ModuleHelper::new(&options.import_prefix);
+    Self::write_runtime(&Utf8PathBuf::from(&options.output_dir)).expect(
+      format!(
+        "write {} runtime in {}",
+        STYLE_LOADER_IDENTIFIER, options.output_dir
+      )
+      .as_ref(),
+    );
     Self {
       options,
       module_helper,

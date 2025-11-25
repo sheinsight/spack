@@ -6114,6 +6114,7 @@ dependencies = [
  "lightningcss",
  "miette",
  "num-format",
+ "once_cell",
  "owo-colors",
  "oxc",
  "oxc_linter",
@@ -6272,6 +6273,7 @@ dependencies = [
  "rspack_hook",
  "spack_builtin_loader",
  "spack_plugin_case_sensitive_paths",
+ "spack_plugin_duplicate_dependency",
  "spack_plugin_oxlint",
 ]
 
