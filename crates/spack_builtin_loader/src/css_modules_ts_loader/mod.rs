@@ -6,34 +6,50 @@ use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext};
 use rspack_error::{Diagnostic, Result};
 use rspack_util::fx_hash::FxHashSet;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 use tokio::fs;
 
-pub const CSS_MODULES_DTS_LOADER_IDENTIFIER: &str = "builtin:css-modules-ts-loader";
+use crate::loader_cache::LoaderWithIdentifier;
+
+pub const CSS_MODULES_TS_LOADER_IDENTIFIER: &str = "builtin:css-modules-ts-loader";
 
 #[cacheable]
-#[derive(EnumString, Debug, Clone, Serialize)]
+#[derive(EnumString, Debug, Clone, Serialize, Deserialize)]
 #[strum(serialize_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub enum Mode {
   Verify,
   Emit,
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CssModulesTsLoaderOpts {
   pub mode: Mode,
 }
 
 #[cacheable]
+#[derive(Clone)]
 pub struct CssModulesTsLoader {
+  identifier: Identifier,
   options: CssModulesTsLoaderOpts,
+}
+
+impl LoaderWithIdentifier for CssModulesTsLoader {
+  fn with_identifier(mut self, identifier: Identifier) -> Self {
+    assert!(identifier.starts_with(CSS_MODULES_TS_LOADER_IDENTIFIER));
+    self.identifier = identifier;
+    self
+  }
 }
 
 impl CssModulesTsLoader {
   pub fn new(options: CssModulesTsLoaderOpts) -> Self {
-    Self { options }
+    Self {
+      identifier: CSS_MODULES_TS_LOADER_IDENTIFIER.into(),
+      options,
+    }
   }
 
   pub fn filename_to_typings_filename(&self, resource: &str) -> Result<PathBuf> {
@@ -89,7 +105,7 @@ impl CssModulesTsLoader {
 #[cacheable_dyn]
 impl Loader<RunnerContext> for CssModulesTsLoader {
   fn identifier(&self) -> Identifier {
-    CSS_MODULES_DTS_LOADER_IDENTIFIER.into()
+    self.identifier
   }
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
@@ -147,16 +163,12 @@ export default cssExports;"#
 
     if !dts_file_name.exists() {
       loader_context.diagnostics.push(Diagnostic::error(
-        CSS_MODULES_DTS_LOADER_IDENTIFIER.to_string(),
+        CSS_MODULES_TS_LOADER_IDENTIFIER.to_string(),
         format!(
           "TypeScript definitions file {:?} does not exist. Please generate it.",
           dts_file_name
         ),
       ));
-      // return Err(rspack_error::Error::error(format!(
-      //   "TypeScript definitions file {:?} does not exist. Please generate it.",
-      //   dts_file_name
-      // )));
     }
 
     let existing_content = fs::read_to_string(&dts_file_name).await?;
@@ -167,16 +179,12 @@ export default cssExports;"#
 
     if diff.count() > 0 {
       loader_context.diagnostics.push(Diagnostic::error(
-        CSS_MODULES_DTS_LOADER_IDENTIFIER.to_string(),
+        CSS_MODULES_TS_LOADER_IDENTIFIER.to_string(),
         format!(
           "TypeScript definitions file {:?} does not exist. Please generate it.",
           dts_file_name
         ),
       ));
-      // return Err(rspack_error::Error::error(format!(
-      //   "TypeScript definitions do not match for {:?}. Please regenerate.",
-      //   dts_file_name
-      // )));
     }
 
     loader_context.finish_with((source, source_map));

@@ -15,6 +15,7 @@ test = false
 [dependencies]
 spack_builtin_loader              = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
+spack_plugin_duplicate_dependency = { workspace = true }
 spack_plugin_oxlint               = { workspace = true }
 
 rspack_core  = { workspace = true }
