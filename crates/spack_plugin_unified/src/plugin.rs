@@ -1,28 +1,16 @@
 use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::plugin;
-use spack_builtin_loader::{
-  // StyleLoaderOpts,
-  UnifiedLoaderPlugin,
-  UnifiedLoaderPluginOpts,
-  // css_modules_ts_loader::CssModulesTsLoaderOpts,
-};
+use spack_builtin_loader::{UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
-// use spack_plugin_duplicate_dependency::DuplicateDependencyPluginOpts;
 use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
 #[derive(Debug)]
 pub struct UnifiedPluginOpts {
-  // #[allow(unused)]
-  // pub style_loader: Option<StyleLoaderOpts>,
-  // #[allow(unused)]
-  // pub css_modules_ts_loader: Option<CssModulesTsLoaderOpts>,
   #[allow(unused)]
   pub case_sensitive: Option<CaseSensitivePathsPluginOpts>,
   #[allow(unused)]
   pub oxlint: Option<OxlintPluginOpts>,
-  // #[allow(unused)]
-  // pub duplicate_dependency: Option<DuplicateDependencyPluginOpts>,
 }
 
 pub const UNIFIED_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedPlugin";
@@ -46,11 +34,7 @@ impl Plugin for UnifiedPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {
-      // style_loader: self.options.style_loader.clone(),
-      // css_modules_dts_loader: self.options.css_modules_ts_loader.clone(),
-    })
-    .apply(ctx)?;
+    UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {}).apply(ctx)?;
 
     if let Some(case_sensitive) = self.options.case_sensitive.clone() {
       CaseSensitivePathsPlugin::new(case_sensitive).apply(ctx)?;
