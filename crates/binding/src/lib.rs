@@ -1,5 +1,3 @@
-// #![feature(let_chains)]
-
 mod raws;
 
 use napi_derive::napi;
@@ -14,8 +12,8 @@ pub enum CustomPluginNames {
   CaseSensitivePathsPlugin,
   #[register(raws::raw_bundle_analyzer::binding)]
   BundleAnalyzerPlugin,
-  // #[register(raws::raw_demo::binding)]
-  // DemoPlugin,
+  #[register(raws::raw_demo::binding)]
+  DemoPlugin,
   #[register(raws::raw_unified::binding)]
   UnifiedPlugin,
 }

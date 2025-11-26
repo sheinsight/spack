@@ -274,6 +274,7 @@ dependencies = [
  "spack_macros",
  "spack_plugin_bundle_analyzer",
  "spack_plugin_case_sensitive_paths",
+ "spack_plugin_demo",
  "spack_plugin_duplicate_dependency",
  "spack_plugin_friendly_errors",
  "spack_plugin_oxlint",
@@ -6200,9 +6201,13 @@ dependencies = [
 name = "spack_plugin_demo"
 version = "0.1.0"
 dependencies = [
+ "derive_more 1.0.0",
+ "futures",
  "rspack_core",
  "rspack_error",
  "rspack_hook",
+ "serde",
+ "serde_json",
  "spack_builtin_loader",
  "tracing",
  "tracing-subscriber",

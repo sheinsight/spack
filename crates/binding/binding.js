@@ -396,5 +396,6 @@ module.exports = nativeBinding
 module.exports.CustomPluginNames = nativeBinding.CustomPluginNames
 module.exports.registerBundleAnalyzerPlugin = nativeBinding.registerBundleAnalyzerPlugin
 module.exports.registerCaseSensitivePathsPlugin = nativeBinding.registerCaseSensitivePathsPlugin
+module.exports.registerDemoPlugin = nativeBinding.registerDemoPlugin
 module.exports.registerDuplicateDependencyPlugin = nativeBinding.registerDuplicateDependencyPlugin
 module.exports.registerUnifiedPlugin = nativeBinding.registerUnifiedPlugin

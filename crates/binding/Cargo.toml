@@ -19,6 +19,7 @@ spack_builtin_loader              = { workspace = true }
 spack_macros                      = { workspace = true }
 spack_plugin_bundle_analyzer      = { workspace = true }
 spack_plugin_case_sensitive_paths = { workspace = true }
+spack_plugin_demo                 = { workspace = true }
 spack_plugin_duplicate_dependency = { workspace = true }
 spack_plugin_friendly_errors      = { workspace = true }
 spack_plugin_oxlint               = { workspace = true }
