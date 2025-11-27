@@ -6123,6 +6123,7 @@ dependencies = [
  "owo-colors",
  "oxc",
  "oxc_linter",
+ "parcel_sourcemap",
  "regex",
  "rspack_binding_api",
  "rspack_cacheable",

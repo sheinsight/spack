@@ -1,0 +1,262 @@
+use std::{
+  borrow::Cow,
+  collections::HashSet,
+  sync::{Arc, RwLock},
+};
+
+use async_trait::async_trait;
+use lightningcss::{
+  printer::PrinterOptions,
+  stylesheet::{MinifyOptions, ParserFlags, ParserOptions, StyleSheet},
+  targets::{Browsers, Features, Targets},
+};
+use rspack_cacheable::{cacheable, cacheable_dyn};
+use rspack_collections::Identifier;
+use rspack_core::{
+  Loader, LoaderContext, RunnerContext,
+  rspack_sources::{Mapping, OriginalLocation, SourceMap, encode_mappings},
+};
+use rspack_error::{Result, ToStringResultToRspackResultExt};
+
+use crate::{
+  lightningcss_loader::opts::LightningcssLoaderOpts, loader_cache::LoaderWithIdentifier,
+};
+
+mod opts;
+
+pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loader";
+
+#[cacheable]
+#[derive(Clone)]
+pub struct LightningcssLoader {
+  identifier: Identifier,
+  options: LightningcssLoaderOpts,
+}
+
+impl LightningcssLoader {
+  pub fn new(options: LightningcssLoaderOpts) -> Self {
+    Self {
+      identifier: LIGHTNINGCSS_LOADER_IDENTIFIER.into(),
+      options,
+    }
+  }
+
+  pub fn get_targets(&self) -> Targets {
+    let browsers = Browsers {
+      chrome: Some(100 << 16),
+      safari: Some(15 << 16),
+      firefox: Some(100 << 16),
+      edge: Some(100 << 16),
+      ..Browsers::default()
+    };
+    Targets {
+      browsers: Some(browsers),
+      include: Features::empty(),
+      exclude: Features::empty(),
+    }
+  }
+}
+
+#[async_trait]
+#[cacheable_dyn]
+impl Loader<RunnerContext> for LightningcssLoader {
+  fn identifier(&self) -> Identifier {
+    LIGHTNINGCSS_LOADER_IDENTIFIER.into()
+  }
+
+  async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    let Some(resource_path) = loader_context.resource_path() else {
+      return Ok(());
+    };
+
+    let filename = resource_path.as_str().to_string();
+
+    // let source_map = loader_context.take_source_map() else {
+    //   return Ok(());
+    // };
+
+    let Some(source) = loader_context.take_content() else {
+      return Ok(());
+    };
+
+    let source_str = match &source {
+      rspack_core::Content::String(s) => Cow::Borrowed(s.as_str()),
+      rspack_core::Content::Buffer(buf) => String::from_utf8_lossy(buf),
+    };
+
+    // let mut parser_flags = ParserFlags::empty();
+    // parser_flags.set(
+    //   ParserFlags::CUSTOM_MEDIA,
+    //   matches!(&self.config.draft, Some(draft) if draft.custom_media),
+    // );
+    // parser_flags.set(
+    //   ParserFlags::DEEP_SELECTOR_COMBINATOR,
+    //   matches!(&self.config.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
+    // );
+
+    // let parser_flags =
+    //   ParserFlags::NESTING | ParserFlags::CUSTOM_MEDIA | ParserFlags::DEEP_SELECTOR_COMBINATOR;
+
+    let parser_flags = ParserFlags::NESTING;
+
+    // let warnings = if error_recovery {
+    //   Some(Arc::new(RwLock::new(Vec::new())))
+    // } else {
+    //   None
+    // };
+
+    let warnings = Some(Arc::new(RwLock::new(Vec::new())));
+
+    let option = ParserOptions {
+      filename: filename.clone(),
+      css_modules: None,
+      source_index: 0,
+      // 是否忽略无效的规则和声明，而不是直接报错
+      error_recovery: true,
+      warnings: warnings,
+      flags: parser_flags,
+    };
+
+    let mut stylesheet = StyleSheet::parse(&source_str, option.clone()).to_rspack_result()?;
+
+    // let mut stylesheet = to_static(
+    //   stylesheet,
+    //   ParserOptions {
+    //     filename: filename.clone(),
+    //     css_modules: None,
+    //     source_index: 0,
+    //     error_recovery: true,
+    //     warnings: None,
+    //     flags: ParserFlags::empty(),
+    //   },
+    // );
+
+    // if let Some(visitors) = &self.visitors {
+    //   let visitors = visitors.lock().await;
+    //   for v in visitors.iter() {
+    //     v(&mut stylesheet);
+    //   }
+    // }
+
+    // let browsers = Browsers::from_browserslist(&["chrome 70"]).ok();
+
+    let targets = self.get_targets();
+
+    let unused_symbols = HashSet::<String>::new();
+
+    stylesheet
+      .minify(MinifyOptions {
+        targets,
+        unused_symbols,
+      })
+      .to_rspack_result()?;
+
+    let mut parcel_source_map = if loader_context.context.source_map_kind.enabled() {
+      Some(
+        loader_context
+          .source_map()
+          .map(|input_source_map| -> Result<_> {
+            let mut sm = parcel_sourcemap::SourceMap::new(
+              input_source_map
+                .source_root()
+                .unwrap_or(&loader_context.context.options.context),
+            );
+            sm.add_source(&filename);
+            sm.set_source_content(0, &source_str).to_rspack_result()?;
+            Ok(sm)
+          })
+          .transpose()?
+          .unwrap_or_else(|| {
+            let mut source_map =
+              parcel_sourcemap::SourceMap::new(&loader_context.context.options.context);
+            let source_idx = source_map.add_source(&filename);
+            source_map
+              .set_source_content(source_idx as usize, &source_str)
+              .expect("should set source content");
+            source_map
+          }),
+      )
+    } else {
+      None
+    };
+
+    let pseudo_classes: Option<lightningcss::printer::PseudoClasses> = self
+      .options
+      .pseudo_classes
+      .as_ref()
+      .map(|item| lightningcss::printer::PseudoClasses {
+        hover: item.hover.as_deref(),
+        active: item.active.as_deref(),
+        focus: item.focus.as_deref(),
+        focus_visible: item.focus_visible.as_deref(),
+        focus_within: item.focus_within.as_deref(),
+      });
+
+    let content = stylesheet
+      .to_css(PrinterOptions {
+        minify: self.options.minify.unwrap_or(false),
+        source_map: parcel_source_map.as_mut(),
+        project_root: None,
+        targets,
+        analyze_dependencies: None,
+        pseudo_classes,
+      })
+      .to_rspack_result_with_message(|e| format!("failed to generate css: {e}"))?;
+
+    println!("content--->{:#?}", content.code);
+
+    if let Some(source_map) = parcel_source_map {
+      let mappings = encode_mappings(source_map.get_mappings().iter().map(|mapping| Mapping {
+        generated_line: mapping.generated_line,
+        generated_column: mapping.generated_column,
+        original: mapping.original.map(|original| OriginalLocation {
+          source_index: original.source,
+          original_line: original.original_line,
+          original_column: original.original_column,
+          name_index: original.name,
+        }),
+      }));
+      let rspack_source_map = SourceMap::new(
+        mappings,
+        source_map
+          .get_sources()
+          .iter()
+          .map(ToString::to_string)
+          .collect::<Vec<_>>(),
+        source_map
+          .get_sources_content()
+          .iter()
+          .map(|source_content| Arc::from(source_content.to_string()))
+          .collect::<Vec<_>>(),
+        source_map
+          .get_names()
+          .iter()
+          .map(ToString::to_string)
+          .collect::<Vec<_>>(),
+      );
+      loader_context.finish_with((content.code, rspack_source_map));
+    } else {
+      loader_context.finish_with(content.code);
+    }
+
+    Ok(())
+  }
+}
+
+impl LoaderWithIdentifier for LightningcssLoader {
+  fn with_identifier(mut self, identifier: Identifier) -> Self {
+    assert!(identifier.starts_with(LIGHTNINGCSS_LOADER_IDENTIFIER));
+    self.identifier = identifier;
+    self
+  }
+}
+
+// pub fn to_static(
+//   stylesheet: StyleSheet,
+//   options: ParserOptions<'static, 'static>,
+// ) -> StyleSheet<'static, 'static> {
+//   let sources = stylesheet.sources.clone();
+//   let rules = stylesheet.rules.clone().into_owned();
+
+//   StyleSheet::new(sources, rules, options)
+// }

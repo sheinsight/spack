@@ -10,6 +10,7 @@ use serde::Serialize;
 
 use crate::{
   css_modules_ts_loader::{CSS_MODULES_TS_LOADER_IDENTIFIER, CssModulesTsLoader},
+  lightningcss_loader::{LIGHTNINGCSS_LOADER_IDENTIFIER, LightningcssLoader},
   loader_cache::{LoaderCache, LoaderWithIdentifier},
   style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader},
 };
@@ -19,6 +20,9 @@ pub const UNIFIED_LOADER_PLUGIN_IDENTIFIER: &str = "Spack.UnifiedLoaderPlugin";
 static STYLE_LOADER_CACHE: Lazy<LoaderCache<StyleLoader>> = Lazy::new(LoaderCache::new);
 
 static CSS_MODULES_TS_LOADER_CACHE: Lazy<LoaderCache<CssModulesTsLoader>> =
+  Lazy::new(LoaderCache::new);
+
+static LIGHTNINGCSS_LOADER_CACHE: Lazy<LoaderCache<LightningcssLoader>> =
   Lazy::new(LoaderCache::new);
 
 #[cacheable]
@@ -75,12 +79,11 @@ pub(crate) async fn resolve_loader(
   if loader_request.starts_with(STYLE_LOADER_IDENTIFIER) {
     let loader = STYLE_LOADER_CACHE
       .get_or_insert(loader_request, options, || {
-        Ok(StyleLoader::new(
-          serde_json::from_str(options).to_rspack_result_with_detail(
-            options,
-            format!("parse {} options error", STYLE_LOADER_IDENTIFIER).as_ref(),
-          )?,
-        ))
+        let options = serde_json::from_str(options).to_rspack_result_with_detail(
+          options,
+          format!("parse {} options error", STYLE_LOADER_IDENTIFIER).as_ref(),
+        )?;
+        Ok(StyleLoader::new(options).with_identifier(loader_request.as_str().into()))
       })
       .await?;
 
@@ -90,13 +93,25 @@ pub(crate) async fn resolve_loader(
   if loader_request.starts_with(CSS_MODULES_TS_LOADER_IDENTIFIER) {
     let loader = CSS_MODULES_TS_LOADER_CACHE
       .get_or_insert(loader_request, options, || {
-        Ok(
-          CssModulesTsLoader::new(serde_json::from_str(options).to_rspack_result_with_detail(
-            options,
-            format!("parse {} options error", CSS_MODULES_TS_LOADER_IDENTIFIER).as_ref(),
-          )?)
-          .with_identifier(loader_request.as_str().into()),
-        )
+        let options = serde_json::from_str(options).to_rspack_result_with_detail(
+          options,
+          format!("parse {} options error", CSS_MODULES_TS_LOADER_IDENTIFIER).as_ref(),
+        )?;
+        Ok(CssModulesTsLoader::new(options).with_identifier(loader_request.as_str().into()))
+      })
+      .await?;
+
+    return Ok(Some(loader));
+  }
+
+  if loader_request.starts_with(LIGHTNINGCSS_LOADER_IDENTIFIER) {
+    let loader = LIGHTNINGCSS_LOADER_CACHE
+      .get_or_insert(loader_request, options, || {
+        let options = serde_json::from_str(options).to_rspack_result_with_detail(
+          options,
+          format!("parse {} options error", LIGHTNINGCSS_LOADER_IDENTIFIER).as_ref(),
+        )?;
+        Ok(LightningcssLoader::new(options).with_identifier(loader_request.as_str().into()))
       })
       .await?;
 

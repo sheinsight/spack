@@ -9,7 +9,7 @@ use rspack_loader_runner::DisplayWithSuffix;
 use rspack_paths::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
 
-use crate::ModuleHelper;
+use crate::{ModuleHelper, loader_cache::LoaderWithIdentifier};
 
 pub const STYLE_LOADER_IDENTIFIER: &str = "builtin:style-loader";
 
@@ -60,6 +60,7 @@ lazy_static::lazy_static! {
 #[derive(Clone)]
 pub struct StyleLoader {
   options: StyleLoaderOpts,
+  identifier: Identifier,
   module_helper: ModuleHelper,
 }
 
@@ -102,6 +103,7 @@ impl StyleLoader {
       .as_ref(),
     );
     Self {
+      identifier: STYLE_LOADER_IDENTIFIER.into(),
       options,
       module_helper,
     }
@@ -325,5 +327,13 @@ impl Loader<RunnerContext> for StyleLoader {
 
     loader_context.finish_with((source, sm));
     Ok(())
+  }
+}
+
+impl LoaderWithIdentifier for StyleLoader {
+  fn with_identifier(mut self, identifier: Identifier) -> Self {
+    assert!(identifier.starts_with(STYLE_LOADER_IDENTIFIER));
+    self.identifier = identifier;
+    self
   }
 }

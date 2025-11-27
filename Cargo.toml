@@ -101,13 +101,14 @@ itertools   = { version = "0.14.0" }
 miette      = { version = "7.6.0" }
 pathdiff    = { version = "0.2.3" }
 
-bitflags    = { version = "^2.9.4" }
-ignore      = { version = "0.4.24" }
-lazy_static = { version = "1.5.0" }
-num-format  = { version = "0.4.4" }
-once_cell   = { version = "1.21.3" }
-owo-colors  = { version = "4.2.3" }
-rayon       = { version = "1.11.0" }
-regex       = { version = "1.12.2" }
-sailfish    = { version = "0.10.0" }
-tera        = { version = "1.20.0" }
+bitflags         = { version = "^2.9.4" }
+ignore           = { version = "0.4.24" }
+lazy_static      = { version = "1.5.0" }
+num-format       = { version = "0.4.4" }
+once_cell        = { version = "1.21.3" }
+owo-colors       = { version = "4.2.3" }
+parcel_sourcemap = { version = "2.1.1", default-features = false }
+rayon            = { version = "1.11.0" }
+regex            = { version = "1.12.2" }
+sailfish         = { version = "0.10.0" }
+tera             = { version = "1.20.0" }

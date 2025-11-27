@@ -44,14 +44,15 @@ tracing-subscriber = { workspace = true }
 strum        = { workspace = true }
 strum_macros = { workspace = true }
 
-lazy_static  = { workspace = true }
-lightningcss = { workspace = true }
-miette       = { workspace = true }
-num-format   = { workspace = true }
-once_cell    = { workspace = true }
-owo-colors   = { workspace = true }
-regex        = { workspace = true }
-ustr         = { workspace = true }
+lazy_static      = { workspace = true }
+lightningcss     = { workspace = true }
+miette           = { workspace = true }
+num-format       = { workspace = true }
+once_cell        = { workspace = true }
+owo-colors       = { workspace = true }
+parcel_sourcemap = { workspace = true }
+regex            = { workspace = true }
+ustr             = { workspace = true }
 
 [package.metadata.sailfish]
 template_dir = "templates"
