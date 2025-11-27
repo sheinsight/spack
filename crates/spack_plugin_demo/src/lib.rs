@@ -58,7 +58,7 @@ pub(crate) async fn resolve_loader(
   &self,
   _context: &Context,
   _resolver: &Resolver,
-  l: &ModuleRuleUseLoader,
+  _l: &ModuleRuleUseLoader,
 ) -> Result<Option<BoxLoader>> {
   if let Some(on_detected) = &self.options.on_detected {
     let future = on_detected(DemoResponse {
