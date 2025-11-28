@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-linux-x64-musl",
-  "version": "0.6.4-1",
+  "version": "0.6.4-2-canary.0",
   "cpu": [
     "x64"
   ],
