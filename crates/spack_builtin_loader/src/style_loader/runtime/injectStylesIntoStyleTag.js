@@ -82,14 +82,14 @@ function modulesToDom(list, options) {
 }
 
 module.exports = (list, options) => {
-  options ||= {};
+  options = options || {};
 
-  list ||= [];
+  list = list || [];
 
   let lastIdentifiers = modulesToDom(list, options);
 
   return function update(newList) {
-    newList ||= [];
+    newList = newList || [];
 
     for (let i = 0; i < lastIdentifiers.length; i++) {
       const identifier = lastIdentifiers[i];
