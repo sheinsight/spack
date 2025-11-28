@@ -32,16 +32,13 @@ impl PxToRemVisitor {
   }
 
   // 辅助方法：检查当前属性是否应该转换
-  fn should_convert(&self) -> bool {
-    if let Some(prop) = self.current_property.borrow().as_ref() {
-      // 检查属性名是否在 prop_list 中
-      // 支持通配符 '*' 表示所有属性
+  fn should_convert(&self, property_name: Option<&str>) -> bool {
+    if let Some(property_name) = property_name {
       self.options.prop_list.iter().any(|pattern| {
         if pattern == "*" {
           return true;
         }
-        // 支持前缀匹配，如 "font" 匹配 "font-size", "font-weight" 等
-        prop.starts_with(pattern.as_str()) || prop == pattern
+        property_name.starts_with(pattern.as_str()) || property_name == pattern
       })
     } else {
       false
@@ -71,24 +68,62 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
     &mut self,
     decls: &mut lightningcss::declaration::DeclarationBlock<'i>,
   ) -> std::result::Result<(), Self::Error> {
-    for property in decls.iter_mut() {
-      let property_name = match property {
-        lightningcss::properties::Property::FontSize(_) => Some("font-size".to_string()),
-        lightningcss::properties::Property::Font(_) => Some("font".to_string()),
-        lightningcss::properties::Property::LineHeight(_) => Some("line-height".to_string()),
-        lightningcss::properties::Property::LetterSpacing(_) => Some("letter-spacing".to_string()),
-        lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing".to_string()),
-        _ => None,
-      };
+    if self.options.replace {
+      for property in decls.iter_mut() {
+        let property_name = match property {
+          lightningcss::properties::Property::FontSize(_) => Some("font-size".to_string()),
+          lightningcss::properties::Property::Font(_) => Some("font".to_string()),
+          lightningcss::properties::Property::LineHeight(_) => Some("line-height".to_string()),
+          lightningcss::properties::Property::LetterSpacing(_) => {
+            Some("letter-spacing".to_string())
+          }
+          lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing".to_string()),
+          _ => None,
+        };
 
-      *self.current_property.borrow_mut() = property_name;
+        *self.current_property.borrow_mut() = property_name;
 
-      // 继续访问子节点（会调用 visit_length）
-      property.visit_children(self)?;
+        // 继续访问子节点（会调用 visit_length）
+        property.visit_children(self)?;
 
-      // 清除当前属性名
-      *self.current_property.borrow_mut() = None;
+        // 清除当前属性名
+        *self.current_property.borrow_mut() = None;
+      }
+    } else {
+      // 追加模式：先收集需要插入的声明，然后统一插入
+      let mut properties_to_insert = Vec::new();
+
+      for (index, property) in decls.declarations.iter().enumerate() {
+        let property_name = match property {
+          lightningcss::properties::Property::FontSize(_) => Some("font-size".to_string()),
+          lightningcss::properties::Property::Font(_) => Some("font".to_string()),
+          lightningcss::properties::Property::LineHeight(_) => Some("line-height".to_string()),
+          lightningcss::properties::Property::LetterSpacing(_) => {
+            Some("letter-spacing".to_string())
+          }
+          lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing".to_string()),
+          _ => None,
+        };
+
+        if self.should_convert(property_name.as_deref()) {
+          let mut cloned = property.clone();
+
+          // 设置当前属性名，转换克隆的 property 中的值
+          *self.current_property.borrow_mut() = property_name;
+          cloned.visit_children(self)?; // 这里会把克隆体的 px 转成 rem
+          *self.current_property.borrow_mut() = None;
+
+          // 记录需要插入的位置和声明
+          properties_to_insert.push((index + 1, cloned));
+        }
+      }
+
+      // 从后往前插入，避免索引偏移问题
+      for (insert_index, property) in properties_to_insert.into_iter().rev() {
+        decls.declarations.insert(insert_index, property);
+      }
     }
+
     Ok(())
   }
 
@@ -98,9 +133,18 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
   ) -> std::result::Result<(), Self::Error> {
     match length {
       lightningcss::values::length::LengthValue::Px(px) => {
-        if !self.should_convert() {
+        // 检查当前属性是否需要转换
+        let should_convert = self
+          .current_property
+          .borrow()
+          .as_ref()
+          .map(|prop| self.should_convert(Some(prop.as_str())))
+          .unwrap_or(false);
+
+        if !should_convert {
           return Ok(());
         }
+
         if let Some(rem_value) = self.convert_px_to_rem(*px) {
           *length = lightningcss::values::length::LengthValue::Rem(rem_value);
         }
