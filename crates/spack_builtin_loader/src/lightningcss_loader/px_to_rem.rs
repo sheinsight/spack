@@ -47,6 +47,17 @@ impl PxToRemVisitor {
       false
     }
   }
+
+  // 转换 length 值
+  fn convert_px_to_rem(&self, px: f32) -> Option<f32> {
+    if px < self.options.min_pixel_value {
+      return None;
+    }
+    let rem_value = px / self.options.root_value;
+    let multiplier = 10_f32.powi(self.options.unit_precision);
+    let rounded = (rem_value * multiplier).round() / multiplier;
+    Some(rounded)
+  }
 }
 
 impl<'i> Visitor<'i> for PxToRemVisitor {
@@ -90,13 +101,9 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
         if !self.should_convert() {
           return Ok(());
         }
-        if *px < self.options.min_pixel_value {
-          return Ok(());
+        if let Some(rem_value) = self.convert_px_to_rem(*px) {
+          *length = lightningcss::values::length::LengthValue::Rem(rem_value);
         }
-        let rem_value = *px / self.options.root_value;
-        let multiplier = 10_f32.powi(self.options.unit_precision);
-        let rounded = (rem_value * multiplier).round() / multiplier;
-        *length = lightningcss::values::length::LengthValue::Rem(rounded);
       }
       _ => {}
     }

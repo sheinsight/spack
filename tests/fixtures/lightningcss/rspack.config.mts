@@ -39,6 +39,7 @@ export default {
                   unitPrecision: 5,
                   propList: ['*'],
                   minPixelValue: 2,
+                  replace: false,
                 },
               },
             },
