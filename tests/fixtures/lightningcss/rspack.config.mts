@@ -34,6 +34,12 @@ export default {
               error_recovery: true,
               draft: {
                 customMedia: true,
+                pxToRem: {
+                  rootValue: 16,
+                  unitPrecision: 5,
+                  propList: ['*'],
+                  minPixelValue: 2,
+                },
               },
             },
           },

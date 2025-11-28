@@ -9,7 +9,7 @@ use lightningcss::{
   printer::PrinterOptions,
   stylesheet::{MinifyOptions, ParserFlags, ParserOptions, StyleSheet},
   targets::{Browsers, Features, Targets},
-  visitor::{Visit, VisitTypes, Visitor},
+  visitor::Visit,
 };
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
@@ -20,67 +20,14 @@ use rspack_core::{
 use rspack_error::{Result, ToStringResultToRspackResultExt};
 
 use crate::{
-  lightningcss_loader::opts::LightningcssLoaderOpts, loader_cache::LoaderWithIdentifier,
+  lightningcss_loader::{opts::LightningcssLoaderOpts, px_to_rem::PxToRemVisitor},
+  loader_cache::LoaderWithIdentifier,
 };
 
 mod opts;
+mod px_to_rem;
 
 pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loader";
-
-pub struct Px2RemVisitor {
-  pub root_value: f32,
-  pub unit_precision: i32,
-  pub prop_list: Vec<String>,
-  // pub replace: bool,
-  // pub media_query: bool,
-  pub min_pixel_value: f32,
-  // pub exclude: Vec<String>,
-  // pub unit: String,
-}
-
-impl Px2RemVisitor {
-  pub fn new(root_value: f32) -> Self {
-    Self {
-      root_value,
-      prop_list: vec![
-        "font".to_string(),
-        "font-size".to_string(),
-        "line-height".to_string(),
-        "letter-spacing".to_string(),
-        "word-spacing".to_string(),
-      ],
-      unit_precision: 5,
-      min_pixel_value: 2.0,
-    }
-  }
-}
-
-impl<'i> Visitor<'i> for Px2RemVisitor {
-  type Error = ();
-
-  fn visit_types(&self) -> VisitTypes {
-    VisitTypes::all()
-  }
-
-  fn visit_length(
-    &mut self,
-    length: &mut lightningcss::values::length::LengthValue,
-  ) -> std::result::Result<(), Self::Error> {
-    match length {
-      lightningcss::values::length::LengthValue::Px(px) => {
-        if *px < self.min_pixel_value {
-          return Ok(());
-        }
-        let rem_value = *px / self.root_value;
-        let multiplier = 10_f32.powi(self.unit_precision);
-        let rounded = (rem_value * multiplier).round() / multiplier;
-        *length = lightningcss::values::length::LengthValue::Rem(rounded);
-      }
-      _ => {}
-    }
-    Ok(())
-  }
-}
 
 #[cacheable]
 #[derive(Clone)]
@@ -194,9 +141,12 @@ impl Loader<RunnerContext> for LightningcssLoader {
     //   }
     // }
 
-    let mut px2rem = Px2RemVisitor::new(16.0);
-
-    stylesheet.visit(&mut px2rem).unwrap();
+    if let Some(draft) = &self.options.draft {
+      if let Some(px_to_rem) = &draft.px_to_rem {
+        let mut px2rem = PxToRemVisitor::new(px_to_rem.clone());
+        stylesheet.visit(&mut px2rem).unwrap();
+      }
+    };
 
     let targets = self.get_targets();
 

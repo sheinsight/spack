@@ -1,11 +1,14 @@
 use rspack_cacheable::cacheable;
 use serde::{Deserialize, Serialize};
 
+use crate::lightningcss_loader::px_to_rem::PxToRemOpts;
+
 #[cacheable]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Draft {
   pub custom_media: bool,
+  pub px_to_rem: Option<PxToRemOpts>,
 }
 
 #[cacheable]
