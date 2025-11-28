@@ -9,6 +9,7 @@ use lightningcss::{
   printer::PrinterOptions,
   stylesheet::{MinifyOptions, ParserFlags, ParserOptions, StyleSheet},
   targets::{Browsers, Features, Targets},
+  visitor::{Visit, VisitTypes, Visitor},
 };
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
@@ -25,6 +26,54 @@ use crate::{
 mod opts;
 
 pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loader";
+
+pub struct Px2RemVisitor {
+  pub root_value: f32,
+  pub unit_precision: i32,
+  // pub prop_list:Vec<String>,
+  // pub replace: bool,
+  // pub media_query: bool,
+  pub min_pixel_value: f32,
+  // pub exclude: Vec<String>,
+  // pub unit: String,
+}
+
+impl Px2RemVisitor {
+  pub fn new(root_value: f32) -> Self {
+    Self {
+      root_value,
+      unit_precision: 5,
+      min_pixel_value: 2.0,
+    }
+  }
+}
+
+impl<'i> Visitor<'i> for Px2RemVisitor {
+  type Error = ();
+
+  fn visit_types(&self) -> VisitTypes {
+    VisitTypes::all()
+  }
+
+  fn visit_length(
+    &mut self,
+    length: &mut lightningcss::values::length::LengthValue,
+  ) -> std::result::Result<(), Self::Error> {
+    match length {
+      lightningcss::values::length::LengthValue::Px(px) => {
+        if *px < self.min_pixel_value {
+          return Ok(());
+        }
+        let rem_value = *px / self.root_value;
+        let multiplier = 10_f32.powi(self.unit_precision);
+        let rounded = (rem_value * multiplier).round() / multiplier;
+        *length = lightningcss::values::length::LengthValue::Rem(rounded);
+      }
+      _ => {}
+    }
+    Ok(())
+  }
+}
 
 #[cacheable]
 #[derive(Clone)]
@@ -84,20 +133,20 @@ impl Loader<RunnerContext> for LightningcssLoader {
       rspack_core::Content::Buffer(buf) => String::from_utf8_lossy(buf),
     };
 
-    // let mut parser_flags = ParserFlags::empty();
-    // parser_flags.set(
-    //   ParserFlags::CUSTOM_MEDIA,
-    //   matches!(&self.config.draft, Some(draft) if draft.custom_media),
-    // );
-    // parser_flags.set(
-    //   ParserFlags::DEEP_SELECTOR_COMBINATOR,
-    //   matches!(&self.config.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
-    // );
+    let mut parser_flags = ParserFlags::empty();
+    parser_flags.set(
+      ParserFlags::CUSTOM_MEDIA,
+      matches!(&self.options.draft, Some(draft) if draft.custom_media),
+    );
+    parser_flags.set(
+      ParserFlags::DEEP_SELECTOR_COMBINATOR,
+      matches!(&self.options.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
+    );
 
     // let parser_flags =
     //   ParserFlags::NESTING | ParserFlags::CUSTOM_MEDIA | ParserFlags::DEEP_SELECTOR_COMBINATOR;
 
-    let parser_flags = ParserFlags::NESTING;
+    // let parser_flags = ParserFlags::NESTING;
 
     // let warnings = if error_recovery {
     //   Some(Arc::new(RwLock::new(Vec::new())))
@@ -138,7 +187,9 @@ impl Loader<RunnerContext> for LightningcssLoader {
     //   }
     // }
 
-    // let browsers = Browsers::from_browserslist(&["chrome 70"]).ok();
+    let mut px2rem = Px2RemVisitor::new(16.0);
+
+    stylesheet.visit(&mut px2rem).unwrap();
 
     let targets = self.get_targets();
 
@@ -202,6 +253,8 @@ impl Loader<RunnerContext> for LightningcssLoader {
         pseudo_classes,
       })
       .to_rspack_result_with_message(|e| format!("failed to generate css: {e}"))?;
+
+    println!("content--->{:#?}", content.code);
 
     if let Some(source_map) = parcel_source_map {
       let mappings = encode_mappings(source_map.get_mappings().iter().map(|mapping| Mapping {
