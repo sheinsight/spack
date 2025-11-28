@@ -30,7 +30,7 @@ pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loa
 pub struct Px2RemVisitor {
   pub root_value: f32,
   pub unit_precision: i32,
-  // pub prop_list:Vec<String>,
+  pub prop_list: Vec<String>,
   // pub replace: bool,
   // pub media_query: bool,
   pub min_pixel_value: f32,
@@ -42,6 +42,13 @@ impl Px2RemVisitor {
   pub fn new(root_value: f32) -> Self {
     Self {
       root_value,
+      prop_list: vec![
+        "font".to_string(),
+        "font-size".to_string(),
+        "line-height".to_string(),
+        "letter-spacing".to_string(),
+        "word-spacing".to_string(),
+      ],
       unit_precision: 5,
       min_pixel_value: 2.0,
     }
