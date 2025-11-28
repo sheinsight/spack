@@ -55,6 +55,20 @@ impl PxToRemVisitor {
     let rounded = (rem_value * multiplier).round() / multiplier;
     Some(rounded)
   }
+
+  fn get_property_name(
+    &self,
+    property: &lightningcss::properties::Property,
+  ) -> Option<&'static str> {
+    match property {
+      lightningcss::properties::Property::FontSize(_) => Some("font-size"),
+      lightningcss::properties::Property::Font(_) => Some("font"),
+      lightningcss::properties::Property::LineHeight(_) => Some("line-height"),
+      lightningcss::properties::Property::LetterSpacing(_) => Some("letter-spacing"),
+      lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing"),
+      _ => None,
+    }
+  }
 }
 
 impl<'i> Visitor<'i> for PxToRemVisitor {
@@ -70,16 +84,7 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
   ) -> std::result::Result<(), Self::Error> {
     if self.options.replace {
       for property in decls.iter_mut() {
-        let property_name = match property {
-          lightningcss::properties::Property::FontSize(_) => Some("font-size".to_string()),
-          lightningcss::properties::Property::Font(_) => Some("font".to_string()),
-          lightningcss::properties::Property::LineHeight(_) => Some("line-height".to_string()),
-          lightningcss::properties::Property::LetterSpacing(_) => {
-            Some("letter-spacing".to_string())
-          }
-          lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing".to_string()),
-          _ => None,
-        };
+        let property_name = self.get_property_name(property).map(|s| s.to_string());
 
         *self.current_property.borrow_mut() = property_name;
 
@@ -94,16 +99,7 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
       let mut properties_to_insert = Vec::new();
 
       for (index, property) in decls.declarations.iter().enumerate() {
-        let property_name = match property {
-          lightningcss::properties::Property::FontSize(_) => Some("font-size".to_string()),
-          lightningcss::properties::Property::Font(_) => Some("font".to_string()),
-          lightningcss::properties::Property::LineHeight(_) => Some("line-height".to_string()),
-          lightningcss::properties::Property::LetterSpacing(_) => {
-            Some("letter-spacing".to_string())
-          }
-          lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing".to_string()),
-          _ => None,
-        };
+        let property_name = self.get_property_name(property).map(|s| s.to_string());
 
         if self.should_convert(property_name.as_deref()) {
           let mut cloned = property.clone();
