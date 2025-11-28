@@ -5,7 +5,6 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{Loader, LoaderContext, RunnerContext, contextify};
 use rspack_error::Result;
-use rspack_loader_runner::DisplayWithSuffix;
 use rspack_paths::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
 
@@ -59,8 +58,8 @@ lazy_static::lazy_static! {
 #[cacheable]
 #[derive(Clone)]
 pub struct StyleLoader {
-  options: StyleLoaderOpts,
   identifier: Identifier,
+  options: StyleLoaderOpts,
   module_helper: ModuleHelper,
 }
 
@@ -135,8 +134,21 @@ impl StyleLoader {
 
   fn get_remaining_request(&self, loader_context: &mut LoaderContext<RunnerContext>) -> String {
     let resource = loader_context.resource();
-    let request = loader_context.remaining_request();
-    let request = request.display_with_suffix(resource);
+    let remaining = loader_context.remaining_request();
+
+    // 使用 loader.identifier() 来获取完整的 identifier (包含 ??ruleSet[...])
+    // 这样可以确保 inline request 中的 loader 能够命中缓存,使用相同的配置
+    let loaders: Vec<String> = remaining
+      .iter()
+      .map(|item| item.loader().identifier().to_string())
+      .collect();
+
+    let request = if loaders.is_empty() {
+      resource.to_string()
+    } else {
+      format!("{}!{}", loaders.join("!"), resource)
+    };
+
     let request = self.escape_for_js_string(request);
     format!("!!{request}")
   }

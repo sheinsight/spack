@@ -61,7 +61,7 @@ impl LightningcssLoader {
 #[cacheable_dyn]
 impl Loader<RunnerContext> for LightningcssLoader {
   fn identifier(&self) -> Identifier {
-    LIGHTNINGCSS_LOADER_IDENTIFIER.into()
+    self.identifier
   }
 
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
@@ -202,8 +202,6 @@ impl Loader<RunnerContext> for LightningcssLoader {
         pseudo_classes,
       })
       .to_rspack_result_with_message(|e| format!("failed to generate css: {e}"))?;
-
-    println!("content--->{:#?}", content.code);
 
     if let Some(source_map) = parcel_source_map {
       let mappings = encode_mappings(source_map.get_mappings().iter().map(|mapping| Mapping {

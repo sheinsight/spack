@@ -111,6 +111,7 @@ pub(crate) async fn resolve_loader(
           options,
           format!("parse {} options error", LIGHTNINGCSS_LOADER_IDENTIFIER).as_ref(),
         )?;
+
         Ok(LightningcssLoader::new(options).with_identifier(loader_request.as_str().into()))
       })
       .await?;
