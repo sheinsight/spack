@@ -11,7 +11,6 @@ use lightningcss::{
   targets::{Browsers, Features, Targets},
   visitor::Visit,
 };
-use rspack_browserslist::browserslist_to_lightningcss_targets;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{
@@ -25,8 +24,9 @@ use crate::{
   loader_cache::LoaderWithIdentifier,
 };
 
-mod opts;
-mod px_to_rem;
+pub(crate) mod opts;
+pub(crate) mod px_to_rem;
+pub(crate) mod raw;
 
 pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loader";
 
@@ -75,10 +75,6 @@ impl Loader<RunnerContext> for LightningcssLoader {
 
     let filename = resource_path.as_str().to_string();
 
-    // let source_map = loader_context.take_source_map() else {
-    //   return Ok(());
-    // };
-
     let Some(source) = loader_context.take_content() else {
       return Ok(());
     };
@@ -97,11 +93,6 @@ impl Loader<RunnerContext> for LightningcssLoader {
       ParserFlags::DEEP_SELECTOR_COMBINATOR,
       matches!(&self.options.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
     );
-
-    // let parser_flags =
-    //   ParserFlags::NESTING | ParserFlags::CUSTOM_MEDIA | ParserFlags::DEEP_SELECTOR_COMBINATOR;
-
-    // let parser_flags = ParserFlags::NESTING;
 
     // let warnings = if error_recovery {
     //   Some(Arc::new(RwLock::new(Vec::new())))
@@ -142,17 +133,8 @@ impl Loader<RunnerContext> for LightningcssLoader {
     //   }
     // }
 
-    let browsers = self
-      .options
-      .targets
-      .as_ref()
-      .map(browserslist_to_lightningcss_targets)
-      .transpose()
-      .to_rspack_result_with_message(|e| format!("Failed to parse browserslist: {e}"))?
-      .flatten();
-
     let targets = Targets {
-      browsers: browsers,
+      browsers: self.options.targets,
       include: Features::empty(),
       exclude: Features::empty(),
     };

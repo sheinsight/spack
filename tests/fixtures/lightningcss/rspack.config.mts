@@ -30,17 +30,16 @@ export default {
           {
             loader: 'builtin:spack-lightningcss-loader',
             options: {
-              // minify: false,
+              minify: false,
               targets: ['chrome 100'],
               error_recovery: true,
               draft: {
                 customMedia: true,
                 pxToRem: {
-                  rootValue: 16,
+                  rootValue: 32,
                   unitPrecision: 5,
                   propList: ['*'],
                   minPixelValue: 2,
-                  // replace: false,
                   mediaQuery: true,
                 },
               },

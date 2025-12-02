@@ -10,7 +10,9 @@ use serde::Serialize;
 
 use crate::{
   css_modules_ts_loader::{CSS_MODULES_TS_LOADER_IDENTIFIER, CssModulesTsLoader},
-  lightningcss_loader::{LIGHTNINGCSS_LOADER_IDENTIFIER, LightningcssLoader},
+  lightningcss_loader::{
+    LIGHTNINGCSS_LOADER_IDENTIFIER, LightningcssLoader, raw::RawLightningcssLoaderOpts,
+  },
   loader_cache::{LoaderCache, LoaderWithIdentifier},
   style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader},
 };
@@ -107,10 +109,14 @@ pub(crate) async fn resolve_loader(
   if loader_request.starts_with(LIGHTNINGCSS_LOADER_IDENTIFIER) {
     let loader = LIGHTNINGCSS_LOADER_CACHE
       .get_or_insert(loader_request, options, || {
-        let options = serde_json::from_str(options).to_rspack_result_with_detail(
-          options,
-          format!("parse {} options error", LIGHTNINGCSS_LOADER_IDENTIFIER).as_ref(),
-        )?;
+        let options: RawLightningcssLoaderOpts = serde_json::from_str(options).map_err(|e| {
+          rspack_error::Error::error(format!(
+            "parse {} options error: {e}",
+            LIGHTNINGCSS_LOADER_IDENTIFIER
+          ))
+        })?;
+
+        let options = options.try_into()?;
 
         Ok(LightningcssLoader::new(options).with_identifier(loader_request.as_str().into()))
       })
