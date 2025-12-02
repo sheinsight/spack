@@ -2,6 +2,7 @@ use std::cell::RefCell;
 
 use lightningcss::visitor::{Visit, VisitTypes, Visitor};
 use rspack_cacheable::cacheable;
+use rspack_util::fx_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 
 #[cacheable]
@@ -21,24 +22,22 @@ pub struct PxToRemOpts {
 pub struct PxToRemVisitor {
   pub options: PxToRemOpts,
   current_property: RefCell<Option<String>>,
+  prop_list_set: FxHashSet<String>,
 }
 
 impl PxToRemVisitor {
   pub fn new(options: PxToRemOpts) -> Self {
+    let prop_list_set = options.prop_list.iter().cloned().collect();
     Self {
       options,
+      prop_list_set,
       current_property: RefCell::new(None),
     }
   }
 
   // 辅助方法：检查当前属性是否应该转换
   fn should_convert(&self, property_name: &str) -> bool {
-    self.options.prop_list.iter().any(|pattern| {
-      if pattern == "*" {
-        return true;
-      }
-      property_name.starts_with(pattern.as_str()) || property_name == pattern
-    })
+    self.prop_list_set.contains(property_name) || property_name == "*"
   }
 
   // 转换 length 值
