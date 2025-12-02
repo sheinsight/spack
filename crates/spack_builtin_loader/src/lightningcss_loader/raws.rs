@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::lightningcss_loader::{
   opts::{Draft, LightningcssLoaderOpts, NonStandard, PseudoClasses},
-  px_to_rem::PxToRemOpts,
+  visitors::px_to_rem::{PxToRemOpts, RawPxToRemOpts},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,16 +24,6 @@ pub struct RawLightningcssLoaderOpts {
 pub struct RawDraft {
   pub custom_media: bool,
   pub px_to_rem: Option<RawPxToRemOpts>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RawPxToRemOpts {
-  pub root_value: f32,
-  pub unit_precision: i32,
-  pub prop_list: Vec<String>,
-  pub media_query: bool,
-  pub min_pixel_value: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

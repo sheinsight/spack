@@ -6,17 +6,26 @@ use rspack_util::fx_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 
 #[cacheable]
+#[derive(Debug, Clone)]
+pub struct PxToRemOpts {
+  pub root_value: f32,
+  pub media_query: bool,
+  pub unit_precision: i32,
+  pub min_pixel_value: f32,
+  pub prop_list: Vec<String>,
+  // pub replace: bool,
+  // pub exclude: Vec<String>,
+  // pub unit: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PxToRemOpts {
+pub struct RawPxToRemOpts {
   pub root_value: f32,
   pub unit_precision: i32,
   pub prop_list: Vec<String>,
-  // pub replace: bool,
   pub media_query: bool,
   pub min_pixel_value: f32,
-  // pub exclude: Vec<String>,
-  // pub unit: String,
 }
 
 pub struct PxToRemVisitor {

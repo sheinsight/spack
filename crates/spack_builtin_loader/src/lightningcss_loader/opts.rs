@@ -4,7 +4,7 @@ use rspack_cacheable::{
   with::{AsOption, AsPreset},
 };
 
-use crate::lightningcss_loader::px_to_rem::PxToRemOpts;
+use crate::lightningcss_loader::visitors::px_to_rem::PxToRemOpts;
 
 #[cacheable]
 #[derive(Debug, Clone)]
@@ -36,8 +36,6 @@ pub struct LightningcssLoaderOpts {
   #[cacheable(with=AsOption<AsPreset>)]
   pub targets: Option<Browsers>,
   pub error_recovery: bool,
-  // #[cacheable(with=AsOption<AsPreset>)]
-  // pub targets: Option<Browsers>,
   // pub include: Option<u32>,
   // pub exclude: Option<u32>,
   pub draft: Option<Draft>,

@@ -20,13 +20,13 @@ use rspack_core::{
 use rspack_error::{Result, ToStringResultToRspackResultExt};
 
 use crate::{
-  lightningcss_loader::{opts::LightningcssLoaderOpts, px_to_rem::PxToRemVisitor},
+  lightningcss_loader::{opts::LightningcssLoaderOpts, visitors::px_to_rem::PxToRemVisitor},
   loader_cache::LoaderWithIdentifier,
 };
 
 pub(crate) mod opts;
-pub(crate) mod px_to_rem;
 pub(crate) mod raws;
+pub(crate) mod visitors;
 
 pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loader";
 
