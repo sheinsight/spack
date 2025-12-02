@@ -199,15 +199,17 @@ impl Loader<RunnerContext> for LightningcssLoader {
         focus_within: item.focus_within.as_deref(),
       });
 
+    let printer_options = PrinterOptions {
+      minify: self.options.minify,
+      source_map: parcel_source_map.as_mut(),
+      project_root: None,
+      targets,
+      analyze_dependencies: None,
+      pseudo_classes,
+    };
+
     let content = stylesheet
-      .to_css(PrinterOptions {
-        minify: self.options.minify,
-        source_map: parcel_source_map.as_mut(),
-        project_root: None,
-        targets,
-        analyze_dependencies: None,
-        pseudo_classes,
-      })
+      .to_css(printer_options)
       .to_rspack_result_with_message(|e| format!("failed to generate css: {e}"))?;
 
     println!("content--->{:#?}", content.code);
