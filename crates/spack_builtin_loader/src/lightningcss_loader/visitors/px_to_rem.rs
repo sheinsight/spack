@@ -46,6 +46,7 @@ pub struct PxToRemVisitor {
   pub options: PxToRemOpts,
   current_property: RefCell<Option<String>>,
   prop_list_set: FxHashSet<String>,
+  conversion_happened: RefCell<bool>,
 }
 
 impl PxToRemVisitor {
@@ -55,6 +56,7 @@ impl PxToRemVisitor {
       options,
       prop_list_set,
       current_property: RefCell::new(None),
+      conversion_happened: RefCell::new(false),
     }
   }
 
@@ -187,45 +189,50 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
     &mut self,
     decls: &mut lightningcss::declaration::DeclarationBlock<'i>,
   ) -> std::result::Result<(), Self::Error> {
-    // if self.options.replace {
-    for property in decls.iter_mut() {
-      let property_name = property.property_id().name().to_string();
+    if self.options.replace {
+      // replace 模式：直接替换 px 为 rem
+      for property in decls.iter_mut() {
+        let property_name = property.property_id().name().to_string();
 
-      *self.current_property.borrow_mut() = Some(property_name);
+        *self.current_property.borrow_mut() = Some(property_name);
 
-      // 继续访问子节点（会调用 visit_length）
-      property.visit_children(self)?;
+        // 继续访问子节点（会调用 visit_length）
+        property.visit_children(self)?;
 
-      // 清除当前属性名
-      *self.current_property.borrow_mut() = None;
+        // 清除当前属性名
+        *self.current_property.borrow_mut() = None;
+      }
+    } else {
+      // append 模式：先收集需要插入的声明，然后统一插入
+      let mut properties_to_insert = Vec::with_capacity(decls.declarations.len());
+
+      for (index, property) in decls.declarations.iter().enumerate() {
+        let property_name = property.property_id().name().to_string();
+
+        if self.should_convert(&property_name) {
+          let mut cloned = property.clone();
+
+          // 重置转换标志
+          *self.conversion_happened.borrow_mut() = false;
+
+          // 设置当前属性名，转换克隆的 property 中的值
+          *self.current_property.borrow_mut() = Some(property_name);
+          cloned.visit_children(self)?; // 这里会把克隆体的 px 转成 rem
+          *self.current_property.borrow_mut() = None;
+
+          // 只有真正发生转换的属性才插入
+          if *self.conversion_happened.borrow() {
+            // 记录需要插入的位置和声明 (index + 1 确保 rem 在 px 后面)
+            properties_to_insert.push((index + 1, cloned));
+          }
+        }
+      }
+
+      // 从后往前插入，避免索引偏移问题
+      for (insert_index, property) in properties_to_insert.into_iter().rev() {
+        decls.declarations.insert(insert_index, property);
+      }
     }
-    // } else {
-    //   // 追加模式：先收集需要插入的声明，然后统一插入
-    //   let mut properties_to_insert = Vec::with_capacity(decls.declarations.len());
-
-    //   for (index, property) in decls.declarations.iter().enumerate() {
-    //     let property_name = property.property_id().name().to_string();
-
-    //     if self.should_convert(&property_name) {
-    //       println!("property_name--->{:?} should convert", property_name);
-
-    //       let mut cloned = property.clone();
-
-    //       // 设置当前属性名，转换克隆的 property 中的值
-    //       *self.current_property.borrow_mut() = Some(property_name);
-    //       cloned.visit_children(self)?; // 这里会把克隆体的 px 转成 rem
-    //       *self.current_property.borrow_mut() = None;
-
-    //       // 记录需要插入的位置和声明
-    //       properties_to_insert.push((index + 1, cloned));
-    //     }
-    //   }
-
-    //   // 从后往前插入，避免索引偏移问题
-    //   for (insert_index, property) in properties_to_insert.into_iter().rev() {
-    //     decls.declarations.insert(insert_index, property);
-    //   }
-    // }
 
     Ok(())
   }
@@ -250,6 +257,8 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
 
         if let Some(rem_value) = self.convert_px_to_rem(*px) {
           *length = lightningcss::values::length::LengthValue::Rem(rem_value);
+          // 标记发生了转换
+          *self.conversion_happened.borrow_mut() = true;
         }
       }
       _ => {}

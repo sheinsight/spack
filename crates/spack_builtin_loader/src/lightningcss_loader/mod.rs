@@ -128,10 +128,10 @@ impl Loader<RunnerContext> for LightningcssLoader {
       exclude: Features::empty(),
     };
 
-    // let mut px_to_rem_replace = true;
+    let mut px_to_rem_replace = true;
     if let Some(draft) = &self.options.draft {
       if let Some(px_to_rem) = &draft.px_to_rem {
-        // px_to_rem_replace = px_to_rem.replace;
+        px_to_rem_replace = px_to_rem.replace;
         let mut px2rem = PxToRemVisitor::new(px_to_rem.clone());
         stylesheet.visit(&mut px2rem).unwrap();
       }
@@ -141,22 +141,15 @@ impl Loader<RunnerContext> for LightningcssLoader {
 
     // 只有在 px_to_rem replace 为 true 或者没有使用 px_to_rem 时才 minify
     // 因为 minify 会合并重复的属性，导致 fallback 被移除
-    // if px_to_rem_replace {
-    //   stylesheet
-    //     .minify(MinifyOptions {
-    //       targets,
-    //       unused_symbols,
-    //     })
-    //     .to_rspack_result()?;
-    // }
-
-    stylesheet
-      .minify(MinifyOptions {
-        targets,
-        unused_symbols,
-        ..MinifyOptions::default()
-      })
-      .to_rspack_result()?;
+    if px_to_rem_replace {
+      stylesheet
+        .minify(MinifyOptions {
+          targets,
+          unused_symbols,
+          ..MinifyOptions::default()
+        })
+        .to_rspack_result()?;
+    }
 
     let mut parcel_source_map = if loader_context.context.source_map_kind.enabled() {
       Some(
