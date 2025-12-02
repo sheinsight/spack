@@ -31,6 +31,7 @@ export default {
             loader: 'builtin:spack-lightningcss-loader',
             options: {
               // minify: false,
+              targets: ['chrome 100'],
               error_recovery: true,
               draft: {
                 customMedia: true,

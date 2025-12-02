@@ -15,6 +15,7 @@ test = false
 [dependencies]
 async-trait          = { workspace = true }
 rspack_binding_api   = { workspace = true }
+rspack_browserslist  = { workspace = true }
 rspack_cacheable     = { workspace = true }
 rspack_collections   = { workspace = true }
 rspack_core          = { workspace = true }

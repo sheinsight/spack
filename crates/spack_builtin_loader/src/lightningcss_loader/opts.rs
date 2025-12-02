@@ -37,12 +37,13 @@ pub struct LightningcssLoaderOpts {
 
   /// default is 5
   // unit_precision: Option<i32>,
+  pub targets: Option<Vec<String>>,
   pub minify: Option<bool>,
   pub error_recovery: Option<bool>,
   // #[cacheable(with=AsOption<AsPreset>)]
   // pub targets: Option<Browsers>,
-  pub include: Option<u32>,
-  pub exclude: Option<u32>,
+  // pub include: Option<u32>,
+  // pub exclude: Option<u32>,
   pub draft: Option<Draft>,
   pub non_standard: Option<NonStandard>,
   pub pseudo_classes: Option<PseudoClasses>,

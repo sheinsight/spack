@@ -11,6 +11,7 @@ use lightningcss::{
   targets::{Browsers, Features, Targets},
   visitor::Visit,
 };
+use rspack_browserslist::browserslist_to_lightningcss_targets;
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::Identifier;
 use rspack_core::{
@@ -141,6 +142,21 @@ impl Loader<RunnerContext> for LightningcssLoader {
     //   }
     // }
 
+    let browsers = self
+      .options
+      .targets
+      .as_ref()
+      .map(browserslist_to_lightningcss_targets)
+      .transpose()
+      .to_rspack_result_with_message(|e| format!("Failed to parse browserslist: {e}"))?
+      .flatten();
+
+    let targets = Targets {
+      browsers: browsers,
+      include: Features::empty(),
+      exclude: Features::empty(),
+    };
+
     // let mut px_to_rem_replace = true;
     if let Some(draft) = &self.options.draft {
       if let Some(px_to_rem) = &draft.px_to_rem {
@@ -150,7 +166,7 @@ impl Loader<RunnerContext> for LightningcssLoader {
       }
     };
 
-    let targets = self.get_targets();
+    // let targets = self.get_targets();
 
     let unused_symbols = HashSet::<String>::new();
 

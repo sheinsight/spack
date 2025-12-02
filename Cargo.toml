@@ -30,6 +30,7 @@ rspack_loader_runner          = "=0.6.5"
 rspack_napi                   = "=0.6.5"
 rspack_paths                  = "=0.6.5"
 rspack_util                   = "=0.6.5"
+rspack_browserslist           = "=0.6.5"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "=0.6.6", default-features = false }
 
