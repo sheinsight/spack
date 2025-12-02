@@ -30,7 +30,7 @@ export default {
           {
             loader: 'builtin:spack-lightningcss-loader',
             options: {
-              minify: false,
+              // minify: false,
               error_recovery: true,
               draft: {
                 customMedia: true,
@@ -39,7 +39,7 @@ export default {
                   unitPrecision: 5,
                   propList: ['*'],
                   minPixelValue: 2,
-                  replace: false,
+                  // replace: false,
                   mediaQuery: true,
                 },
               },
