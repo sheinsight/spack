@@ -94,20 +94,19 @@ impl Loader<RunnerContext> for LightningcssLoader {
       matches!(&self.options.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
     );
 
-    // let warnings = if error_recovery {
-    //   Some(Arc::new(RwLock::new(Vec::new())))
-    // } else {
-    //   None
-    // };
+    let error_recovery = self.options.error_recovery.unwrap_or(false);
 
-    let warnings = Some(Arc::new(RwLock::new(Vec::new())));
+    let warnings = if error_recovery {
+      Some(Arc::new(RwLock::new(Vec::new())))
+    } else {
+      None
+    };
 
     let option = ParserOptions {
       filename: filename.clone(),
       css_modules: None,
       source_index: 0,
-      // 是否忽略无效的规则和声明，而不是直接报错
-      error_recovery: true,
+      error_recovery,
       warnings: warnings,
       flags: parser_flags,
     };
