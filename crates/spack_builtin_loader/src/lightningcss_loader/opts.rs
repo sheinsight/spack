@@ -32,15 +32,10 @@ pub struct PseudoClasses {
 #[cacheable]
 #[derive(Debug, Clone)]
 pub struct LightningcssLoaderOpts {
-  /// default is 16
-  // root_value: Option<i32>,
-
-  /// default is 5
-  // unit_precision: Option<i32>,
-  pub minify: Option<bool>,
+  pub minify: bool,
   #[cacheable(with=AsOption<AsPreset>)]
   pub targets: Option<Browsers>,
-  pub error_recovery: Option<bool>,
+  pub error_recovery: bool,
   // #[cacheable(with=AsOption<AsPreset>)]
   // pub targets: Option<Browsers>,
   // pub include: Option<u32>,

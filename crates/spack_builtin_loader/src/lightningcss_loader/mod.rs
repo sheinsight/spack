@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use lightningcss::{
   printer::PrinterOptions,
   stylesheet::{MinifyOptions, ParserFlags, ParserOptions, StyleSheet},
-  targets::{Browsers, Features, Targets},
+  targets::{Features, Targets},
   visitor::Visit,
 };
 use rspack_cacheable::{cacheable, cacheable_dyn};
@@ -26,7 +26,7 @@ use crate::{
 
 pub(crate) mod opts;
 pub(crate) mod px_to_rem;
-pub(crate) mod raw;
+pub(crate) mod raws;
 
 pub const LIGHTNINGCSS_LOADER_IDENTIFIER: &str = "builtin:spack-lightningcss-loader";
 
@@ -45,19 +45,17 @@ impl LightningcssLoader {
     }
   }
 
-  pub fn get_targets(&self) -> Targets {
-    let browsers = Browsers {
-      chrome: Some(100 << 16),
-      safari: Some(15 << 16),
-      firefox: Some(100 << 16),
-      edge: Some(100 << 16),
-      ..Browsers::default()
-    };
-    Targets {
-      browsers: Some(browsers),
-      include: Features::empty(),
-      exclude: Features::empty(),
-    }
+  fn get_flags(&self) -> ParserFlags {
+    let mut flags = ParserFlags::empty();
+    flags.set(
+      ParserFlags::CUSTOM_MEDIA,
+      matches!(&self.options.draft, Some(draft) if draft.custom_media),
+    );
+    flags.set(
+      ParserFlags::DEEP_SELECTOR_COMBINATOR,
+      matches!(&self.options.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
+    );
+    flags
   }
 }
 
@@ -84,17 +82,9 @@ impl Loader<RunnerContext> for LightningcssLoader {
       rspack_core::Content::Buffer(buf) => String::from_utf8_lossy(buf),
     };
 
-    let mut parser_flags = ParserFlags::empty();
-    parser_flags.set(
-      ParserFlags::CUSTOM_MEDIA,
-      matches!(&self.options.draft, Some(draft) if draft.custom_media),
-    );
-    parser_flags.set(
-      ParserFlags::DEEP_SELECTOR_COMBINATOR,
-      matches!(&self.options.non_standard, Some(non_standard) if non_standard.deep_selector_combinator),
-    );
+    let flags = self.get_flags();
 
-    let error_recovery = self.options.error_recovery.unwrap_or(false);
+    let error_recovery = self.options.error_recovery;
 
     let warnings = if error_recovery {
       Some(Arc::new(RwLock::new(Vec::new())))
@@ -107,8 +97,8 @@ impl Loader<RunnerContext> for LightningcssLoader {
       css_modules: None,
       source_index: 0,
       error_recovery,
-      warnings: warnings,
-      flags: parser_flags,
+      warnings,
+      flags,
     };
 
     let mut stylesheet = StyleSheet::parse(&source_str, option.clone()).to_rspack_result()?;
@@ -147,8 +137,6 @@ impl Loader<RunnerContext> for LightningcssLoader {
       }
     };
 
-    // let targets = self.get_targets();
-
     let unused_symbols = HashSet::<String>::new();
 
     // 只有在 px_to_rem replace 为 true 或者没有使用 px_to_rem 时才 minify
@@ -161,10 +149,12 @@ impl Loader<RunnerContext> for LightningcssLoader {
     //     })
     //     .to_rspack_result()?;
     // }
+
     stylesheet
       .minify(MinifyOptions {
         targets,
         unused_symbols,
+        ..MinifyOptions::default()
       })
       .to_rspack_result()?;
 
@@ -211,7 +201,7 @@ impl Loader<RunnerContext> for LightningcssLoader {
 
     let content = stylesheet
       .to_css(PrinterOptions {
-        minify: self.options.minify.unwrap_or(true),
+        minify: self.options.minify,
         source_map: parcel_source_map.as_mut(),
         project_root: None,
         targets,

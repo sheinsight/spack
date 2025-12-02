@@ -55,15 +55,17 @@ pub struct RawPseudoClasses {
 impl TryInto<LightningcssLoaderOpts> for RawLightningcssLoaderOpts {
   type Error = rspack_error::Error;
   fn try_into(self) -> Result<LightningcssLoaderOpts, Self::Error> {
+    let targets = self
+      .targets
+      .map(browserslist_to_lightningcss_targets)
+      .transpose()
+      .to_rspack_result_with_message(|e| format!("Failed to parse browserslist: {e}"))?
+      .flatten();
+
     Ok(LightningcssLoaderOpts {
-      minify: self.minify,
-      targets: self
-        .targets
-        .map(browserslist_to_lightningcss_targets)
-        .transpose()
-        .to_rspack_result_with_message(|e| format!("Failed to parse browserslist: {e}"))?
-        .flatten(),
-      error_recovery: self.error_recovery,
+      minify: self.minify.unwrap_or(true),
+      targets,
+      error_recovery: self.error_recovery.unwrap_or(false),
       draft: self.draft.map(Into::into),
       non_standard: self.non_standard.map(Into::into),
       pseudo_classes: self.pseudo_classes.map(Into::into),

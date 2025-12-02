@@ -11,7 +11,7 @@ use serde::Serialize;
 use crate::{
   css_modules_ts_loader::{CSS_MODULES_TS_LOADER_IDENTIFIER, CssModulesTsLoader},
   lightningcss_loader::{
-    LIGHTNINGCSS_LOADER_IDENTIFIER, LightningcssLoader, raw::RawLightningcssLoaderOpts,
+    LIGHTNINGCSS_LOADER_IDENTIFIER, LightningcssLoader, raws::RawLightningcssLoaderOpts,
   },
   loader_cache::{LoaderCache, LoaderWithIdentifier},
   style_loader::{STYLE_LOADER_IDENTIFIER, StyleLoader},
