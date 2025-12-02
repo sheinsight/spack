@@ -40,6 +40,7 @@ export default {
                   propList: ['*'],
                   minPixelValue: 2,
                   replace: false,
+                  mediaQuery: true,
                 },
               },
             },

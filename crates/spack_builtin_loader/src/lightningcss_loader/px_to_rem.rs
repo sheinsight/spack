@@ -32,17 +32,13 @@ impl PxToRemVisitor {
   }
 
   // 辅助方法：检查当前属性是否应该转换
-  fn should_convert(&self, property_name: Option<&str>) -> bool {
-    if let Some(property_name) = property_name {
-      self.options.prop_list.iter().any(|pattern| {
-        if pattern == "*" {
-          return true;
-        }
-        property_name.starts_with(pattern.as_str()) || property_name == pattern
-      })
-    } else {
-      false
-    }
+  fn should_convert(&self, property_name: &str) -> bool {
+    self.options.prop_list.iter().any(|pattern| {
+      if pattern == "*" {
+        return true;
+      }
+      property_name.starts_with(pattern.as_str()) || property_name == pattern
+    })
   }
 
   // 转换 length 值
@@ -54,20 +50,6 @@ impl PxToRemVisitor {
     let multiplier = 10_f32.powi(self.options.unit_precision);
     let rounded = (rem_value * multiplier).round() / multiplier;
     Some(rounded)
-  }
-
-  fn get_property_name(
-    &self,
-    property: &lightningcss::properties::Property,
-  ) -> Option<&'static str> {
-    match property {
-      lightningcss::properties::Property::FontSize(_) => Some("font-size"),
-      lightningcss::properties::Property::Font(_) => Some("font"),
-      lightningcss::properties::Property::LineHeight(_) => Some("line-height"),
-      lightningcss::properties::Property::LetterSpacing(_) => Some("letter-spacing"),
-      lightningcss::properties::Property::WordSpacing(_) => Some("word-spacing"),
-      _ => None,
-    }
   }
 
   // 处理 media condition（媒体查询条件）
@@ -141,16 +123,16 @@ impl PxToRemVisitor {
     match value {
       // Length 类型：长度值，如 768px
       // MediaFeatureValue::Length 包含的是 Length enum
-      MediaFeatureValue::Length(length) => {
+      MediaFeatureValue::Length(media_length) => {
         // Length 有两个变体：Value(LengthValue) 和 Calc(...)
         // 我们只处理 Value 的情况
-        match length {
-          Length::Value(length_value) => {
+        match media_length {
+          Length::Value(length) => {
             // 在 media query 中，我们总是转换，不检查 prop_list
             // 因为 media query 不是 CSS 属性，而是查询条件
             // 所以我们临时设置一个标记，让 visit_length 知道这是 media query 上下文
             let old_property = self.current_property.replace(Some("*".to_string()));
-            self.visit_length(length_value)?;
+            self.visit_length(length)?;
             *self.current_property.borrow_mut() = old_property;
           }
           // Calc 类型暂时不处理，因为计算表达式比较复杂
@@ -185,9 +167,9 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
   ) -> std::result::Result<(), Self::Error> {
     if self.options.replace {
       for property in decls.iter_mut() {
-        let property_name = self.get_property_name(property).map(|s| s.to_string());
+        let property_name = property.property_id().name().to_string();
 
-        *self.current_property.borrow_mut() = property_name;
+        *self.current_property.borrow_mut() = Some(property_name);
 
         // 继续访问子节点（会调用 visit_length）
         property.visit_children(self)?;
@@ -200,13 +182,13 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
       let mut properties_to_insert = Vec::new();
 
       for (index, property) in decls.declarations.iter().enumerate() {
-        let property_name = self.get_property_name(property).map(|s| s.to_string());
+        let property_name = property.property_id().name().to_string();
 
-        if self.should_convert(property_name.as_deref()) {
+        if self.should_convert(&property_name) {
           let mut cloned = property.clone();
 
           // 设置当前属性名，转换克隆的 property 中的值
-          *self.current_property.borrow_mut() = property_name;
+          *self.current_property.borrow_mut() = Some(property_name);
           cloned.visit_children(self)?; // 这里会把克隆体的 px 转成 rem
           *self.current_property.borrow_mut() = None;
 
@@ -235,7 +217,7 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
           .current_property
           .borrow()
           .as_ref()
-          .map(|prop| self.should_convert(Some(prop.as_str())))
+          .map(|prop| self.should_convert(prop.as_str()))
           .unwrap_or(false);
 
         if !should_convert {
