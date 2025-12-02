@@ -13,7 +13,7 @@ pub struct PxToRemOpts {
   pub unit_precision: i32,
   pub min_pixel_value: f32,
   pub prop_list: Vec<String>,
-  // pub replace: bool,
+  pub replace: bool,
   // pub exclude: Vec<String>,
   // pub unit: String,
 }
@@ -21,11 +21,25 @@ pub struct PxToRemOpts {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RawPxToRemOpts {
-  pub root_value: f32,
-  pub unit_precision: i32,
-  pub prop_list: Vec<String>,
-  pub media_query: bool,
-  pub min_pixel_value: f32,
+  pub root_value: Option<f32>,
+  pub unit_precision: Option<i32>,
+  pub prop_list: Option<Vec<String>>,
+  pub media_query: Option<bool>,
+  pub min_pixel_value: Option<f32>,
+  pub replace: Option<bool>,
+}
+
+impl Into<PxToRemOpts> for RawPxToRemOpts {
+  fn into(self) -> PxToRemOpts {
+    PxToRemOpts {
+      root_value: self.root_value.unwrap_or(16.0),
+      unit_precision: self.unit_precision.unwrap_or(5),
+      prop_list: self.prop_list.unwrap_or(vec!["*".to_string()]),
+      media_query: self.media_query.unwrap_or(true),
+      min_pixel_value: self.min_pixel_value.unwrap_or(0.0),
+      replace: self.replace.unwrap_or(true),
+    }
+  }
 }
 
 pub struct PxToRemVisitor {

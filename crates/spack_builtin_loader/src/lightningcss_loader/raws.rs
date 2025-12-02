@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::lightningcss_loader::{
   opts::{Draft, LightningcssLoaderOpts, NonStandard, PseudoClasses},
-  visitors::px_to_rem::{PxToRemOpts, RawPxToRemOpts},
+  visitors::px_to_rem::RawPxToRemOpts,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,18 +89,6 @@ impl Into<PseudoClasses> for RawPseudoClasses {
       focus: self.focus,
       focus_visible: self.focus_visible,
       focus_within: self.focus_within,
-    }
-  }
-}
-
-impl Into<PxToRemOpts> for RawPxToRemOpts {
-  fn into(self) -> PxToRemOpts {
-    PxToRemOpts {
-      root_value: self.root_value,
-      unit_precision: self.unit_precision,
-      prop_list: self.prop_list,
-      media_query: self.media_query,
-      min_pixel_value: self.min_pixel_value,
     }
   }
 }
