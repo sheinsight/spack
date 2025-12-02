@@ -179,7 +179,7 @@ impl<'i> Visitor<'i> for PxToRemVisitor {
       }
     } else {
       // 追加模式：先收集需要插入的声明，然后统一插入
-      let mut properties_to_insert = Vec::new();
+      let mut properties_to_insert = Vec::with_capacity(decls.declarations.len());
 
       for (index, property) in decls.declarations.iter().enumerate() {
         let property_name = property.property_id().name().to_string();
