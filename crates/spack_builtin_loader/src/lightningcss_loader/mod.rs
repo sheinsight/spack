@@ -92,6 +92,38 @@ impl LightningcssLoader {
 
     Ok(rspack_source_map)
   }
+
+  fn get_parcel_source_map(
+    &self,
+    loader_context: &mut LoaderContext<RunnerContext>,
+    filename: &str,
+    source_str: &str,
+  ) -> Result<parcel_sourcemap::SourceMap> {
+    let source_map = loader_context
+      .source_map()
+      .map(|input_source_map| -> Result<_> {
+        let mut sm = parcel_sourcemap::SourceMap::new(
+          input_source_map
+            .source_root()
+            .unwrap_or(&loader_context.context.options.context),
+        );
+        sm.add_source(&filename);
+        sm.set_source_content(0, &source_str).to_rspack_result()?;
+        Ok(sm)
+      })
+      .transpose()?
+      .unwrap_or_else(|| {
+        let mut source_map =
+          parcel_sourcemap::SourceMap::new(&loader_context.context.options.context);
+        let source_idx = source_map.add_source(&filename);
+        source_map
+          .set_source_content(source_idx as usize, &source_str)
+          .expect("set source content error");
+        source_map
+      });
+
+    Ok(source_map)
+  }
 }
 
 #[async_trait]
@@ -170,30 +202,8 @@ impl Loader<RunnerContext> for LightningcssLoader {
     }
 
     let mut parcel_source_map = if loader_context.context.source_map_kind.enabled() {
-      Some(
-        loader_context
-          .source_map()
-          .map(|input_source_map| -> Result<_> {
-            let mut sm = parcel_sourcemap::SourceMap::new(
-              input_source_map
-                .source_root()
-                .unwrap_or(&loader_context.context.options.context),
-            );
-            sm.add_source(&filename);
-            sm.set_source_content(0, &source_str).to_rspack_result()?;
-            Ok(sm)
-          })
-          .transpose()?
-          .unwrap_or_else(|| {
-            let mut source_map =
-              parcel_sourcemap::SourceMap::new(&loader_context.context.options.context);
-            let source_idx = source_map.add_source(&filename);
-            source_map
-              .set_source_content(source_idx as usize, &source_str)
-              .expect("set source content error");
-            source_map
-          }),
-      )
+      let parcel_source_map = self.get_parcel_source_map(loader_context, &filename, &source_str)?;
+      Some(parcel_source_map)
     } else {
       None
     };
