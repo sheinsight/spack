@@ -22,14 +22,14 @@ pub struct RawLightningcssLoaderOpts {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RawDraft {
-  pub custom_media: bool,
+  pub custom_media: Option<bool>,
   pub px_to_rem: Option<RawPxToRemOpts>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RawNonStandard {
-  pub deep_selector_combinator: bool,
+  pub deep_selector_combinator: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,7 +67,7 @@ impl TryInto<LightningcssLoaderOpts> for RawLightningcssLoaderOpts {
 impl Into<Draft> for RawDraft {
   fn into(self) -> Draft {
     Draft {
-      custom_media: self.custom_media,
+      custom_media: self.custom_media.unwrap_or(false),
       px_to_rem: self.px_to_rem.map(Into::into),
     }
   }
@@ -76,7 +76,7 @@ impl Into<Draft> for RawDraft {
 impl Into<NonStandard> for RawNonStandard {
   fn into(self) -> NonStandard {
     NonStandard {
-      deep_selector_combinator: self.deep_selector_combinator,
+      deep_selector_combinator: self.deep_selector_combinator.unwrap_or(false),
     }
   }
 }
