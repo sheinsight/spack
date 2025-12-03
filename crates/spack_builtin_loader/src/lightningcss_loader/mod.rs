@@ -202,8 +202,7 @@ impl Loader<RunnerContext> for LightningcssLoader {
     }
 
     let mut parcel_source_map = if loader_context.context.source_map_kind.enabled() {
-      let parcel_source_map = self.get_parcel_source_map(loader_context, &filename, &source_str)?;
-      Some(parcel_source_map)
+      Some(self.get_parcel_source_map(loader_context, &filename, &source_str)?)
     } else {
       None
     };
