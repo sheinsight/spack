@@ -166,6 +166,7 @@ impl Loader<RunnerContext> for LightningcssLoader {
       error_recovery,
       warnings,
       flags,
+      ..Default::default()
     };
 
     let mut stylesheet = StyleSheet::parse(&source_str, option.clone()).to_rspack_result()?;
