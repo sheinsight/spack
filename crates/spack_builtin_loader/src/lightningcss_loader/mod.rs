@@ -57,6 +57,41 @@ impl LightningcssLoader {
     );
     flags
   }
+
+  fn get_rspack_source_map(&self, source_map: &parcel_sourcemap::SourceMap) -> Result<SourceMap> {
+    let mappings = encode_mappings(source_map.get_mappings().iter().map(|mapping| Mapping {
+      generated_line: mapping.generated_line,
+      generated_column: mapping.generated_column,
+      original: mapping.original.map(|original| OriginalLocation {
+        source_index: original.source,
+        original_line: original.original_line,
+        original_column: original.original_column,
+        name_index: original.name,
+      }),
+    }));
+
+    let sources = source_map
+      .get_sources()
+      .iter()
+      .map(ToString::to_string)
+      .collect::<Vec<_>>();
+
+    let sources_content = source_map
+      .get_sources_content()
+      .iter()
+      .map(|source_content| Arc::from(source_content.to_string()))
+      .collect::<Vec<_>>();
+
+    let names = source_map
+      .get_names()
+      .iter()
+      .map(ToString::to_string)
+      .collect::<Vec<_>>();
+
+    let rspack_source_map = SourceMap::new(mappings, sources, sources_content, names);
+
+    Ok(rspack_source_map)
+  }
 }
 
 #[async_trait]
@@ -103,25 +138,6 @@ impl Loader<RunnerContext> for LightningcssLoader {
 
     let mut stylesheet = StyleSheet::parse(&source_str, option.clone()).to_rspack_result()?;
 
-    // let mut stylesheet = to_static(
-    //   stylesheet,
-    //   ParserOptions {
-    //     filename: filename.clone(),
-    //     css_modules: None,
-    //     source_index: 0,
-    //     error_recovery: true,
-    //     warnings: None,
-    //     flags: ParserFlags::empty(),
-    //   },
-    // );
-
-    // if let Some(visitors) = &self.visitors {
-    //   let visitors = visitors.lock().await;
-    //   for v in visitors.iter() {
-    //     v(&mut stylesheet);
-    //   }
-    // }
-
     let targets = Targets {
       browsers: self.options.targets,
       include: Features::empty(),
@@ -133,7 +149,9 @@ impl Loader<RunnerContext> for LightningcssLoader {
       if let Some(px_to_rem) = &draft.px_to_rem {
         px_to_rem_replace = px_to_rem.replace;
         let mut px2rem = PxToRemVisitor::new(px_to_rem.clone());
-        stylesheet.visit(&mut px2rem).unwrap();
+        stylesheet
+          .visit(&mut px2rem)
+          .expect("visit px_to_rem error");
       }
     };
 
@@ -172,7 +190,7 @@ impl Loader<RunnerContext> for LightningcssLoader {
             let source_idx = source_map.add_source(&filename);
             source_map
               .set_source_content(source_idx as usize, &source_str)
-              .expect("should set source content");
+              .expect("set source content error");
             source_map
           }),
       )
@@ -206,37 +224,10 @@ impl Loader<RunnerContext> for LightningcssLoader {
       .to_rspack_result_with_message(|e| format!("failed to generate css: {e}"))?;
 
     if let Some(source_map) = parcel_source_map {
-      let mappings = encode_mappings(source_map.get_mappings().iter().map(|mapping| Mapping {
-        generated_line: mapping.generated_line,
-        generated_column: mapping.generated_column,
-        original: mapping.original.map(|original| OriginalLocation {
-          source_index: original.source,
-          original_line: original.original_line,
-          original_column: original.original_column,
-          name_index: original.name,
-        }),
-      }));
-      let rspack_source_map = SourceMap::new(
-        mappings,
-        source_map
-          .get_sources()
-          .iter()
-          .map(ToString::to_string)
-          .collect::<Vec<_>>(),
-        source_map
-          .get_sources_content()
-          .iter()
-          .map(|source_content| Arc::from(source_content.to_string()))
-          .collect::<Vec<_>>(),
-        source_map
-          .get_names()
-          .iter()
-          .map(ToString::to_string)
-          .collect::<Vec<_>>(),
-      );
+      let rspack_source_map = self.get_rspack_source_map(&source_map)?;
       loader_context.finish_with((content.code, rspack_source_map));
     } else {
-      loader_context.finish_with(content.code);
+      loader_context.finish_with((content.code, None));
     }
 
     Ok(())
