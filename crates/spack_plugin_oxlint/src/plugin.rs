@@ -1,7 +1,7 @@
 use std::{path::Path, sync::Arc};
 
 use ignore::WalkBuilder;
-use rspack_core::{Compilation, CompilationParams, Plugin};
+use rspack_core::{AsyncModulesArtifact, Compilation, CompilationParams, Plugin};
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 
@@ -150,7 +150,11 @@ pub(crate) async fn this_compilation(
 }
 
 #[plugin_hook(rspack_core::CompilationFinishModules for OxlintPlugin,stage=rspack_core::Compilation::PROCESS_ASSETS_STAGE_REPORT)]
-pub(crate) async fn finish_modules(&self, compilation: &mut Compilation) -> Result<()> {
+pub(crate) async fn finish_modules(
+  &self,
+  compilation: &mut Compilation,
+  _async_modules_artifact: &mut AsyncModulesArtifact,
+) -> Result<()> {
   // 在所有 succeed_module 完成后，读取最终的错误计数
   // 此时计数器已经包含了本轮编译的所有 lint 结果
   let error_count = self.lint_cache.get_error_count();
