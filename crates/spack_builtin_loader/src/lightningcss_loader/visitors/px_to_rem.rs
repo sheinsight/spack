@@ -34,7 +34,13 @@ impl Into<PxToRemOpts> for RawPxToRemOpts {
     PxToRemOpts {
       root_value: self.root_value.unwrap_or(16.0),
       unit_precision: self.unit_precision.unwrap_or(5),
-      prop_list: self.prop_list.unwrap_or(vec!["*".to_string()]),
+      prop_list: self.prop_list.unwrap_or(vec![
+        "font",
+        "font-size",
+        "line-height",
+        "letter-spacing",
+        "word-spacing",
+      ]),
       media_query: self.media_query.unwrap_or(true),
       min_pixel_value: self.min_pixel_value.unwrap_or(0.0),
       replace: self.replace.unwrap_or(true),
