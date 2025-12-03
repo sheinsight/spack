@@ -1,0 +1,20 @@
+/* 测试 replace=true 模式：直接替换 px 为 rem */
+.container {
+  font-size: 16px;
+  padding: 32px;
+  margin: 8px 16px;
+  width: 100px;
+  color: red; /* 不应该被转换 */
+}
+
+.title {
+  font-size: 1rem; /* 已经是 rem，不应该重复 */
+  line-height: 1.5; /* 无单位，不应该被转换 */
+}
+
+@media (min-width: 768px) {
+  .container {
+    font-size: 20px;
+    padding: 48px;
+  }
+}

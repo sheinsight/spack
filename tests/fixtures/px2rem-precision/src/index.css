@@ -1,0 +1,7 @@
+/* 测试 unitPrecision：小数位精度控制 */
+.container {
+  font-size: 13px; /* 13/16 = 0.8125rem -> 0.81rem (2位精度) */
+  padding: 15px; /* 15/16 = 0.9375rem -> 0.94rem (2位精度) */
+  margin: 17px; /* 17/16 = 1.0625rem -> 1.06rem (2位精度) */
+  width: 123px; /* 123/16 = 7.6875rem -> 7.69rem (2位精度) */
+}

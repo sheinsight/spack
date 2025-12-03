@@ -1,0 +1,14 @@
+/* 测试 propList 属性过滤：只转换指定属性 */
+.container {
+  font-size: 16px; /* 应该被转换 */
+  padding: 32px; /* 不应该被转换（不在 propList 中） */
+  margin: 16px; /* 应该被转换 */
+  width: 100px; /* 不应该被转换 */
+  height: 200px; /* 应该被转换 */
+  border-width: 2px; /* 不应该被转换 */
+}
+
+.title {
+  font-size: 24px; /* 应该被转换 */
+  line-height: 32px; /* 不应该被转换 */
+}

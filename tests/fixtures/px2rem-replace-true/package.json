@@ -1,0 +1,11 @@
+{
+  "name": "px2rem-test-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@shined/spack-binding": "workspace:*"
+  },
+  "devDependencies": {
+    "css-loader": "catalog:"
+  }
+}

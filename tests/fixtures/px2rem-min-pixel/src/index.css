@@ -1,0 +1,13 @@
+/* 测试 minPixelValue：小于最小值的不转换 */
+.container {
+  font-size: 16px; /* 应该被转换 (>= 10px) */
+  padding: 8px; /* 不应该被转换 (< 10px) */
+  margin: 2px; /* 不应该被转换 (< 10px) */
+  border-width: 1px; /* 不应该被转换 (< 10px) */
+  width: 100px; /* 应该被转换 (>= 10px) */
+}
+
+.title {
+  font-size: 24px; /* 应该被转换 */
+  line-height: 5px; /* 不应该被转换 */
+}

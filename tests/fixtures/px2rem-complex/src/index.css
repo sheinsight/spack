@@ -1,0 +1,21 @@
+/* 测试复杂场景：replace=false + propList + minPixelValue */
+.container {
+  font-size: 16px; /* 应该 append：在 propList 中，>= 5px */
+  padding: 32px; /* 不应该转换：不在 propList 中 */
+  margin: 2px; /* 不应该转换：< 5px */
+  width: 100px; /* 不应该转换：不在 propList 中 */
+  height: 8px; /* 应该 append：在 propList 中，>= 5px */
+  color: red; /* 不应该被重复 */
+}
+
+.title {
+  font-size: 1rem; /* 已经是 rem，不应该被重复 */
+  line-height: 24px; /* 应该 append */
+}
+
+@media (min-width: 768px) {
+  .container {
+    font-size: 20px; /* 媒体查询值：直接替换（不 append） */
+    padding: 48px;
+  }
+}

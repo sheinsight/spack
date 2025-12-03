@@ -1,0 +1,19 @@
+/* 测试 replace=false 模式：保留 px 并追加 rem */
+.container {
+  font-size: 16px;
+  padding: 32px;
+  margin: 8px 16px;
+  color: red; /* 不应该被重复 */
+}
+
+.title {
+  font-size: 1rem; /* 已经是 rem，不应该被重复 */
+  line-height: 24px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    font-size: 20px;
+    padding: 48px;
+  }
+}
