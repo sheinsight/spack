@@ -205,8 +205,6 @@ impl Loader<RunnerContext> for LightningcssLoader {
       .to_css(printer_options)
       .to_rspack_result_with_message(|e| format!("failed to generate css: {e}"))?;
 
-    println!("content--->{:#?}", content.code);
-
     if let Some(source_map) = parcel_source_map {
       let mappings = encode_mappings(source_map.get_mappings().iter().map(|mapping| Mapping {
         generated_line: mapping.generated_line,
