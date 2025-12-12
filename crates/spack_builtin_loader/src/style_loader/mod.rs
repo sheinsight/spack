@@ -77,9 +77,9 @@ pub struct StyleLoaderOpts {
 
 impl StyleLoader {
   pub fn write_runtime(dir: &Utf8PathBuf) -> Result<()> {
-    if dir.exists().not() {
-      std::fs::create_dir_all(dir)?;
-    }
+    // if dir.exists().not() {
+    //   std::fs::create_dir_all(dir)?;
+    // }
     for (file_name, runtime) in STYLE_LOADER_RUNTIME.iter() {
       let file = dir.join(file_name);
       if file.exists().not() {
