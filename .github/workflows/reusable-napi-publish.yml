@@ -113,7 +113,7 @@ jobs:
 
       - name: Publish napi
         run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          # echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
           # pnpm --filter ${{ inputs.npm_package_name }} publish --no-git-checks --force
           # pnpm publish -r --no-git-checks
           pnpm run release publish
