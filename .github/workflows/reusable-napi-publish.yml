@@ -116,7 +116,7 @@ jobs:
           # echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
           # pnpm --filter ${{ inputs.npm_package_name }} publish --no-git-checks --force
           # pnpm publish -r --no-git-checks
-          pnpm run release publish
+          pnpm run release:publish
         env:
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_ID: ${{ steps.create_release.outputs.id }}
