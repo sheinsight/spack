@@ -149,5 +149,5 @@ jobs:
     with:
       binding_dir: crates/binding
       npm_package_name: '@shined/spack-binding'
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    # secrets:
+    #   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

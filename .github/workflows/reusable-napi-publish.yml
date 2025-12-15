@@ -118,7 +118,7 @@ jobs:
           # pnpm publish -r --no-git-checks
           pnpm run release publish
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_ID: ${{ steps.create_release.outputs.id }}
 
       - name: Update Release
