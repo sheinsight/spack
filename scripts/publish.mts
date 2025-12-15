@@ -42,5 +42,5 @@ export async function publish() {
     throw new Error('packages and binaries length mismatch');
   }
 
-  await $$`pnpm publish -r --no-git-checks`;
+  await $$`pnpm publish -r --no-git-checks --provenance`;
 }
