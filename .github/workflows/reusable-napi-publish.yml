@@ -9,9 +9,9 @@ on:
       npm_package_name:
         required: true
         type: string
-    secrets:
-      NPM_TOKEN:
-        required: true
+    # secrets:
+    #   NPM_TOKEN:
+    #     required: true
 
 env:
   DEBUG: napi:*
