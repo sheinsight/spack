@@ -6,7 +6,7 @@
   "main": "binding.js",
   "types": "binding.d.ts",
   "private": true,
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.20.0",
   "scripts": {
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
     "build:release": "pnpm --filter @shined/spack-binding run build:release",
