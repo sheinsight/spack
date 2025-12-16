@@ -42,5 +42,19 @@ export async function publish() {
     throw new Error('packages and binaries length mismatch');
   }
 
-  await $$`pnpm publish -r --no-git-checks`;
+  // 读取每个包的 package.json 获取包名
+  const pkgNames: string[] = [];
+  for (const pkgPath of packages) {
+    const pkgJson = await import(pkgPath, { with: { type: 'json' } });
+    pkgNames.push(pkgJson.default.name);
+  }
+
+  consola.info('Publishing packages one by one...');
+
+  // 逐个发布包，这样 OIDC 认证更可靠
+  for (const pkgName of pkgNames) {
+    consola.info(`Publishing ${pkgName}...`);
+    await $$`pnpm --filter ${pkgName} publish --access public --no-git-checks`;
+    consola.success(`✓ Published ${pkgName}`);
+  }
 }
