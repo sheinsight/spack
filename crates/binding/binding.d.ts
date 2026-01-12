@@ -408,7 +408,7 @@ export declare class JsCompilation {
 }
 
 export declare class JsCompiler {
-  constructor(compilerPath: string, options: RawOptions, builtinPlugins: Array<BuiltinPlugin>, registerJsTaps: RegisterJsTaps, outputFilesystem: ThreadsafeNodeFS, intermediateFilesystem: ThreadsafeNodeFS | undefined | null, inputFilesystem: ThreadsafeNodeFS | undefined | null, resolverFactoryReference: JsResolverFactory, unsafeFastDrop: boolean)
+  constructor(compilerPath: string, options: RawOptions, builtinPlugins: Array<BuiltinPlugin>, registerJsTaps: RegisterJsTaps, outputFilesystem: ThreadsafeNodeFS, intermediateFilesystem: ThreadsafeNodeFS | undefined | null, inputFilesystem: ThreadsafeNodeFS | undefined | null, resolverFactoryReference: JsResolverFactory, unsafeFastDrop: boolean, platform: RawCompilerPlatform)
   setNonSkippableRegisters(kinds: Array<RegisterJsTapKind>): void
   /** Build with the given option passed to the constructor */
   build(callback: (err: null | Error) => void): void
@@ -638,7 +638,7 @@ export declare enum BuiltinPluginName {
   RealContentHashPlugin = 'RealContentHashPlugin',
   RemoveEmptyChunksPlugin = 'RemoveEmptyChunksPlugin',
   EnsureChunkConditionsPlugin = 'EnsureChunkConditionsPlugin',
-  WarnCaseSensitiveModulesPlugin = 'WarnCaseSensitiveModulesPlugin',
+  CaseSensitivePlugin = 'CaseSensitivePlugin',
   DataUriPlugin = 'DataUriPlugin',
   FileUriPlugin = 'FileUriPlugin',
   RuntimePlugin = 'RuntimePlugin',
@@ -898,6 +898,7 @@ export interface JsEntryOptions {
   name?: string
   runtime?: false | string
   chunkLoading?: false | string
+  wasmLoading?: false | string
   asyncChunks?: boolean
   publicPath?: "auto" | JsFilename
   baseUri?: string
@@ -1910,13 +1911,21 @@ export interface RawCacheOptions {
 
 export interface RawCircularDependencyRspackPluginOptions {
   failOnError?: boolean
-  allowAsyncCycles?: boolean
   exclude?: RegExp
   ignoredConnections?: Array<[string | RegExp, string | RegExp]>
   onDetected?: (entrypoint: Module, modules: string[]) => void
   onIgnored?: (entrypoint: Module, modules: string[]) => void
   onStart?: () => void
   onEnd?: () => void
+}
+
+export interface RawCompilerPlatform {
+  web?: boolean | null
+  browser?: boolean | null
+  webworker?: boolean | null
+  node?: boolean | null
+  nwjs?: boolean | null
+  electron?: boolean | null
 }
 
 export interface RawConsumeOptions {
@@ -2182,6 +2191,7 @@ export interface RawEnvironment {
   optionalChaining?: boolean
   templateLiteral?: boolean
   dynamicImportInWorker?: boolean
+  importMetaDirnameAndFilename?: boolean
 }
 
 export interface RawEsmLibraryPlugin {
@@ -2204,14 +2214,10 @@ export interface RawExperimentCacheOptionsPersistent {
 export interface RawExperiments {
   topLevelAwait: boolean
 incremental?: false | { [key: string]: boolean }
-parallelCodeSplitting: boolean
 rspackFuture?: RawRspackFuture
 cache: boolean | { type: "persistent" } & RawExperimentCacheOptionsPersistent | { type: "memory" }
 useInputFileSystem?: false | Array<RegExp>
 css?: boolean
-inlineConst: boolean
-inlineEnum: boolean
-typeReexportsPresence: boolean
 lazyBarrel: boolean
 deferImport: boolean
 }
@@ -2439,11 +2445,6 @@ commonjsMagicComments?: boolean
  * This option is experimental in Rspack only and subject to change or be removed anytime.
  * @experimental
  */
-inlineConst?: boolean
-/**
- * This option is experimental in Rspack only and subject to change or be removed anytime.
- * @experimental
- */
 typeReexportsPresence?: string
 /**
  * This option is experimental in Rspack only and subject to change or be removed anytime.
@@ -2663,6 +2664,7 @@ export interface RawOptimizationOptions {
   innerGraph: boolean
   realContentHash: boolean
   mangleExports: boolean | string
+  inlineExports: boolean
   concatenateModules: boolean
   avoidEntryIife: boolean
 }
