@@ -14,23 +14,23 @@ repository    = "https://github.com/sheinsight/spack"
 version       = "0.1.0"
 
 [workspace.dependencies]
-rspack_binding_api            = "=0.6.7"
-rspack_binding_build          = "=0.6.7"
-rspack_binding_builder        = "=0.6.7"
-rspack_binding_builder_macros = "=0.6.7"
-rspack_browserslist           = "=0.6.7"
-rspack_cacheable              = "=0.6.7"
-rspack_collections            = "=0.6.7"
-rspack_core                   = "=0.6.7"
-rspack_error                  = "=0.6.7"
-rspack_fs                     = "=0.6.7"
-rspack_hash                   = "=0.6.7"
-rspack_hook                   = "=0.6.7"
-rspack_javascript_compiler    = "=0.6.7"
-rspack_loader_runner          = "=0.6.7"
-rspack_napi                   = "=0.6.7"
-rspack_paths                  = "=0.6.7"
-rspack_util                   = "=0.6.7"
+rspack_binding_api            = "=0.7.1"
+rspack_binding_build          = "=0.7.1"
+rspack_binding_builder        = "=0.7.1"
+rspack_binding_builder_macros = "=0.7.1"
+rspack_browserslist           = "=0.7.1"
+rspack_cacheable              = "=0.7.1"
+rspack_collections            = "=0.7.1"
+rspack_core                   = "=0.7.1"
+rspack_error                  = "=0.7.1"
+rspack_fs                     = "=0.7.1"
+rspack_hash                   = "=0.7.1"
+rspack_hook                   = "=0.7.1"
+rspack_javascript_compiler    = "=0.7.1"
+rspack_loader_runner          = "=0.7.1"
+rspack_napi                   = "=0.7.1"
+rspack_paths                  = "=0.7.1"
+rspack_util                   = "=0.7.1"
 
 rspack_resolver = { features = ["package_json_raw_json_api", "yarn_pnp"], version = "=0.6.6", default-features = false }
 
@@ -48,7 +48,7 @@ lightningcss = { version = "1.0.0-alpha.67", default-features = false, features 
 
 rkyv = { version = "=0.8.8", default-features = false, features = ["std", "bytecheck"] }
 
-swc_core = { version = "=46.0.3", default-features = false, features = [
+swc_core = { version = "=54.0.0", default-features = false, features = [
   "parallel_rayon",
   "__base",
   "__ecma",
@@ -79,25 +79,25 @@ spack_plugin_friendly_errors      = { path = "crates/spack_plugin_friendly_error
 spack_plugin_oxlint               = { path = "crates/spack_plugin_oxlint" }
 spack_plugin_unified              = { path = "crates/spack_plugin_unified" }
 
-tracing            = { version = "0.1.41", features = ["max_level_trace", "release_max_level_trace"] }
-tracing-subscriber = { version = "0.3.19" }
+tracing            = { version = "0.1.44", features = ["max_level_trace", "release_max_level_trace"] }
+tracing-subscriber = { version = "0.3.22" }
 
 # lightningcss = { version = "=1.0.0-alpha.67", default-features = false, features = ["serde"] }
 
 serde      = { version = "1.0.210" }
-serde_json = { version = "1.0.142" }
+serde_json = { version = "1.0.149" }
 
 strum        = { version = "0.27.1" }
 strum_macros = { version = "0.27.1" }
 
-tokio = { version = "1.42.0", default-features = false, features = ["rt", "rt-multi-thread"] }
+tokio = { version = "1.49.0", default-features = false, features = ["rt", "rt-multi-thread"] }
 
-proc-macro2 = { version = "1.0.97" }
-quote       = { version = "1.0.40" }
-syn         = { version = "2.0.105", features = ["full"] }
+proc-macro2 = { version = "1.0.105" }
+quote       = { version = "1.0.43" }
+syn         = { version = "2.0.114", features = ["full"] }
 
 async-trait = { version = "0.1.88" }
-byte-unit   = { version = "5.1" }
+byte-unit   = { version = "5.2.0" }
 itertools   = { version = "0.14.0" }
 miette      = { version = "7.6.0" }
 pathdiff    = { version = "0.2.3" }
@@ -111,5 +111,5 @@ owo-colors       = { version = "4.2.3" }
 parcel_sourcemap = { version = "2.1.1", default-features = false }
 rayon            = { version = "1.11.0" }
 regex            = { version = "1.12.2" }
-sailfish         = { version = "0.10.0" }
+sailfish         = { version = "0.10.1" }
 tera             = { version = "1.20.0" }
