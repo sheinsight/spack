@@ -88,17 +88,19 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let duplicate_libraries: Vec<LibraryGroup> = cache
     .into_values()
-    .into_group_map_by(|lib| (lib.name.clone(), lib.version.clone())) // 按name和version分组
+    .into_group_map_by(|lib| lib.name.clone()) // 只按 name 分组
     .into_iter()
-    .into_group_map_by(|((name, _), _)| name.clone()) // 按name重新分组
-    .into_iter()
-    .filter(|(_, libs)| libs.len() > 1) // 过滤出有多个版本的包
-    .map(|(name, groups)| LibraryGroup {
-      name,
-      libs: groups
-        .into_iter()
-        .map(|(_, libs)| libs[0].clone())
-        .collect(),
+    .filter_map(|(name, libs)| {
+      // 检查是否有多个不同的版本或路径
+      let unique_versions: Vec<_> = libs.iter().map(|l| &l.version).unique().collect();
+      let unique_paths: Vec<_> = libs.iter().map(|l| &l.file).unique().collect();
+
+      // 有多个版本或多个路径都算重复
+      if unique_versions.len() > 1 || unique_paths.len() > 1 {
+        Some(LibraryGroup { name, libs })
+      } else {
+        None
+      }
     })
     .collect();
 
