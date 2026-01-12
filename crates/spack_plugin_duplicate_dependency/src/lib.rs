@@ -108,7 +108,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   if let Some(on_detected) = &self.options.on_detected {
     if let Err(e) = on_detected(response).await {
-      println!("plugin-error: {:?}", e);
+      // println!("plugin-error: {:?}", e);
+      tracing::error!("DuplicateDependencyPlugin callback failed: {:?}", e);
     }
   }
 
