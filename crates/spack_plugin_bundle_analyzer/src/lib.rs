@@ -1,5 +1,5 @@
 mod asset;
-// mod chunk;
+mod chunk;
 mod module;
 mod opts;
 // mod report;
@@ -16,7 +16,7 @@ use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plug
 use rspack_hook::{plugin, plugin_hook};
 pub use types::*;
 
-use crate::{asset::Asset, module::Module};
+use crate::{asset::Asset, chunk::Chunk, module::Module};
 
 #[plugin]
 #[derive(Debug)]
@@ -52,6 +52,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   // 2. 收集 Modules（源文件）
   let modules = collect_modules(compilation);
+
+  // 3. 收集 Chunks（代码块）
+  // let chunks = collect_chunks(compilation);
 
   let millis = start_time.elapsed().as_millis();
 
@@ -133,3 +136,52 @@ fn get_module_chunks(module_id: &Identifier, chunk_graph: &ChunkGraph) -> Vec<St
     .map(|chunk_ukey| chunk_ukey.as_u32().to_string())
     .collect()
 }
+
+/// 计算 chunk 的总大小
+/// 通过累加该 chunk 包含的所有模块的大小得出
+fn calculate_chunk_size(
+  module_ids: &[String],
+  module_graph: &rspack_core::ModuleGraph,
+) -> u64 {
+  module_ids
+    .iter()
+    .filter_map(|id_str| {
+      // 将字符串 ID 转换为 ModuleIdentifier
+      // 从 module_graph 中找到对应的模块并获取其大小
+      module_graph
+        .modules()
+        .into_iter()
+        .find(|(module_id, _)| module_id.to_string() == *id_str)
+        .map(|(_, module)| get_module_size(module.as_ref()))
+    })
+    .sum()
+}
+
+// fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
+//   let chunk_graph = &compilation.chunk_graph;
+//   let module_graph = compilation.get_module_graph();
+
+//   compilation
+//     .chunk_by_ukey
+//     .iter()
+//     .map(|(ukey, chunk)| {
+//       let modules = chunk_graph
+//         .get_chunk_modules(ukey, &module_graph)
+//         .iter()
+//         .map(|m| m.identifier().to_string())
+//         .collect();
+
+//       Chunk {
+//         id: ukey.as_u32().to_string(),
+//         names: chunk
+//           .name()
+//           .map(|n| vec![n.to_string()])
+//           .unwrap_or_default(),
+//         size: calculate_chunk_size(&modules, &module_graph),
+//         modules,
+//         entry: chunk.has_entry_module(chunk_graph),
+//         initial: chunk.can_be_initial(chunk_graph),
+//       }
+//     })
+//     .collect()
+// }
