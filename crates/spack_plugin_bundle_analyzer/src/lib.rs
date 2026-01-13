@@ -20,6 +20,7 @@ use crate::asset::Asset;
 #[plugin]
 #[derive(Debug)]
 pub struct BundleAnalyzerPlugin {
+  #[allow(unused)]
   options: BundleAnalyzerPluginOpts,
 }
 
