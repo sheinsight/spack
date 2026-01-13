@@ -2,6 +2,7 @@ mod asset;
 mod chunk;
 mod module;
 mod opts;
+mod package;
 // mod report;
 mod resp;
 // mod summary;
@@ -16,7 +17,7 @@ use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plug
 use rspack_hook::{plugin, plugin_hook};
 pub use types::*;
 
-use crate::{asset::Asset, chunk::Chunk, module::Module};
+use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package};
 
 #[plugin]
 #[derive(Debug)]
@@ -56,6 +57,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 3. 收集 Chunks（代码块）
   let chunks = collect_chunks(compilation);
 
+  // 4. 分析 Packages（按包名聚合）
+  let packages = analyze_packages(&modules);
+
   let millis = start_time.elapsed().as_millis();
 
   println!("assets--> {:#?}", assets);
@@ -63,6 +67,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   println!("modules--> {:#?}", modules);
 
   println!("chunks---> {:#?}", chunks);
+
+  println!("packages--> {:#?}", packages);
 
   println!("millis {}", millis);
 
@@ -183,4 +189,72 @@ fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
       }
     })
     .collect()
+}
+
+/// 分析包依赖,按包名聚合
+fn analyze_packages(modules: &[Module]) -> Vec<Package> {
+  use std::collections::HashMap;
+
+  let mut package_map: HashMap<String, Vec<&Module>> = HashMap::new();
+
+  // 1. 遍历所有模块,按包名分组
+  for module in modules {
+    if let Some(package_name) = parse_package_name(&module.name) {
+      package_map.entry(package_name).or_default().push(module);
+    }
+  }
+
+  // 2. 为每个包生成统计信息
+  let mut packages: Vec<Package> = package_map
+    .into_iter()
+    .map(|(name, mods)| {
+      let size: u64 = mods.iter().map(|m| m.size).sum();
+      let modules: Vec<String> = mods.iter().map(|m| m.id.clone()).collect();
+
+      Package {
+        name,
+        version: "unknown".to_string(), // 暂时固定为 unknown
+        size,
+        module_count: mods.len(),
+        modules,
+      }
+    })
+    .collect();
+
+  // 3. 按大小降序排序
+  packages.sort_by_key(|p| std::cmp::Reverse(p.size));
+
+  packages
+}
+
+/// 从模块路径中解析包名
+/// 例如:
+///   "node_modules/react/index.js" -> Some("react")
+///   "node_modules/@babel/core/lib.js" -> Some("@babel/core")
+///   "./src/index.js" -> None (不是 node_modules)
+fn parse_package_name(module_path: &str) -> Option<String> {
+  // 只处理 node_modules 中的模块
+  if !module_path.contains("node_modules/") {
+    return None;
+  }
+
+  // 找到 node_modules/ 后面的部分
+  let parts: Vec<&str> = module_path.split("node_modules/").collect();
+  if parts.len() < 2 {
+    return None;
+  }
+
+  let after_nm = parts[1];
+  let segments: Vec<&str> = after_nm.split('/').collect();
+
+  // 处理 scoped package (如 @babel/core)
+  if segments[0].starts_with('@') {
+    if segments.len() < 2 {
+      return None;
+    }
+    Some(format!("{}/{}", segments[0], segments[1]))
+  } else {
+    // 普通 package (如 react)
+    Some(segments[0].to_string())
+  }
 }
