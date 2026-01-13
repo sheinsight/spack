@@ -54,7 +54,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let modules = collect_modules(compilation);
 
   // 3. 收集 Chunks（代码块）
-  // let chunks = collect_chunks(compilation);
+  let chunks = collect_chunks(compilation);
 
   let millis = start_time.elapsed().as_millis();
 
@@ -139,10 +139,7 @@ fn get_module_chunks(module_id: &Identifier, chunk_graph: &ChunkGraph) -> Vec<St
 
 /// 计算 chunk 的总大小
 /// 通过累加该 chunk 包含的所有模块的大小得出
-fn calculate_chunk_size(
-  module_ids: &[String],
-  module_graph: &rspack_core::ModuleGraph,
-) -> u64 {
+fn calculate_chunk_size(module_ids: &[String], module_graph: &rspack_core::ModuleGraph) -> u64 {
   module_ids
     .iter()
     .filter_map(|id_str| {
@@ -157,31 +154,31 @@ fn calculate_chunk_size(
     .sum()
 }
 
-// fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
-//   let chunk_graph = &compilation.chunk_graph;
-//   let module_graph = compilation.get_module_graph();
+fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
+  let chunk_graph = &compilation.chunk_graph;
+  let module_graph = compilation.get_module_graph();
 
-//   compilation
-//     .chunk_by_ukey
-//     .iter()
-//     .map(|(ukey, chunk)| {
-//       let modules = chunk_graph
-//         .get_chunk_modules(ukey, &module_graph)
-//         .iter()
-//         .map(|m| m.identifier().to_string())
-//         .collect();
+  compilation
+    .chunk_by_ukey
+    .iter()
+    .map(|(ukey, chunk)| {
+      let modules: Vec<String> = chunk_graph
+        .get_chunk_modules(ukey, &module_graph)
+        .iter()
+        .map(|m| m.identifier().to_string())
+        .collect();
 
-//       Chunk {
-//         id: ukey.as_u32().to_string(),
-//         names: chunk
-//           .name()
-//           .map(|n| vec![n.to_string()])
-//           .unwrap_or_default(),
-//         size: calculate_chunk_size(&modules, &module_graph),
-//         modules,
-//         entry: chunk.has_entry_module(chunk_graph),
-//         initial: chunk.can_be_initial(chunk_graph),
-//       }
-//     })
-//     .collect()
-// }
+      Chunk {
+        id: ukey.as_u32().to_string(),
+        names: chunk
+          .name()
+          .map(|n| vec![n.to_string()])
+          .unwrap_or_default(),
+        size: calculate_chunk_size(&modules, &module_graph),
+        modules,
+        entry: chunk.has_entry_module(chunk_graph),
+        initial: chunk.can_be_initial(&compilation.chunk_group_by_ukey),
+      }
+    })
+    .collect()
+}
