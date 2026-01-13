@@ -1,14 +1,14 @@
 pub struct Chunk {
   // chunk ID
-  id: String,
+  pub id: String,
   // chunk 名称
-  names: Vec<String>,
+  pub names: Vec<String>,
   // chunk 大小
-  size: u64,
+  pub size: u64,
   // 包含的模块 ID 列表
-  modules: Vec<String>,
+  pub modules: Vec<String>,
   // 是否入口 chunk
-  entry: bool,
+  pub entry: bool,
   // 是否初始 chunk
-  initial: bool,
+  pub initial: bool,
 }
