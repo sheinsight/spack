@@ -1,6 +1,6 @@
 mod asset;
 // mod chunk;
-// mod module;
+mod module;
 mod opts;
 // mod report;
 mod resp;
@@ -11,11 +11,14 @@ use derive_more::Debug;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 pub use resp::*;
-use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
+use rspack_collections::Identifier;
+use rspack_core::{
+  ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, ModuleIdentifier, Plugin,
+};
 use rspack_hook::{plugin, plugin_hook};
 pub use types::*;
 
-use crate::asset::Asset;
+use crate::{asset::Asset, module::Module};
 
 #[plugin]
 #[derive(Debug)]
@@ -36,6 +39,7 @@ impl Plugin for BundleAnalyzerPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
+    println!("coming bundle analyzer");
     ctx.compiler_hooks.after_emit.tap(after_emit::new(self));
     Ok(())
   }
@@ -48,14 +52,12 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 1. 收集 Assets（输出文件）
   let assets = collect_assets(compilation);
 
+  // 2. 收集 Modules（源文件）
+  let modules = collect_modules(compilation);
+
   let millis = start_time.elapsed().as_millis();
 
-  assets.iter().for_each(|item| {
-    println!(
-      "--> {} {:?} {} {} ",
-      item.name, item.chunks, item.emitted, item.size
-    )
-  });
+  assets.iter().for_each(|item| println!("--> {:#?}", item));
 
   println!("millis {}", millis);
 
@@ -96,5 +98,38 @@ fn get_asset_chunks(asset_name: &str, compilation: &Compilation) -> Vec<String> 
       };
       return id;
     })
+    .collect()
+}
+
+fn collect_modules(compilation: &Compilation) -> Vec<Module> {
+  let module_graph = compilation.get_module_graph();
+  let chunk_graph = &compilation.chunk_graph;
+
+  module_graph
+    .modules()
+    .into_iter()
+    .map(|(id, module)| Module {
+      id: id.to_string(),
+      name: module
+        .readable_identifier(&compilation.options.context)
+        .to_string(),
+      size: get_module_size(module.as_ref()),
+      chunks: get_module_chunks(&id, chunk_graph),
+    })
+    .collect()
+}
+
+fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
+  module
+    .original_source()
+    .map(|s| s.size() as u64)
+    .unwrap_or(0)
+}
+
+fn get_module_chunks(module_id: &Identifier, chunk_graph: &ChunkGraph) -> Vec<String> {
+  chunk_graph
+    .get_module_chunks(*module_id)
+    .iter()
+    .map(|chunk_ukey| chunk_ukey.as_u32().to_string())
     .collect()
 }
