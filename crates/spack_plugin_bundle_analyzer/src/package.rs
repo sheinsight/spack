@@ -2,7 +2,7 @@
 pub struct Package {
   // 包名,如 "react" 或 "@babel/core"
   pub name: String,
-  // 版本号,暂时固定为 "unknown"
+  // 版本号(pnpm 可从路径提取,npm/yarn 为 "unknown")
   pub version: String,
   // 该包的总大小
   pub size: u64,
