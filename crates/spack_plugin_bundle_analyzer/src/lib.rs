@@ -47,11 +47,14 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 1. 收集 Assets（输出文件）
   let assets = collect_assets(compilation);
 
-  // tracing::error!("{:?}", assets);
-
   let millis = start_time.elapsed().as_millis();
 
-  println!("{:#?}", assets);
+  assets.iter().for_each(|item| {
+    println!(
+      "--> {} {:?} {} {} ",
+      item.name, item.chunks, item.emitted, item.size
+    )
+  });
 
   println!("millis {}", millis);
 
