@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Chunk {
   // chunk ID
   pub id: String,
