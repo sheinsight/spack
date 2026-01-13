@@ -1,21 +1,17 @@
 mod asset;
-mod chunk;
-mod module;
+// mod chunk;
+// mod module;
 mod opts;
-mod report;
+// mod report;
 mod resp;
-mod summary;
+// mod summary;
 mod types;
-
-use std::collections::HashMap;
 
 use derive_more::Debug;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 pub use resp::*;
-use rspack_core::{
-  ApplyContext, ChunkUkey, Compilation, CompilerAfterEmit, ModuleIdentifier, Plugin,
-};
+use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 pub use types::*;
 
