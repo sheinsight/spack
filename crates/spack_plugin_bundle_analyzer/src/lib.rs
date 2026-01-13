@@ -195,25 +195,30 @@ fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
 fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   use std::collections::HashMap;
 
-  let mut package_map: HashMap<String, Vec<&Module>> = HashMap::new();
+  // key 是包名, value 是 (版本号, 模块列表)
+  let mut package_map: HashMap<String, (String, Vec<&Module>)> = HashMap::new();
 
   // 1. 遍历所有模块,按包名分组
   for module in modules {
-    if let Some(package_name) = parse_package_name(&module.name) {
-      package_map.entry(package_name).or_default().push(module);
+    if let Some((package_name, version)) = parse_package_info(&module.name) {
+      package_map
+        .entry(package_name)
+        .or_insert_with(|| (version.clone(), Vec::new()))
+        .1
+        .push(module);
     }
   }
 
   // 2. 为每个包生成统计信息
   let mut packages: Vec<Package> = package_map
     .into_iter()
-    .map(|(name, mods)| {
+    .map(|(name, (version, mods))| {
       let size: u64 = mods.iter().map(|m| m.size).sum();
       let modules: Vec<String> = mods.iter().map(|m| m.id.clone()).collect();
 
       Package {
         name,
-        version: "unknown".to_string(), // 暂时固定为 unknown
+        version,
         size,
         module_count: mods.len(),
         modules,
@@ -227,24 +232,96 @@ fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   packages
 }
 
-/// 从模块路径中解析包名
+/// 从模块路径中解析包名和版本号
+/// 支持 npm/yarn 和 pnpm 两种路径格式
+///
+/// 返回: Some((包名, 版本号))
+///
 /// 例如:
-///   "node_modules/react/index.js" -> Some("react")
-///   "node_modules/@babel/core/lib.js" -> Some("@babel/core")
-///   "./src/index.js" -> None (不是 node_modules)
-fn parse_package_name(module_path: &str) -> Option<String> {
+///   npm/yarn 格式:
+///     "node_modules/react/index.js" -> Some(("react", "unknown"))
+///     "node_modules/@babel/core/lib.js" -> Some(("@babel/core", "unknown"))
+///
+///   pnpm 格式:
+///     "node_modules/.pnpm/react@18.2.0/node_modules/react/index.js"
+///       -> Some(("react", "18.2.0"))
+///     "node_modules/.pnpm/@babel+core@7.22.0/node_modules/@babel/core/lib.js"
+///       -> Some(("@babel/core", "7.22.0"))
+///
+///   非 node_modules:
+///     "./src/index.js" -> None
+fn parse_package_info(module_path: &str) -> Option<(String, String)> {
   // 只处理 node_modules 中的模块
   if !module_path.contains("node_modules/") {
     return None;
   }
 
-  // 找到 node_modules/ 后面的部分
+  // 优先检查是否是 pnpm 格式 (包含 .pnpm/)
+  if module_path.contains("node_modules/.pnpm/") {
+    return parse_pnpm_package_info(module_path);
+  }
+
+  // 处理标准 npm/yarn 格式
+  parse_npm_package_info(module_path)
+}
+
+/// 解析 pnpm 格式的包路径
+/// 例如: node_modules/.pnpm/react@18.2.0/node_modules/react/index.js
+///       node_modules/.pnpm/@babel+core@7.22.0/node_modules/@babel/core/lib.js
+fn parse_pnpm_package_info(module_path: &str) -> Option<(String, String)> {
+  // 找到 .pnpm/ 后面的部分
+  let parts: Vec<&str> = module_path.split("node_modules/.pnpm/").collect();
+  if parts.len() < 2 {
+    return None;
+  }
+
+  let after_pnpm = parts[1];
+  let segments: Vec<&str> = after_pnpm.split('/').collect();
+  if segments.is_empty() {
+    return None;
+  }
+
+  // 第一个 segment 是 "包名@版本" 或 "@scope+包名@版本"
+  let pkg_with_version = segments[0];
+
+  // 处理 scoped package: @babel+core@7.22.0
+  if pkg_with_version.starts_with('@') {
+    // 去掉开头的 @
+    let without_at = &pkg_with_version[1..];
+
+    // 找到最后一个 @ (版本号前的)
+    if let Some(last_at_pos) = without_at.rfind('@') {
+      let name_part = &without_at[..last_at_pos]; // 例如: babel+core
+      let version = &without_at[last_at_pos + 1..]; // 例如: 7.22.0
+
+      // 将 + 替换回 /
+      let package_name = format!("@{}", name_part.replace('+', "/"));
+
+      return Some((package_name, version.to_string()));
+    }
+  } else {
+    // 处理普通 package: react@18.2.0
+    if let Some(at_pos) = pkg_with_version.rfind('@') {
+      let package_name = pkg_with_version[..at_pos].to_string();
+      let version = pkg_with_version[at_pos + 1..].to_string();
+      return Some((package_name, version));
+    }
+  }
+
+  None
+}
+
+/// 解析标准 npm/yarn 格式的包路径
+/// 例如: node_modules/react/index.js
+///       node_modules/@babel/core/lib.js
+fn parse_npm_package_info(module_path: &str) -> Option<(String, String)> {
+  // 找到最后一个 node_modules/ (可能有嵌套依赖)
   let parts: Vec<&str> = module_path.split("node_modules/").collect();
   if parts.len() < 2 {
     return None;
   }
 
-  let after_nm = parts[1];
+  let after_nm = parts[parts.len() - 1];
   let segments: Vec<&str> = after_nm.split('/').collect();
 
   // 处理 scoped package (如 @babel/core)
@@ -252,9 +329,11 @@ fn parse_package_name(module_path: &str) -> Option<String> {
     if segments.len() < 2 {
       return None;
     }
-    Some(format!("{}/{}", segments[0], segments[1]))
+    let package_name = format!("{}/{}", segments[0], segments[1]);
+    Some((package_name, "unknown".to_string()))
   } else {
     // 普通 package (如 react)
-    Some(segments[0].to_string())
+    let package_name = segments[0].to_string();
+    Some((package_name, "unknown".to_string()))
   }
 }
