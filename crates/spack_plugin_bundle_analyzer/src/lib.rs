@@ -62,6 +62,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   println!("modules--> {:#?}", modules);
 
+  println!("chunks---> {:#?}", chunks);
+
   println!("millis {}", millis);
 
   Ok(())
