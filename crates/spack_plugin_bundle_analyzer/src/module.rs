@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Module {
   // 模块唯一 ID
   pub id: String,

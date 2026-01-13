@@ -12,9 +12,7 @@ use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 pub use resp::*;
 use rspack_collections::Identifier;
-use rspack_core::{
-  ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, ModuleIdentifier, Plugin,
-};
+use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 pub use types::*;
 
@@ -57,7 +55,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let millis = start_time.elapsed().as_millis();
 
-  assets.iter().for_each(|item| println!("--> {:#?}", item));
+  println!("assets--> {:#?}", assets);
+
+  println!("modules--> {:#?}", modules);
 
   println!("millis {}", millis);
 
@@ -120,10 +120,10 @@ fn collect_modules(compilation: &Compilation) -> Vec<Module> {
 }
 
 fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
-  module
-    .original_source()
-    .map(|s| s.size() as u64)
-    .unwrap_or(0)
+  // 使用 Module trait 的 size 方法获取模块大小
+  // source_type 参数为 None 表示获取所有类型的总大小
+  // compilation 参数为 None 因为我们不需要编译上下文
+  module.size(None, None) as u64
 }
 
 fn get_module_chunks(module_id: &Identifier, chunk_graph: &ChunkGraph) -> Vec<String> {
