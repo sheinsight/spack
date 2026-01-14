@@ -14,4 +14,6 @@ pub struct Module {
   pub module_type: ModuleType,
   // 是否来自 node_modules
   pub is_node_module: bool,
+
+  pub name_for_condition: String,
 }

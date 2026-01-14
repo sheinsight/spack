@@ -198,6 +198,11 @@ fn collect_modules(compilation: &Compilation) -> Vec<Module> {
         .readable_identifier(&compilation.options.context)
         .to_string();
 
+      let name_for_condition = module
+        .name_for_condition()
+        .unwrap_or_default()
+        .into_string();
+
       // 识别模块类型
       let module_type = ModuleType::from_path(&name);
 
@@ -207,6 +212,7 @@ fn collect_modules(compilation: &Compilation) -> Vec<Module> {
       Module {
         id: id.to_string(),
         name,
+        name_for_condition,
         size: get_module_size(module.as_ref()),
         chunks: get_module_chunks(&id, chunk_graph),
         module_type,
@@ -262,6 +268,8 @@ fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
         .map(|m| m.identifier().to_string())
         .collect();
 
+      let files = chunk.files().iter().cloned().collect();
+
       Chunk {
         id: ukey.as_u32().to_string(),
         names: chunk
@@ -272,6 +280,8 @@ fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
         modules,
         entry: chunk.has_entry_module(chunk_graph),
         initial: chunk.can_be_initial(&compilation.chunk_group_by_ukey),
+        reason: chunk.chunk_reason().unwrap_or_default().to_string(),
+        files,
       }
     })
     .collect()

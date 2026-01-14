@@ -12,4 +12,8 @@ pub struct Chunk {
   pub entry: bool,
   // 是否初始 chunk
   pub initial: bool,
+
+  pub reason: String,
+
+  pub files: Vec<String>,
 }
