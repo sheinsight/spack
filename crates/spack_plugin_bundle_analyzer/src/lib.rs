@@ -4,6 +4,7 @@ mod module;
 mod module_type;
 mod opts;
 mod package;
+mod package_version_resolver;
 mod performance_timings;
 mod report;
 mod summary;
@@ -281,9 +282,20 @@ fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   // key 是包名, value 是 (版本号, 模块列表)
   let mut package_map: HashMap<String, (String, Vec<&Module>)> = HashMap::new();
 
+  // 创建版本解析器
+  let mut version_resolver = package_version_resolver::PackageVersionResolver::new();
+
   // 1. 遍历所有模块,按包名分组
   for module in modules {
-    if let Some((package_name, version)) = parse_package_info(&module.name) {
+    if let Some((package_name, version_from_path)) = parse_package_info(&module.name) {
+      // 优先使用从路径解析的版本（pnpm 格式）
+      // 如果是 "unknown"，则尝试从 package.json 读取（npm/yarn）
+      let version = if version_from_path != "unknown" {
+        version_from_path
+      } else {
+        version_resolver.resolve(&module.name)
+      };
+
       package_map
         .entry(package_name)
         .or_insert_with(|| (version.clone(), Vec::new()))
