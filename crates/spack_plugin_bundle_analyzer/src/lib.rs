@@ -6,12 +6,11 @@ mod package;
 mod report;
 mod summary;
 
-use std::io::Write;
-
-use brotli::enc::BrotliEncoderParams;
+use brotli::enc::{BrotliCompress, BrotliEncoderParams};
 use derive_more::Debug;
-use flate2::Compression;
 use flate2::write::GzEncoder;
+use flate2::Compression;
+use std::io::Write;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 use rspack_collections::Identifier;
@@ -40,7 +39,6 @@ impl Plugin for BundleAnalyzerPlugin {
   }
 
   fn apply(&self, ctx: &mut ApplyContext) -> rspack_error::Result<()> {
-    println!("coming bundle analyzer");
     ctx.compiler_hooks.after_emit.tap(after_emit::new(self));
     Ok(())
   }
@@ -126,6 +124,8 @@ fn collect_assets(compilation: &Compilation) -> Vec<Asset> {
         // 计算 gzip 和 brotli 压缩后的大小
         let gzip_size = calculate_gzip_size(&buffer);
         let brotli_size = calculate_brotli_size(&buffer);
+        // let gzip_size = Some(0);
+        // let brotli_size = Some(0);
 
         (size, gzip_size, brotli_size)
       } else {
@@ -415,7 +415,10 @@ fn calculate_gzip_size(data: &[u8]) -> Option<usize> {
   // 完成压缩
   match encoder.finish() {
     Ok(compressed) => Some(compressed.len()),
-    Err(_) => None,
+    Err(e) => {
+      tracing::error!("{}", e);
+      None
+    }
   }
 }
 
@@ -430,8 +433,11 @@ fn calculate_brotli_size(data: &[u8]) -> Option<usize> {
   let params = BrotliEncoderParams::default();
 
   // 执行压缩
-  match brotli::BrotliCompress(&mut std::io::Cursor::new(data), &mut compressed, &params) {
+  match BrotliCompress(&mut std::io::Cursor::new(data), &mut compressed, &params) {
     Ok(_) => Some(compressed.len()),
-    Err(_) => None,
+    Err(e) => {
+      tracing::error!("Brotli compression failed: {}", e);
+      None
+    }
   }
 }
