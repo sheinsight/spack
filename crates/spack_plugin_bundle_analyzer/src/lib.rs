@@ -63,12 +63,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let millis = start_time.elapsed().as_millis();
 
-  // println!("assets--> {:#?}", assets);
-
-  // println!("modules--> {:#?}", modules);
-
-  // println!("chunks---> {:#?}", chunks);
-
   // 计算总大小：累加所有 assets 的大小
   let total_size: u64 = assets.iter().map(|a| a.size as u64).sum();
 
@@ -94,8 +88,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     chunks,
     packages,
   };
-
-  // println!("report--> {:#?}", report);
 
   // 调用回调函数
   if let Some(on_analyzed) = &self.options.on_analyzed {
