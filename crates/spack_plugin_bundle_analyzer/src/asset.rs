@@ -6,8 +6,6 @@ pub struct Asset {
   pub size: usize,
   // gzip 压缩后大小
   pub gzip_size: Option<usize>,
-  // brotli 压缩后大小
-  pub brotli_size: Option<usize>,
   // 关联的 chunk
   pub chunks: Vec<String>,
   // 是否实际输出
