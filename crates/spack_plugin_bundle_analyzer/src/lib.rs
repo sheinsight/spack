@@ -24,7 +24,6 @@ pub use crate::{
 #[plugin]
 #[derive(Debug)]
 pub struct BundleAnalyzerPlugin {
-  #[allow(unused)]
   options: BundleAnalyzerPluginOpts,
 }
 
@@ -87,7 +86,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     .unwrap()
     .as_millis() as u64;
 
-  let r = Report {
+  let report = Report {
     timestamp,
     summary,
     assets,
@@ -96,7 +95,14 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     packages,
   };
 
-  println!("packages--> {:#?}", r);
+  // println!("report--> {:#?}", report);
+
+  // 调用回调函数
+  if let Some(on_analyzed) = &self.options.on_analyzed {
+    if let Err(e) = on_analyzed(report).await {
+      tracing::error!("BundleAnalyzerPlugin callback failed: {:?}", e);
+    }
+  }
 
   Ok(())
 }
