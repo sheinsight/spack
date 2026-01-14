@@ -2,7 +2,6 @@ use rspack_core::Plugin;
 use rspack_error::Result;
 use rspack_hook::plugin;
 use spack_builtin_loader::{UnifiedLoaderPlugin, UnifiedLoaderPluginOpts};
-use spack_plugin_bundle_analyzer::{BundleAnalyzerPlugin, BundleAnalyzerPluginOpts};
 use spack_plugin_case_sensitive_paths::{CaseSensitivePathsPlugin, CaseSensitivePathsPluginOpts};
 use spack_plugin_oxlint::{OxlintPlugin, OxlintPluginOpts};
 
@@ -35,8 +34,6 @@ impl Plugin for UnifiedPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext) -> Result<()> {
-    println!("--->");
-
     UnifiedLoaderPlugin::new(UnifiedLoaderPluginOpts {}).apply(ctx)?;
 
     if let Some(case_sensitive) = self.options.case_sensitive.clone() {
@@ -46,8 +43,6 @@ impl Plugin for UnifiedPlugin {
     if let Some(oxlint_ops) = self.options.oxlint.clone() {
       OxlintPlugin::new(oxlint_ops).apply(ctx)?;
     }
-
-    BundleAnalyzerPlugin::new(BundleAnalyzerPluginOpts { on_analyzed: None }).apply(ctx)?;
 
     Ok(())
   }
