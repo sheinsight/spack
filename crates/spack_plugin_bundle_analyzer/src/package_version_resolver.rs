@@ -3,56 +3,66 @@ use std::collections::HashMap;
 use std::path::Path;
 use up_finder::UpFinder;
 
-/// 包版本解析器
+/// 包信息（包名和版本）
+#[derive(Debug, Clone)]
+pub struct PackageInfo {
+  pub name: String,
+  pub version: String,
+}
+
+/// 包信息解析器
 ///
-/// 用于从 package.json 文件中解析 npm 包的版本号
+/// 从 package.json 文件中解析 npm 包的名称和版本号
 /// 内置缓存机制，每个目录只会查找一次
 pub struct PackageVersionResolver {
-  // 缓存: 目录路径 -> 版本号
-  cache: HashMap<String, String>,
+  // 缓存: 目录路径 -> 包信息
+  cache: HashMap<String, PackageInfo>,
 }
 
 impl PackageVersionResolver {
-  /// 创建新的版本解析器
+  /// 创建新的解析器
   pub fn new() -> Self {
     Self {
       cache: HashMap::new(),
     }
   }
 
-  /// 解析包版本
+  /// 解析包信息（包名和版本）
   ///
   /// 参数:
   /// - module_path: 模块路径，如 "node_modules/react/index.js"
   ///
   /// 返回:
-  /// - 版本号字符串，如果找不到返回 "unknown"
-  pub fn resolve(&mut self, module_path: &str) -> String {
-    // 1. 提取目录路径
-    let dir = match Path::new(module_path).parent() {
-      Some(d) => d,
-      None => return "unknown".to_string(),
-    };
-
-    // 2. 使用目录路径作为缓存 key
-    let cache_key = dir.to_string_lossy().to_string();
-
-    // 3. 查缓存
-    if let Some(version) = self.cache.get(&cache_key) {
-      return version.clone();
+  /// - Some((包名, 版本号)): 找到了 package.json
+  /// - None: 不在 node_modules 中或找不到 package.json
+  pub fn resolve(&mut self, module_path: &str) -> Option<(String, String)> {
+    // 1. 只处理 node_modules 中的模块
+    if !module_path.contains("node_modules/") {
+      return None;
     }
 
-    // 4. 使用 up_finder 向上查找 package.json
-    let version = self.find_package_version(dir);
+    // 2. 提取目录路径
+    let dir = Path::new(module_path).parent()?;
 
-    // 5. 写入缓存
-    self.cache.insert(cache_key, version.clone());
+    // 3. 使用目录路径作为缓存 key
+    let cache_key = dir.to_string_lossy().to_string();
 
-    version
+    // 4. 查缓存
+    if let Some(info) = self.cache.get(&cache_key) {
+      return Some((info.name.clone(), info.version.clone()));
+    }
+
+    // 5. 使用 up_finder 向上查找 package.json
+    let info = self.find_package_info(dir)?;
+
+    // 6. 写入缓存
+    self.cache.insert(cache_key, info.clone());
+
+    Some((info.name, info.version))
   }
 
-  /// 向上查找最近的 package.json 并提取版本号
-  fn find_package_version(&self, dir: &Path) -> String {
+  /// 向上查找最近的 package.json 并提取包信息
+  fn find_package_info(&self, dir: &Path) -> Option<PackageInfo> {
     // 使用 up_finder 从当前目录向上查找 package.json
     let up_finder = UpFinder::builder().cwd(dir).build();
     let paths = up_finder.find_up("package.json");
@@ -61,14 +71,22 @@ impl PackageVersionResolver {
     for path in paths.iter() {
       // 使用 package_json_parser 解析文件
       if let Ok(package_json) = PackageJsonParser::parse(path) {
-        if let Some(version) = package_json.version {
-          return version.to_string();
+        // 必须同时有 name 和 version 字段
+        if let Some(name) = package_json.name {
+          let version = package_json
+            .version
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+
+          return Some(PackageInfo {
+            name: name.to_string(),
+            version,
+          });
         }
       }
     }
 
-    // 如果没找到或解析失败，返回 "unknown"
-    "unknown".to_string()
+    None
   }
 }
 
@@ -77,16 +95,36 @@ mod tests {
   use super::*;
 
   #[test]
+  fn test_resolver_returns_name_and_version() {
+    let mut resolver = PackageVersionResolver::new();
+
+    // 应该返回包名和版本
+    if let Some((name, version)) = resolver.resolve("node_modules/react/index.js") {
+      assert!(!name.is_empty());
+      assert!(!version.is_empty());
+    }
+  }
+
+  #[test]
   fn test_resolver_cache() {
     let mut resolver = PackageVersionResolver::new();
 
-    // 首次解析应该会查找文件
-    let version1 = resolver.resolve("node_modules/react/index.js");
+    // 首次解析
+    let result1 = resolver.resolve("node_modules/react/index.js");
 
     // 同一目录的文件应该命中缓存
-    let version2 = resolver.resolve("node_modules/react/cjs/react.development.js");
+    let result2 = resolver.resolve("node_modules/react/cjs/react.development.js");
 
     // 两次结果应该相同
-    assert_eq!(version1, version2);
+    assert_eq!(result1, result2);
+  }
+
+  #[test]
+  fn test_non_node_modules() {
+    let mut resolver = PackageVersionResolver::new();
+
+    // 不在 node_modules 中的模块应该返回 None
+    let result = resolver.resolve("./src/index.js");
+    assert_eq!(result, None);
   }
 }
