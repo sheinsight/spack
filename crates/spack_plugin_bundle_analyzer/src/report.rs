@@ -1,6 +1,7 @@
 use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package, summary::Summary};
 
 // 核心数据结构
+#[derive(Debug)]
 pub struct Report {
   // 元数据
   pub timestamp: u64,

@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Summary {
   // 总大小（字节）
   pub total_size: u64,
