@@ -98,6 +98,8 @@ syn         = { version = "2.0.114", features = ["full"] }
 
 async-trait = { version = "0.1.88" }
 byte-unit   = { version = "5.2.0" }
+flate2      = { version = "1.0.30" }
+brotli      = { version = "7.0.0" }
 itertools   = { version = "0.14.0" }
 miette      = { version = "7.6.0" }
 pathdiff    = { version = "0.2.3" }
