@@ -51,6 +51,7 @@ pub struct JsModule {
   pub chunks: Vec<String>,
   pub module_type: String,
   pub is_node_module: bool,
+  pub name_for_condition: String,
 }
 
 impl From<Module> for JsModule {
@@ -62,6 +63,7 @@ impl From<Module> for JsModule {
       chunks: value.chunks,
       module_type: value.module_type.as_str().to_string(),
       is_node_module: value.is_node_module,
+      name_for_condition: value.name_for_condition,
     }
   }
 }
@@ -75,6 +77,8 @@ pub struct JsChunk {
   pub modules: Vec<String>,
   pub entry: bool,
   pub initial: bool,
+  pub reason: String,
+  pub files: Vec<String>,
 }
 
 impl From<Chunk> for JsChunk {
@@ -86,6 +90,8 @@ impl From<Chunk> for JsChunk {
       modules: value.modules,
       entry: value.entry,
       initial: value.initial,
+      reason: value.reason,
+      files: value.files,
     }
   }
 }

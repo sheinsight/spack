@@ -14,6 +14,6 @@ pub struct Module {
   pub module_type: ModuleType,
   // 是否来自 node_modules
   pub is_node_module: bool,
-
+  // 模块条件名称,用于模块解析条件判断(如 package.json 的 exports 字段)
   pub name_for_condition: String,
 }

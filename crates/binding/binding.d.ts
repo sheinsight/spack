@@ -30,6 +30,8 @@ export interface JsChunk {
   modules: Array<string>
   entry: boolean
   initial: boolean
+  reason: string
+  files: Array<string>
 }
 
 export interface JsDuplicateDependencyPluginResp {
@@ -55,6 +57,7 @@ export interface JsModule {
   chunks: Array<string>
   moduleType: string
   isNodeModule: boolean
+  nameForCondition: string
 }
 
 export interface JsPackage {
