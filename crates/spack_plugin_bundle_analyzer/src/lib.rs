@@ -1,3 +1,4 @@
+#![feature(duration_millis_float)]
 mod asset;
 mod chunk;
 mod module;
@@ -14,9 +15,9 @@ use std::io::Write;
 use derive_more::Debug;
 use flate2::Compression;
 use flate2::write::GzEncoder;
-use rayon::prelude::*;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
+use rayon::prelude::*;
 use rspack_collections::Identifier;
 use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
@@ -56,25 +57,26 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 1. 收集 Assets（输出文件）
   let assets_start = Instant::now();
   let assets = collect_assets(compilation);
-  let collect_assets_ms = assets_start.elapsed().as_micros() as f64 / 1000.0;
+  let collect_assets_ms = assets_start.elapsed().as_millis_f64();
 
   // 2. 收集 Modules（源文件）
   let modules_start = Instant::now();
   let modules = collect_modules(compilation);
-  let collect_modules_ms = modules_start.elapsed().as_micros() as f64 / 1000.0;
+  let collect_modules_ms = modules_start.elapsed().as_millis_f64();
 
   // 3. 收集 Chunks（代码块）
   let chunks_start = Instant::now();
   let chunks = collect_chunks(compilation);
-  let collect_chunks_ms = chunks_start.elapsed().as_micros() as f64 / 1000.0;
+  // let collect_chunks_ms = chunks_start.elapsed().as_micros() as f64 / 1000.0;
+  let collect_chunks_ms = chunks_start.elapsed().as_millis_f64();
 
   // 4. 分析 Packages（按包名聚合）
   let packages_start = Instant::now();
   let packages = analyze_packages(&modules);
-  let analyze_packages_ms = packages_start.elapsed().as_micros() as f64 / 1000.0;
+  let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
 
   // 计算总耗时
-  let total_ms = start_time.elapsed().as_micros() as f64 / 1000.0;
+  let total_ms = start_time.elapsed().as_millis_f64();
 
   // Gzip 压缩耗时已经在 collect_assets 中并行计算，这里统计的是总耗时中用于压缩的部分
   // 实际压缩时间已包含在 collect_assets_ms 中
@@ -468,4 +470,3 @@ fn calculate_gzip_size(data: &[u8]) -> Option<usize> {
     }
   }
 }
-
