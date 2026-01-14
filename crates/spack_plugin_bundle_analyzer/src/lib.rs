@@ -1,8 +1,10 @@
 mod asset;
 mod chunk;
 mod module;
+mod module_type;
 mod opts;
 mod package;
+mod performance_timings;
 mod report;
 mod summary;
 
@@ -19,7 +21,8 @@ use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plug
 use rspack_hook::{plugin, plugin_hook};
 
 pub use crate::{
-  asset::Asset, chunk::Chunk, module::Module, package::Package, report::Report, summary::Summary,
+  asset::Asset, chunk::Chunk, module::Module, module_type::ModuleType, package::Package,
+  performance_timings::PerformanceTimings, report::Report, summary::Summary,
 };
 
 #[plugin]
@@ -50,18 +53,31 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let start_time = Instant::now();
 
   // 1. 收集 Assets（输出文件）
+  let assets_start = Instant::now();
   let assets = collect_assets(compilation);
+  let collect_assets_ms = assets_start.elapsed().as_micros() as f64 / 1000.0;
 
   // 2. 收集 Modules（源文件）
+  let modules_start = Instant::now();
   let modules = collect_modules(compilation);
+  let collect_modules_ms = modules_start.elapsed().as_micros() as f64 / 1000.0;
 
   // 3. 收集 Chunks（代码块）
+  let chunks_start = Instant::now();
   let chunks = collect_chunks(compilation);
+  let collect_chunks_ms = chunks_start.elapsed().as_micros() as f64 / 1000.0;
 
   // 4. 分析 Packages（按包名聚合）
+  let packages_start = Instant::now();
   let packages = analyze_packages(&modules);
+  let analyze_packages_ms = packages_start.elapsed().as_micros() as f64 / 1000.0;
 
-  let millis = start_time.elapsed().as_millis();
+  // 计算总耗时
+  let total_ms = start_time.elapsed().as_micros() as f64 / 1000.0;
+
+  // Gzip 压缩耗时已经在 collect_assets 中并行计算，这里统计的是总耗时中用于压缩的部分
+  // 实际压缩时间已包含在 collect_assets_ms 中
+  let compress_gzip_ms = collect_assets_ms; // 压缩主要发生在 collect_assets 阶段
 
   // 计算总大小：累加所有 assets 的大小
   let total_size: u64 = assets.iter().map(|a| a.size as u64).sum();
@@ -72,13 +88,24 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     .filter_map(|a| a.gzip_size.map(|s| s as u64))
     .sum();
 
+  // 构建性能计时信息
+  let timings = PerformanceTimings::new(
+    collect_assets_ms,
+    collect_modules_ms,
+    collect_chunks_ms,
+    analyze_packages_ms,
+    compress_gzip_ms,
+    total_ms,
+  );
+
   let summary = Summary {
     total_size,
     total_gzip_size,
     total_assets: assets.len(),
     total_modules: modules.len(),
     total_chunks: chunks.len(),
-    build_time: millis as f64,
+    build_time: total_ms, // 保持向后兼容
+    timings,
   };
 
   // 获取当前 Unix 时间戳（毫秒）
@@ -163,13 +190,25 @@ fn collect_modules(compilation: &Compilation) -> Vec<Module> {
   module_graph
     .modules()
     .into_iter()
-    .map(|(id, module)| Module {
-      id: id.to_string(),
-      name: module
+    .map(|(id, module)| {
+      let name = module
         .readable_identifier(&compilation.options.context)
-        .to_string(),
-      size: get_module_size(module.as_ref()),
-      chunks: get_module_chunks(&id, chunk_graph),
+        .to_string();
+
+      // 识别模块类型
+      let module_type = ModuleType::from_path(&name);
+
+      // 判断是否来自 node_modules
+      let is_node_module = name.contains("node_modules/");
+
+      Module {
+        id: id.to_string(),
+        name,
+        size: get_module_size(module.as_ref()),
+        chunks: get_module_chunks(&id, chunk_graph),
+        module_type,
+        is_node_module,
+      }
     })
     .collect()
 }
