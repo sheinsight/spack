@@ -16,6 +16,11 @@ use rspack_collections::Identifier;
 use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 
+use brotli::enc::BrotliEncoderParams;
+use flate2::write::GzEncoder;
+use flate2::Compression;
+use std::io::Write;
+
 // pub use types::*;
 pub use crate::{
   asset::Asset, chunk::Chunk, module::Module, package::Package, report::Report, summary::Summary,
@@ -66,8 +71,22 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 计算总大小：累加所有 assets 的大小
   let total_size: u64 = assets.iter().map(|a| a.size as u64).sum();
 
+  // 计算 gzip 压缩后总大小
+  let total_gzip_size: u64 = assets
+    .iter()
+    .filter_map(|a| a.gzip_size.map(|s| s as u64))
+    .sum();
+
+  // 计算 brotli 压缩后总大小
+  let total_brotli_size: u64 = assets
+    .iter()
+    .filter_map(|a| a.brotli_size.map(|s| s as u64))
+    .sum();
+
   let summary = Summary {
     total_size,
+    total_gzip_size,
+    total_brotli_size,
     total_assets: assets.len(),
     total_modules: modules.len(),
     total_chunks: chunks.len(),
@@ -104,15 +123,24 @@ fn collect_assets(compilation: &Compilation) -> Vec<Asset> {
     .assets()
     .iter()
     .map(|(name, asset)| {
-      let size = if let Some(source) = &asset.source {
-        source.size()
+      let (size, gzip_size, brotli_size) = if let Some(source) = &asset.source {
+        let size = source.size();
+        let buffer = source.buffer();
+
+        // 计算 gzip 和 brotli 压缩后的大小
+        let gzip_size = calculate_gzip_size(&buffer);
+        let brotli_size = calculate_brotli_size(&buffer);
+
+        (size, gzip_size, brotli_size)
       } else {
-        0
+        (0, None, None)
       };
 
       return Asset {
         name: name.to_string(),
-        size: size,
+        size,
+        gzip_size,
+        brotli_size,
         chunks: get_asset_chunks(name, compilation),
         emitted: true,
       };
@@ -371,5 +399,47 @@ fn parse_npm_package_info(module_path: &str) -> Option<(String, String)> {
     // 普通 package (如 react)
     let package_name = segments[0].to_string();
     Some((package_name, "unknown".to_string()))
+  }
+}
+
+/// 计算 gzip 压缩后的大小
+///
+/// 参数:
+/// - data: 原始数据字节
+///
+/// 返回: 压缩后的字节数,如果压缩失败返回 None
+fn calculate_gzip_size(data: &[u8]) -> Option<usize> {
+  let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+
+  // 写入数据
+  if encoder.write_all(data).is_err() {
+    return None;
+  }
+
+  // 完成压缩
+  match encoder.finish() {
+    Ok(compressed) => Some(compressed.len()),
+    Err(_) => None,
+  }
+}
+
+/// 计算 brotli 压缩后的大小
+///
+/// 参数:
+/// - data: 原始数据字节
+///
+/// 返回: 压缩后的字节数,如果压缩失败返回 None
+fn calculate_brotli_size(data: &[u8]) -> Option<usize> {
+  let mut compressed = Vec::new();
+  let params = BrotliEncoderParams::default();
+
+  // 执行压缩
+  match brotli::BrotliCompress(
+    &mut std::io::Cursor::new(data),
+    &mut compressed,
+    &params,
+  ) {
+    Ok(_) => Some(compressed.len()),
+    Err(_) => None,
   }
 }
