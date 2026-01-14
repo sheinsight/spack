@@ -4,24 +4,20 @@ mod module;
 mod opts;
 mod package;
 mod report;
-// mod resp;
 mod summary;
-// mod types;
 
+use std::io::Write;
+
+use brotli::enc::BrotliEncoderParams;
 use derive_more::Debug;
+use flate2::Compression;
+use flate2::write::GzEncoder;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
-// pub use resp::*;
 use rspack_collections::Identifier;
 use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 
-use brotli::enc::BrotliEncoderParams;
-use flate2::write::GzEncoder;
-use flate2::Compression;
-use std::io::Write;
-
-// pub use types::*;
 pub use crate::{
   asset::Asset, chunk::Chunk, module::Module, package::Package, report::Report, summary::Summary,
 };
@@ -434,11 +430,7 @@ fn calculate_brotli_size(data: &[u8]) -> Option<usize> {
   let params = BrotliEncoderParams::default();
 
   // 执行压缩
-  match brotli::BrotliCompress(
-    &mut std::io::Cursor::new(data),
-    &mut compressed,
-    &params,
-  ) {
+  match brotli::BrotliCompress(&mut std::io::Cursor::new(data), &mut compressed, &params) {
     Ok(_) => Some(compressed.len()),
     Err(_) => None,
   }
