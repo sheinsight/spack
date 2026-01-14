@@ -5,7 +5,8 @@ use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
-  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, Module, Package, Report, Summary,
+  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, Module, Package,
+  PerformanceTimings, Report, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -48,6 +49,8 @@ pub struct JsModule {
   pub name: String,
   pub size: u32,
   pub chunks: Vec<String>,
+  pub module_type: String,
+  pub is_node_module: bool,
 }
 
 impl From<Module> for JsModule {
@@ -57,6 +60,8 @@ impl From<Module> for JsModule {
       name: value.name,
       size: value.size as u32,
       chunks: value.chunks,
+      module_type: value.module_type.as_str().to_string(),
+      is_node_module: value.is_node_module,
     }
   }
 }
@@ -109,6 +114,30 @@ impl From<Package> for JsPackage {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
+pub struct JsPerformanceTimings {
+  pub collect_assets_ms: f64,
+  pub collect_modules_ms: f64,
+  pub collect_chunks_ms: f64,
+  pub analyze_packages_ms: f64,
+  pub compress_gzip_ms: f64,
+  pub total_ms: f64,
+}
+
+impl From<PerformanceTimings> for JsPerformanceTimings {
+  fn from(value: PerformanceTimings) -> Self {
+    Self {
+      collect_assets_ms: value.collect_assets_ms,
+      collect_modules_ms: value.collect_modules_ms,
+      collect_chunks_ms: value.collect_chunks_ms,
+      analyze_packages_ms: value.analyze_packages_ms,
+      compress_gzip_ms: value.compress_gzip_ms,
+      total_ms: value.total_ms,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
 pub struct JsSummary {
   pub total_size: u32,
   pub total_gzip_size: u32,
@@ -116,6 +145,7 @@ pub struct JsSummary {
   pub total_modules: u32,
   pub total_chunks: u32,
   pub build_time: f64,
+  pub timings: JsPerformanceTimings,
 }
 
 impl From<Summary> for JsSummary {
@@ -127,6 +157,7 @@ impl From<Summary> for JsSummary {
       total_modules: value.total_modules as u32,
       total_chunks: value.total_chunks as u32,
       build_time: value.build_time,
+      timings: value.timings.into(),
     }
   }
 }

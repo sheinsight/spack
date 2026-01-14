@@ -1,3 +1,5 @@
+use crate::performance_timings::PerformanceTimings;
+
 #[derive(Debug)]
 pub struct Summary {
   // 总大小（字节）- 原始大小
@@ -10,6 +12,8 @@ pub struct Summary {
   pub total_modules: usize,
   // chunk 数量
   pub total_chunks: usize,
-  // 构建耗时（毫秒）
+  // 构建耗时（毫秒）- 已废弃，使用 timings.total_ms
   pub build_time: f64,
+  // 详细性能指标
+  pub timings: PerformanceTimings,
 }

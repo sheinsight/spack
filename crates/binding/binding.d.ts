@@ -53,6 +53,8 @@ export interface JsModule {
   name: string
   size: number
   chunks: Array<string>
+  moduleType: string
+  isNodeModule: boolean
 }
 
 export interface JsPackage {
@@ -63,6 +65,15 @@ export interface JsPackage {
   modules: Array<string>
 }
 
+export interface JsPerformanceTimings {
+  collectAssetsMs: number
+  collectModulesMs: number
+  collectChunksMs: number
+  analyzePackagesMs: number
+  compressGzipMs: number
+  totalMs: number
+}
+
 export interface JsSummary {
   totalSize: number
   totalGzipSize: number
@@ -70,6 +81,7 @@ export interface JsSummary {
   totalModules: number
   totalChunks: number
   buildTime: number
+  timings: JsPerformanceTimings
 }
 
 export interface RawBundleAnalyzerPluginOpts {
