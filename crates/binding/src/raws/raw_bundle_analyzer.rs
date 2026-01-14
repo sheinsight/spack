@@ -24,6 +24,8 @@ pub struct RawBundleAnalyzerPluginOpts {
 pub struct JsAsset {
   pub name: String,
   pub size: u32,
+  pub gzip_size: Option<u32>,
+  pub brotli_size: Option<u32>,
   pub chunks: Vec<String>,
   pub emitted: bool,
 }
@@ -33,6 +35,8 @@ impl From<Asset> for JsAsset {
     Self {
       name: value.name,
       size: value.size as u32,
+      gzip_size: value.gzip_size.map(|s| s as u32),
+      brotli_size: value.brotli_size.map(|s| s as u32),
       chunks: value.chunks,
       emitted: value.emitted,
     }
@@ -109,6 +113,8 @@ impl From<Package> for JsPackage {
 #[napi(object)]
 pub struct JsSummary {
   pub total_size: u32,
+  pub total_gzip_size: u32,
+  pub total_brotli_size: u32,
   pub total_assets: u32,
   pub total_modules: u32,
   pub total_chunks: u32,
@@ -119,6 +125,8 @@ impl From<Summary> for JsSummary {
   fn from(value: Summary) -> Self {
     Self {
       total_size: value.total_size as u32,
+      total_gzip_size: value.total_gzip_size as u32,
+      total_brotli_size: value.total_brotli_size as u32,
       total_assets: value.total_assets as u32,
       total_modules: value.total_modules as u32,
       total_chunks: value.total_chunks as u32,
