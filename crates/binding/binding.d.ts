@@ -10,7 +10,6 @@ export interface JsAsset {
   name: string
   size: number
   gzipSize?: number
-  brotliSize?: number
   chunks: Array<string>
   emitted: boolean
 }
@@ -67,7 +66,6 @@ export interface JsPackage {
 export interface JsSummary {
   totalSize: number
   totalGzipSize: number
-  totalBrotliSize: number
   totalAssets: number
   totalModules: number
   totalChunks: number

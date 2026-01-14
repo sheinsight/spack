@@ -8,7 +8,6 @@ mod summary;
 
 use std::io::Write;
 
-use brotli::enc::{BrotliCompress, BrotliEncoderParams};
 use derive_more::Debug;
 use flate2::Compression;
 use flate2::write::GzEncoder;
@@ -73,16 +72,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     .filter_map(|a| a.gzip_size.map(|s| s as u64))
     .sum();
 
-  // 计算 brotli 压缩后总大小
-  let total_brotli_size: u64 = assets
-    .iter()
-    .filter_map(|a| a.brotli_size.map(|s| s as u64))
-    .sum();
-
   let summary = Summary {
     total_size,
     total_gzip_size,
-    total_brotli_size,
     total_assets: assets.len(),
     total_modules: modules.len(),
     total_chunks: chunks.len(),
@@ -130,20 +122,17 @@ fn collect_assets(compilation: &Compilation) -> Vec<Asset> {
   assets_data
     .par_iter()
     .map(|(name, size, buffer_opt)| {
-      let (gzip_size, brotli_size) = if let Some(buffer) = buffer_opt {
-        // 并行计算 gzip 和 brotli 压缩大小
-        let gzip_size = calculate_gzip_size(buffer);
-        let brotli_size = calculate_brotli_size(buffer);
-        (gzip_size, brotli_size)
+      let gzip_size = if let Some(buffer) = buffer_opt {
+        // 并行计算 gzip 压缩大小
+        calculate_gzip_size(buffer)
       } else {
-        (None, None)
+        None
       };
 
       Asset {
         name: name.clone(),
         size: *size,
         gzip_size,
-        brotli_size,
         chunks: get_asset_chunks(name, compilation),
         emitted: true,
       }
@@ -429,22 +418,3 @@ fn calculate_gzip_size(data: &[u8]) -> Option<usize> {
   }
 }
 
-/// 计算 brotli 压缩后的大小
-///
-/// 参数:
-/// - data: 原始数据字节
-///
-/// 返回: 压缩后的字节数,如果压缩失败返回 None
-fn calculate_brotli_size(data: &[u8]) -> Option<usize> {
-  let mut compressed = Vec::new();
-  let params = BrotliEncoderParams::default();
-
-  // 执行压缩
-  match BrotliCompress(&mut std::io::Cursor::new(data), &mut compressed, &params) {
-    Ok(_) => Some(compressed.len()),
-    Err(e) => {
-      tracing::error!("Brotli compression failed: {}", e);
-      None
-    }
-  }
-}
