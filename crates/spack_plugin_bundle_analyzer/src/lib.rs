@@ -62,11 +62,11 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let millis = start_time.elapsed().as_millis();
 
-  println!("assets--> {:#?}", assets);
+  // println!("assets--> {:#?}", assets);
 
-  println!("modules--> {:#?}", modules);
+  // println!("modules--> {:#?}", modules);
 
-  println!("chunks---> {:#?}", chunks);
+  // println!("chunks---> {:#?}", chunks);
 
   println!("packages--> {:#?}", packages);
 
@@ -266,8 +266,10 @@ fn parse_package_info(module_path: &str) -> Option<(String, String)> {
 }
 
 /// 解析 pnpm 格式的包路径
-/// 例如: node_modules/.pnpm/react@18.2.0/node_modules/react/index.js
-///       node_modules/.pnpm/@babel+core@7.22.0/node_modules/@babel/core/lib.js
+/// 例如:
+///   node_modules/.pnpm/react@18.2.0/node_modules/react/index.js
+///   node_modules/.pnpm/@babel+core@7.22.0/node_modules/@babel/core/lib.js
+///   node_modules/.pnpm/@visactor+react-vchart@2.0.9_react-dom@19.2.0_react@19.2.0/...
 fn parse_pnpm_package_info(module_path: &str) -> Option<(String, String)> {
   // 找到 .pnpm/ 后面的部分
   let parts: Vec<&str> = module_path.split("node_modules/.pnpm/").collect();
@@ -281,13 +283,23 @@ fn parse_pnpm_package_info(module_path: &str) -> Option<(String, String)> {
     return None;
   }
 
-  // 第一个 segment 是 "包名@版本" 或 "@scope+包名@版本"
+  // 第一个 segment 格式:
+  // - 普通包: "包名@版本" 或 "包名@版本_peer依赖信息"
+  // - scoped: "@scope+包名@版本" 或 "@scope+包名@版本_peer依赖信息"
   let pkg_with_version = segments[0];
 
+  // 先去掉 peer dependencies 后缀 (如果有的话)
+  // 例如: react@18.2.0_some_peer -> react@18.2.0
+  let pkg_without_peers = if let Some(underscore_pos) = pkg_with_version.find('_') {
+    &pkg_with_version[..underscore_pos]
+  } else {
+    pkg_with_version
+  };
+
   // 处理 scoped package: @babel+core@7.22.0
-  if pkg_with_version.starts_with('@') {
+  if pkg_without_peers.starts_with('@') {
     // 去掉开头的 @
-    let without_at = &pkg_with_version[1..];
+    let without_at = &pkg_without_peers[1..];
 
     // 找到最后一个 @ (版本号前的)
     if let Some(last_at_pos) = without_at.rfind('@') {
@@ -301,9 +313,9 @@ fn parse_pnpm_package_info(module_path: &str) -> Option<(String, String)> {
     }
   } else {
     // 处理普通 package: react@18.2.0
-    if let Some(at_pos) = pkg_with_version.rfind('@') {
-      let package_name = pkg_with_version[..at_pos].to_string();
-      let version = pkg_with_version[at_pos + 1..].to_string();
+    if let Some(at_pos) = pkg_without_peers.rfind('@') {
+      let package_name = pkg_without_peers[..at_pos].to_string();
+      let version = pkg_without_peers[at_pos + 1..].to_string();
       return Some((package_name, version));
     }
   }
