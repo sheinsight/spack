@@ -4,20 +4,20 @@ mod module;
 mod opts;
 mod package;
 mod report;
-mod resp;
+// mod resp;
 mod summary;
-mod types;
+// mod types;
 
 use derive_more::Debug;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
-pub use resp::*;
+// pub use resp::*;
 use rspack_collections::Identifier;
 use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
-pub use types::*;
 
-use crate::{
+// pub use types::*;
+pub use crate::{
   asset::Asset, chunk::Chunk, module::Module, package::Package, report::Report, summary::Summary,
 };
 
@@ -96,9 +96,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     packages,
   };
 
-  println!("packages--> {:#?}", packages);
-
-  println!("millis {}", millis);
+  println!("packages--> {:#?}", r);
 
   Ok(())
 }

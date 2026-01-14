@@ -6,48 +6,34 @@ export declare enum CustomPluginNames {
   UnifiedPlugin = 'UnifiedPlugin'
 }
 
+export interface JsAsset {
+  name: string
+  size: number
+  chunks: Array<string>
+  emitted: boolean
+}
+
 export interface JsBundleAnalyzerPluginResp {
   timestamp: number
-  buildTime: number
-  summary: JsSummaryInfo
-  modules: Array<JsModuleInfo>
-  chunks: Array<JsChunkInfo>
-  dependencyGraph: Array<JsDependencyNode>
-  statistics: JsStatisticsInfo
-  visualization: JsVisualizationData
+  summary: JsSummary
+  assets: Array<JsAsset>
+  modules: Array<JsModule>
+  chunks: Array<JsChunk>
+  packages: Array<JsPackage>
 }
 
-export interface JsChunkInfo {
+export interface JsChunk {
   id: string
-  name: string
-  size: JsSizeInfo
+  names: Array<string>
+  size: number
   modules: Array<string>
-  isEntry: boolean
-  parents: Array<string>
-  children: Array<string>
-}
-
-export interface JsDependencyEdge {
-  moduleId: string
-  dependencyType: string
-  userRequest: string
-}
-
-export interface JsDependencyNode {
-  moduleId: string
-  dependencies: Array<JsDependencyEdge>
+  entry: boolean
+  initial: boolean
 }
 
 export interface JsDuplicateDependencyPluginResp {
   groups: Array<JsLibraryGroup>
   duration: number
-}
-
-export interface JsHeatmapNode {
-  name: string
-  value: number
-  path: string
-  level: number
 }
 
 export interface JsLibrary {
@@ -61,56 +47,27 @@ export interface JsLibraryGroup {
   libs: Array<JsLibrary>
 }
 
-export interface JsModuleInfo {
+export interface JsModule {
   id: string
   name: string
-  path: string
-  size: JsSizeInfo
-  moduleType: string
-  source: string
-  isEntry: boolean
-  dependencies: Array<string>
+  size: number
+  chunks: Array<string>
 }
 
-export interface JsSizeInfo {
-  original: number
-  minified: number
-  gzipped: number
+export interface JsPackage {
+  name: string
+  version: string
+  size: number
+  moduleCount: number
+  modules: Array<string>
 }
 
-export interface JsSourceStatistics {
-  count: number
-  totalSize: JsSizeInfo
-}
-
-export interface JsStatisticsInfo {
-  byFileType: Record<string, JsTypeStatistics>
-  bySource: Record<string, JsSourceStatistics>
-  largestModules: Array<JsModuleInfo>
-}
-
-export interface JsSummaryInfo {
+export interface JsSummary {
+  totalSize: number
+  totalAssets: number
   totalModules: number
   totalChunks: number
-  totalSize: JsSizeInfo
-}
-
-export interface JsTreeNode {
-  name: string
-  size: number
-  children?: Array<JsTreeNode>
-  path?: string
-  moduleType?: string
-}
-
-export interface JsTypeStatistics {
-  count: number
-  totalSize: JsSizeInfo
-}
-
-export interface JsVisualizationData {
-  treeData: Array<JsTreeNode>
-  heatmapData: Array<JsHeatmapNode>
+  buildTime: number
 }
 
 export interface RawBundleAnalyzerPluginOpts {

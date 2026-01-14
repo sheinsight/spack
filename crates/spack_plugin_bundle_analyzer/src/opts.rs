@@ -1,13 +1,12 @@
 use derive_more::Debug;
 use futures::future::BoxFuture;
 
-use crate::resp::BundleAnalysisResult;
+use crate::report::Report;
 
-pub type CompilationHookFn = Box<
-  dyn Fn(BundleAnalysisResult) -> BoxFuture<'static, Result<(), Box<dyn std::error::Error>>>
-    + Sync
-    + Send,
->;
+// use crate::resp::BundleAnalysisResult;
+
+pub type CompilationHookFn =
+  Box<dyn Fn(Report) -> BoxFuture<'static, Result<(), Box<dyn std::error::Error>>> + Sync + Send>;
 
 #[derive(Debug)]
 pub struct BundleAnalyzerPluginOpts {

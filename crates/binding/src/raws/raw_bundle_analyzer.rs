@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use derive_more::Debug;
 use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
@@ -7,9 +5,7 @@ use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
-  BundleAnalysisResult, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, ChunkInfo, DependencyEdge,
-  DependencyNode, HeatmapNode, ModuleInfo, SizeInfo, SourceStatistics, StatisticsInfo, SummaryInfo,
-  TreeNode, TypeStatistics, VisualizationData,
+  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, Module, Package, Report, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -21,262 +17,112 @@ pub struct RawBundleAnalyzerPluginOpts {
   pub on_analyzed: Option<ThreadsafeFunction<JsBundleAnalyzerPluginResp, ()>>,
 }
 
+// JavaScript 可用的数据结构
+
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsSizeInfo {
-  pub original: f64,
-  pub minified: f64,
-  pub gzipped: f64,
+pub struct JsAsset {
+  pub name: String,
+  pub size: u32,
+  pub chunks: Vec<String>,
+  pub emitted: bool,
 }
 
-impl From<SizeInfo> for JsSizeInfo {
-  fn from(value: SizeInfo) -> Self {
+impl From<Asset> for JsAsset {
+  fn from(value: Asset) -> Self {
     Self {
-      original: value.original as f64,
-      minified: value.minified as f64,
-      gzipped: value.gzipped as f64,
+      name: value.name,
+      size: value.size as u32,
+      chunks: value.chunks,
+      emitted: value.emitted,
     }
   }
 }
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsModuleInfo {
+pub struct JsModule {
   pub id: String,
   pub name: String,
-  pub path: String,
-  pub size: JsSizeInfo,
-  #[napi(js_name = "moduleType")]
-  pub module_type: String,
-  pub source: String,
-  #[napi(js_name = "isEntry")]
-  pub is_entry: bool,
-  pub dependencies: Vec<String>,
+  pub size: u32,
+  pub chunks: Vec<String>,
 }
 
-impl From<ModuleInfo> for JsModuleInfo {
-  fn from(value: ModuleInfo) -> Self {
+impl From<Module> for JsModule {
+  fn from(value: Module) -> Self {
     Self {
       id: value.id,
       name: value.name,
-      path: value.path,
-      size: value.size.into(),
-      module_type: value.module_type,
-      source: value.source,
-      is_entry: value.is_entry,
-      dependencies: value.dependencies,
+      size: value.size as u32,
+      chunks: value.chunks,
     }
   }
 }
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsChunkInfo {
+pub struct JsChunk {
   pub id: String,
-  pub name: String,
-  pub size: JsSizeInfo,
+  pub names: Vec<String>,
+  pub size: u32,
   pub modules: Vec<String>,
-  #[napi(js_name = "isEntry")]
-  pub is_entry: bool,
-  pub parents: Vec<String>,
-  pub children: Vec<String>,
+  pub entry: bool,
+  pub initial: bool,
 }
 
-impl From<ChunkInfo> for JsChunkInfo {
-  fn from(value: ChunkInfo) -> Self {
+impl From<Chunk> for JsChunk {
+  fn from(value: Chunk) -> Self {
     Self {
       id: value.id,
-      name: value.name,
-      size: value.size.into(),
+      names: value.names,
+      size: value.size as u32,
       modules: value.modules,
-      is_entry: value.is_entry,
-      parents: value.parents,
-      children: value.children,
+      entry: value.entry,
+      initial: value.initial,
     }
   }
 }
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsSummaryInfo {
-  #[napi(js_name = "totalModules")]
-  pub total_modules: f64,
-  #[napi(js_name = "totalChunks")]
-  pub total_chunks: f64,
-  #[napi(js_name = "totalSize")]
-  pub total_size: JsSizeInfo,
-}
-
-impl From<SummaryInfo> for JsSummaryInfo {
-  fn from(value: SummaryInfo) -> Self {
-    Self {
-      total_modules: value.total_modules as f64,
-      total_chunks: value.total_chunks as f64,
-      total_size: value.total_size.into(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsTypeStatistics {
-  pub count: f64,
-  #[napi(js_name = "totalSize")]
-  pub total_size: JsSizeInfo,
-}
-
-impl From<TypeStatistics> for JsTypeStatistics {
-  fn from(value: TypeStatistics) -> Self {
-    Self {
-      count: value.count as f64,
-      total_size: value.total_size.into(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsSourceStatistics {
-  pub count: f64,
-  #[napi(js_name = "totalSize")]
-  pub total_size: JsSizeInfo,
-}
-
-impl From<SourceStatistics> for JsSourceStatistics {
-  fn from(value: SourceStatistics) -> Self {
-    Self {
-      count: value.count as f64,
-      total_size: value.total_size.into(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsDependencyEdge {
-  #[napi(js_name = "moduleId")]
-  pub module_id: String,
-  #[napi(js_name = "dependencyType")]
-  pub dependency_type: String,
-  #[napi(js_name = "userRequest")]
-  pub user_request: String,
-}
-
-impl From<DependencyEdge> for JsDependencyEdge {
-  fn from(value: DependencyEdge) -> Self {
-    Self {
-      module_id: value.module_id,
-      dependency_type: value.dependency_type,
-      user_request: value.user_request,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsDependencyNode {
-  #[napi(js_name = "moduleId")]
-  pub module_id: String,
-  pub dependencies: Vec<JsDependencyEdge>,
-}
-
-impl From<DependencyNode> for JsDependencyNode {
-  fn from(value: DependencyNode) -> Self {
-    Self {
-      module_id: value.module_id,
-      dependencies: value.dependencies.into_iter().map(Into::into).collect(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsTreeNode {
+pub struct JsPackage {
   pub name: String,
-  pub size: f64,
-  pub children: Option<Vec<JsTreeNode>>,
-  pub path: Option<String>,
-  #[napi(js_name = "moduleType")]
-  pub module_type: Option<String>,
+  pub version: String,
+  pub size: u32,
+  pub module_count: u32,
+  pub modules: Vec<String>,
 }
 
-impl From<TreeNode> for JsTreeNode {
-  fn from(value: TreeNode) -> Self {
+impl From<Package> for JsPackage {
+  fn from(value: Package) -> Self {
     Self {
       name: value.name,
-      size: value.size as f64,
-      children: value
-        .children
-        .map(|children| children.into_iter().map(Into::into).collect()),
-      path: value.path,
-      module_type: value.module_type,
+      version: value.version,
+      size: value.size as u32,
+      module_count: value.module_count as u32,
+      modules: value.modules,
     }
   }
 }
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsHeatmapNode {
-  pub name: String,
-  pub value: f64,
-  pub path: String,
-  pub level: f64,
+pub struct JsSummary {
+  pub total_size: u32,
+  pub total_assets: u32,
+  pub total_modules: u32,
+  pub total_chunks: u32,
+  pub build_time: f64,
 }
 
-impl From<HeatmapNode> for JsHeatmapNode {
-  fn from(value: HeatmapNode) -> Self {
+impl From<Summary> for JsSummary {
+  fn from(value: Summary) -> Self {
     Self {
-      name: value.name,
-      value: value.value as f64,
-      path: value.path,
-      level: value.level as f64,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsVisualizationData {
-  #[napi(js_name = "treeData")]
-  pub tree_data: Vec<JsTreeNode>,
-  #[napi(js_name = "heatmapData")]
-  pub heatmap_data: Vec<JsHeatmapNode>,
-}
-
-impl From<VisualizationData> for JsVisualizationData {
-  fn from(value: VisualizationData) -> Self {
-    Self {
-      tree_data: value.tree_data.into_iter().map(Into::into).collect(),
-      heatmap_data: value.heatmap_data.into_iter().map(Into::into).collect(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsStatisticsInfo {
-  #[napi(js_name = "byFileType")]
-  pub by_file_type: HashMap<String, JsTypeStatistics>,
-  #[napi(js_name = "bySource")]
-  pub by_source: HashMap<String, JsSourceStatistics>,
-  #[napi(js_name = "largestModules")]
-  pub largest_modules: Vec<JsModuleInfo>,
-}
-
-impl From<StatisticsInfo> for JsStatisticsInfo {
-  fn from(value: StatisticsInfo) -> Self {
-    Self {
-      by_file_type: value
-        .by_file_type
-        .into_iter()
-        .map(|(k, v)| (k, v.into()))
-        .collect(),
-      by_source: value
-        .by_source
-        .into_iter()
-        .map(|(k, v)| (k, v.into()))
-        .collect(),
-      largest_modules: value.largest_modules.into_iter().map(Into::into).collect(),
+      total_size: value.total_size as u32,
+      total_assets: value.total_assets as u32,
+      total_modules: value.total_modules as u32,
+      total_chunks: value.total_chunks as u32,
+      build_time: value.build_time,
     }
   }
 }
@@ -284,32 +130,34 @@ impl From<StatisticsInfo> for JsStatisticsInfo {
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsBundleAnalyzerPluginResp {
-  pub timestamp: f64,
-  #[napi(js_name = "buildTime")]
-  pub build_time: f64,
-  pub summary: JsSummaryInfo,
-  pub modules: Vec<JsModuleInfo>,
-  pub chunks: Vec<JsChunkInfo>,
-  #[napi(js_name = "dependencyGraph")]
-  pub dependency_graph: Vec<JsDependencyNode>,
-  pub statistics: JsStatisticsInfo,
-  pub visualization: JsVisualizationData,
+  pub timestamp: u32,
+  pub summary: JsSummary,
+  pub assets: Vec<JsAsset>,
+  pub modules: Vec<JsModule>,
+  pub chunks: Vec<JsChunk>,
+  pub packages: Vec<JsPackage>,
 }
 
-impl From<BundleAnalysisResult> for JsBundleAnalyzerPluginResp {
-  fn from(value: BundleAnalysisResult) -> Self {
+impl From<Report> for JsBundleAnalyzerPluginResp {
+  fn from(value: Report) -> Self {
     Self {
-      timestamp: value.timestamp as f64,
-      build_time: value.build_time,
+      timestamp: value.timestamp as u32,
       summary: value.summary.into(),
-      modules: value.modules.into_iter().map(Into::into).collect(),
-      chunks: value.chunks.into_iter().map(Into::into).collect(),
-      dependency_graph: value.dependency_graph.into_iter().map(Into::into).collect(),
-      statistics: value.statistics.into(),
-      visualization: value.visualization.into(),
+      assets: value.assets.into_iter().map(|a| a.into()).collect(),
+      modules: value.modules.into_iter().map(|m| m.into()).collect(),
+      chunks: value.chunks.into_iter().map(|c| c.into()).collect(),
+      packages: value.packages.into_iter().map(|p| p.into()).collect(),
     }
   }
 }
+
+// impl Into<BundleAnalyzerPluginOpts> for RawBundleAnalyzerPluginOpts {
+//   fn into(self) -> BundleAnalyzerPluginOpts {
+//     BundleAnalyzerPluginOpts {
+//       on_analyzed: todo!(),
+//     }
+//   }
+// }
 
 #[allow(unused)]
 pub fn binding(_env: Env, options: Unknown<'_>) -> napi::Result<BoxPlugin> {
