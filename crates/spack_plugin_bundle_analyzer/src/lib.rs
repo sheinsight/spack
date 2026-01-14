@@ -6,11 +6,13 @@ mod package;
 mod report;
 mod summary;
 
+use std::io::Write;
+
 use brotli::enc::{BrotliCompress, BrotliEncoderParams};
 use derive_more::Debug;
-use flate2::write::GzEncoder;
 use flate2::Compression;
-use std::io::Write;
+use flate2::write::GzEncoder;
+use rayon::prelude::*;
 use napi::tokio::time::Instant;
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 use rspack_collections::Identifier;
@@ -113,33 +115,38 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 }
 
 fn collect_assets(compilation: &Compilation) -> Vec<Asset> {
-  compilation
+  // 先收集所有 assets 的基本信息到 Vec,然后并行计算压缩大小
+  let assets_data: Vec<_> = compilation
     .assets()
     .iter()
     .map(|(name, asset)| {
-      let (size, gzip_size, brotli_size) = if let Some(source) = &asset.source {
-        let size = source.size();
-        let buffer = source.buffer();
+      let buffer = asset.source.as_ref().map(|s| s.buffer());
+      let size = asset.source.as_ref().map(|s| s.size()).unwrap_or(0);
+      (name.to_string(), size, buffer)
+    })
+    .collect();
 
-        // 计算 gzip 和 brotli 压缩后的大小
-        let gzip_size = calculate_gzip_size(&buffer);
-        let brotli_size = calculate_brotli_size(&buffer);
-        // let gzip_size = Some(0);
-        // let brotli_size = Some(0);
-
-        (size, gzip_size, brotli_size)
+  // 使用 rayon 并行计算每个 asset 的压缩大小
+  assets_data
+    .par_iter()
+    .map(|(name, size, buffer_opt)| {
+      let (gzip_size, brotli_size) = if let Some(buffer) = buffer_opt {
+        // 并行计算 gzip 和 brotli 压缩大小
+        let gzip_size = calculate_gzip_size(buffer);
+        let brotli_size = calculate_brotli_size(buffer);
+        (gzip_size, brotli_size)
       } else {
-        (0, None, None)
+        (None, None)
       };
 
-      return Asset {
-        name: name.to_string(),
-        size,
+      Asset {
+        name: name.clone(),
+        size: *size,
         gzip_size,
         brotli_size,
         chunks: get_asset_chunks(name, compilation),
         emitted: true,
-      };
+      }
     })
     .collect()
 }
