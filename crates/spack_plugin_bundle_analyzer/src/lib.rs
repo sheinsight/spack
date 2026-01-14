@@ -3,9 +3,9 @@ mod chunk;
 mod module;
 mod opts;
 mod package;
-// mod report;
+mod report;
 mod resp;
-// mod summary;
+mod summary;
 mod types;
 
 use derive_more::Debug;
@@ -17,7 +17,9 @@ use rspack_core::{ApplyContext, ChunkGraph, Compilation, CompilerAfterEmit, Plug
 use rspack_hook::{plugin, plugin_hook};
 pub use types::*;
 
-use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package};
+use crate::{
+  asset::Asset, chunk::Chunk, module::Module, package::Package, report::Report, summary::Summary,
+};
 
 #[plugin]
 #[derive(Debug)]
@@ -67,6 +69,32 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // println!("modules--> {:#?}", modules);
 
   // println!("chunks---> {:#?}", chunks);
+
+  // 计算总大小：累加所有 assets 的大小
+  let total_size: u64 = assets.iter().map(|a| a.size as u64).sum();
+
+  let summary = Summary {
+    total_size,
+    total_assets: assets.len(),
+    total_modules: modules.len(),
+    total_chunks: chunks.len(),
+    build_time: millis as f64,
+  };
+
+  // 获取当前 Unix 时间戳（毫秒）
+  let timestamp = std::time::SystemTime::now()
+    .duration_since(std::time::UNIX_EPOCH)
+    .unwrap()
+    .as_millis() as u64;
+
+  let r = Report {
+    timestamp,
+    summary,
+    assets,
+    modules,
+    chunks,
+    packages,
+  };
 
   println!("packages--> {:#?}", packages);
 
