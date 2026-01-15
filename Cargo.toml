@@ -59,7 +59,7 @@ swc_core = { version = "=54.0.0", default-features = false, features = [
 ] }
 
 dashmap     = { version = "6.1.0" }
-derive_more = { version = "1.0.0", features = ["debug"] }
+derive_more = { version = "1.0.0", features = ["debug", "deref", "deref_mut", "into"] }
 futures     = { version = "0.3.31", default-features = false, features = ["std"] }
 rustc-hash  = { version = "2.1.1" }
 
