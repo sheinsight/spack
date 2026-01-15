@@ -268,20 +268,29 @@ fn collect_chunks(compilation: &Compilation) -> Vec<Chunk> {
         .map(|m| m.identifier().to_string())
         .collect();
 
+      let id = ukey.as_u32().to_string();
+      let names = chunk
+        .name()
+        .map(|n| vec![n.to_string()])
+        .unwrap_or_default();
       let files = chunk.files().iter().cloned().collect();
+      let reason = chunk.chunk_reason().unwrap_or_default().to_string();
+      let initial = chunk.can_be_initial(&compilation.chunk_group_by_ukey);
+      let entry = chunk.has_entry_module(chunk_graph);
+      let async_chunks = chunk.has_async_chunks(&compilation.chunk_group_by_ukey);
+      let runtime = chunk.has_runtime(&compilation.chunk_group_by_ukey);
 
       Chunk {
-        id: ukey.as_u32().to_string(),
-        names: chunk
-          .name()
-          .map(|n| vec![n.to_string()])
-          .unwrap_or_default(),
+        id,
+        names,
         size: calculate_chunk_size(&modules, &module_graph),
         modules,
-        entry: chunk.has_entry_module(chunk_graph),
-        initial: chunk.can_be_initial(&compilation.chunk_group_by_ukey),
-        reason: chunk.chunk_reason().unwrap_or_default().to_string(),
+        entry,
+        initial,
+        reason,
         files,
+        async_chunks,
+        runtime,
       }
     })
     .collect()

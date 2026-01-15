@@ -16,4 +16,8 @@ pub struct Chunk {
   pub reason: String,
   // chunk 生成的输出文件列表
   pub files: Vec<String>,
+  // 是否包含异步 chunk
+  pub async_chunks: bool,
+  // 是否包含运行时代码
+  pub runtime: bool,
 }

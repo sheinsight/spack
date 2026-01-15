@@ -30,6 +30,8 @@ export interface JsChunk {
   modules: Array<string>
   entry: boolean
   initial: boolean
+  asyncChunks: boolean
+  runtime: boolean
   reason: string
   files: Array<string>
 }
