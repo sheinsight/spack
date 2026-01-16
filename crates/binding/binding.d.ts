@@ -21,6 +21,7 @@ export interface JsBundleAnalyzerPluginResp {
   modules: Array<JsModule>
   chunks: Array<JsChunk>
   packages: Array<JsPackage>
+  duplicatePackages: Array<JsDuplicatePackage>
 }
 
 export interface JsChunk {
@@ -39,6 +40,13 @@ export interface JsChunk {
 export interface JsDuplicateDependencyPluginResp {
   groups: Array<JsLibraryGroup>
   duration: number
+}
+
+export interface JsDuplicatePackage {
+  name: string
+  versions: Array<JsPackageVersion>
+  totalSize: number
+  wastedSize: number
 }
 
 export interface JsLibrary {
@@ -68,6 +76,13 @@ export interface JsPackage {
   size: number
   moduleCount: number
   modules: Array<string>
+  packageJsonPath: string
+}
+
+export interface JsPackageVersion {
+  version: string
+  size: number
+  moduleCount: number
 }
 
 export interface JsPerformanceTimings {

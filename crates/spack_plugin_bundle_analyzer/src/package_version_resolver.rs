@@ -3,11 +3,12 @@ use std::collections::HashMap;
 use std::path::Path;
 use up_finder::UpFinder;
 
-/// 包信息（包名和版本）
+/// 包信息（包名、版本和 package.json 路径）
 #[derive(Debug, Clone)]
 pub struct PackageInfo {
   pub name: String,
   pub version: String,
+  pub path: String,
 }
 
 /// 包信息解析器
@@ -27,15 +28,15 @@ impl PackageVersionResolver {
     }
   }
 
-  /// 解析包信息（包名和版本）
+  /// 解析包信息（包名、版本和 package.json 路径）
   ///
   /// 参数:
   /// - module_path: 模块路径，如 "node_modules/react/index.js"
   ///
   /// 返回:
-  /// - Some((包名, 版本号)): 找到了 package.json
+  /// - Some(PackageInfo): 找到了 package.json
   /// - None: 不在 node_modules 中或找不到 package.json
-  pub fn resolve(&mut self, module_path: &str) -> Option<(String, String)> {
+  pub fn resolve(&mut self, module_path: &str) -> Option<PackageInfo> {
     // 1. 只处理 node_modules 中的模块
     if !module_path.contains("node_modules/") {
       return None;
@@ -49,7 +50,7 @@ impl PackageVersionResolver {
 
     // 4. 查缓存
     if let Some(info) = self.cache.get(&cache_key) {
-      return Some((info.name.clone(), info.version.clone()));
+      return Some(info.clone());
     }
 
     // 5. 使用 up_finder 向上查找 package.json
@@ -58,7 +59,7 @@ impl PackageVersionResolver {
     // 6. 写入缓存
     self.cache.insert(cache_key, info.clone());
 
-    Some((info.name, info.version))
+    Some(info)
   }
 
   /// 向上查找最近的 package.json 并提取包信息
@@ -81,6 +82,7 @@ impl PackageVersionResolver {
           return Some(PackageInfo {
             name: name.to_string(),
             version,
+            path: path.to_string_lossy().to_string(),
           });
         }
       }

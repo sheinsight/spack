@@ -118,6 +118,7 @@ pub struct JsPackage {
   pub size: u32,
   pub module_count: u32,
   pub modules: Vec<String>,
+  pub package_json_path: String,
 }
 
 impl From<Package> for JsPackage {
@@ -128,6 +129,7 @@ impl From<Package> for JsPackage {
       size: value.size as u32,
       module_count: value.module_count as u32,
       modules: value.modules,
+      package_json_path: value.package_json_path,
     }
   }
 }

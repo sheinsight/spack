@@ -14,6 +14,8 @@ pub struct Package {
   pub module_count: usize,
   // 该包包含的所有模块 ID 列表
   pub modules: Vec<String>,
+  // package.json 文件路径
+  pub package_json_path: String,
 }
 
 #[derive(Debug, Deref, Into)]
@@ -30,19 +32,20 @@ impl<'a> From<&'a Modules> for Packages {
 fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   use std::collections::HashMap;
 
-  // key 是 (包名, 版本) 元组, value 是模块列表
-  let mut package_map: HashMap<(String, String), Vec<&Module>> = HashMap::new();
+  // key 是 (包名, 版本) 元组, value 是 (package.json 路径, 模块列表)
+  let mut package_map: HashMap<(String, String), (String, Vec<&Module>)> = HashMap::new();
 
   // 创建包信息解析器
   let mut resolver = package_version_resolver::PackageVersionResolver::new();
 
   // 1. 遍历所有模块,按 (包名, 版本) 分组
   for module in modules {
-    // 从 package.json 解析包名和版本
-    if let Some((package_name, version)) = resolver.resolve(&module.name) {
+    // 从 package.json 解析包名、版本和路径
+    if let Some(info) = resolver.resolve(&module.name) {
       package_map
-        .entry((package_name, version))
-        .or_insert_with(Vec::new)
+        .entry((info.name, info.version))
+        .or_insert_with(|| (info.path, Vec::new()))
+        .1
         .push(module);
     }
   }
@@ -50,7 +53,7 @@ fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   // 2. 为每个包生成统计信息
   let mut packages: Vec<Package> = package_map
     .into_iter()
-    .map(|((name, version), mods)| {
+    .map(|((name, version), (package_json_path, mods))| {
       let size: u64 = mods.iter().map(|m| m.size).sum();
       let modules: Vec<String> = mods.iter().map(|m| m.id.clone()).collect();
 
@@ -60,6 +63,7 @@ fn analyze_packages(modules: &[Module]) -> Vec<Package> {
         size,
         module_count: mods.len(),
         modules,
+        package_json_path,
       }
     })
     .collect();
