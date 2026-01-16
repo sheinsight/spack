@@ -37,11 +37,15 @@ impl<'a> From<&'a mut Compilation> for Chunks {
       .chunk_by_ukey
       .iter()
       .map(|(ukey, chunk)| {
-        let modules: Vec<String> = chunk_graph
+        // 一次遍历同时收集模块ID和计算大小，避免二次查找
+        let (modules, size) = chunk_graph
           .get_chunk_modules(ukey, &module_graph)
           .iter()
-          .map(|m| m.identifier().to_string())
-          .collect();
+          .fold((Vec::new(), 0u64), |(mut ids, total_size), m| {
+            ids.push(m.identifier().to_string());
+            let module_size = get_module_size(m.as_ref());
+            (ids, total_size + module_size)
+          });
 
         let id = ukey.as_u32().to_string();
         let names = chunk
@@ -58,7 +62,7 @@ impl<'a> From<&'a mut Compilation> for Chunks {
         Chunk {
           id,
           names,
-          size: calculate_chunk_size(&modules, &module_graph),
+          size,
           modules,
           entry,
           initial,
@@ -72,23 +76,6 @@ impl<'a> From<&'a mut Compilation> for Chunks {
 
     Chunks(chunks)
   }
-}
-
-/// 计算 chunk 的总大小
-/// 通过累加该 chunk 包含的所有模块的大小得出
-fn calculate_chunk_size(module_ids: &[String], module_graph: &rspack_core::ModuleGraph) -> u64 {
-  module_ids
-    .iter()
-    .filter_map(|id_str| {
-      // 将字符串 ID 转换为 ModuleIdentifier
-      // 从 module_graph 中找到对应的模块并获取其大小
-      module_graph
-        .modules()
-        .into_iter()
-        .find(|(module_id, _)| module_id.to_string() == *id_str)
-        .map(|(_, module)| get_module_size(module.as_ref()))
-    })
-    .sum()
 }
 
 fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
