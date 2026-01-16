@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Write as _;
 
 use derive_more::{Deref, derive::Into};
@@ -25,6 +26,9 @@ pub struct Assets(Vec<Asset>);
 
 impl<'a> From<&'a mut Compilation> for Assets {
   fn from(compilation: &'a mut Compilation) -> Self {
+    // 预先构建 asset -> chunks 映射，避免对每个 asset 都遍历所有 chunks
+    let asset_to_chunks = build_asset_chunks_map(compilation);
+
     let assets: Vec<_> = compilation
       .assets()
       .iter()
@@ -45,11 +49,17 @@ impl<'a> From<&'a mut Compilation> for Assets {
           None
         };
 
+        // 从预构建的映射中查找，O(1) 操作
+        let chunks = asset_to_chunks
+          .get(name.as_str())
+          .cloned()
+          .unwrap_or_default();
+
         Asset {
           name: name.clone(),
           size: *size,
           gzip_size,
-          chunks: get_asset_chunks(name, compilation),
+          chunks,
           emitted: true,
         }
       })
@@ -58,20 +68,27 @@ impl<'a> From<&'a mut Compilation> for Assets {
   }
 }
 
-fn get_asset_chunks(asset_name: &str, compilation: &Compilation) -> Vec<String> {
-  compilation
-    .chunk_by_ukey
-    .values()
-    .filter(|chunk| chunk.files().contains(asset_name))
-    .map(|chunk| {
-      let id = if let Some(id) = chunk.id() {
-        id.to_string()
-      } else {
-        "".to_string()
-      };
-      return id;
-    })
-    .collect()
+/// 构建 asset 名称到 chunk IDs 的映射
+/// 一次遍历所有 chunks，避免对每个 asset 重复遍历
+fn build_asset_chunks_map(compilation: &Compilation) -> HashMap<String, Vec<String>> {
+  let mut map: HashMap<String, Vec<String>> = HashMap::new();
+
+  for chunk in compilation.chunk_by_ukey.values() {
+    let chunk_id = chunk
+      .id()
+      .map(|id| id.to_string())
+      .unwrap_or_default();
+
+    // 将 chunk_id 添加到所有关联的 asset 中
+    for file in chunk.files() {
+      map
+        .entry(file.to_string())
+        .or_insert_with(Vec::new)
+        .push(chunk_id.clone());
+    }
+  }
+
+  map
 }
 
 /// 计算 gzip 压缩后的大小
