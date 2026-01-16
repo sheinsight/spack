@@ -1,6 +1,6 @@
 {
   "name": "@shined/spack-binding-win32-x64-msvc",
-  "version": "0.7.1-0-canary.5",
+  "version": "0.7.1-0-canary.6",
   "cpu": [
     "x64"
   ],
