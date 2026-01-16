@@ -83,6 +83,7 @@ export interface JsPackageVersion {
   version: string
   size: number
   moduleCount: number
+  packageJsonPath: string
 }
 
 export interface JsPerformanceTimings {

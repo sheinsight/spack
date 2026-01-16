@@ -10,6 +10,7 @@ pub struct PackageVersion {
   pub version: String,
   pub size: u64,
   pub module_count: usize,
+  pub package_json_path: String,
 }
 
 /// 重复的包
@@ -65,6 +66,7 @@ fn detect_duplicates(packages: &[Package]) -> Vec<DuplicatePackage> {
           version: p.version.clone(),
           size: p.size,
           module_count: p.module_count,
+          package_json_path: p.package_json_path.clone(),
         })
         .collect();
 

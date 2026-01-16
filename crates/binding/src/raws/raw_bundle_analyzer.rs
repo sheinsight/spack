@@ -140,6 +140,7 @@ pub struct JsPackageVersion {
   pub version: String,
   pub size: u32,
   pub module_count: u32,
+  pub package_json_path: String,
 }
 
 impl From<PackageVersion> for JsPackageVersion {
@@ -148,6 +149,7 @@ impl From<PackageVersion> for JsPackageVersion {
       version: value.version,
       size: value.size as u32,
       module_count: value.module_count as u32,
+      package_json_path: value.package_json_path,
     }
   }
 }
