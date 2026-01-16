@@ -157,8 +157,11 @@ impl ChunkOverlapAnalysis {
       }
 
       // 使用 PackageVersionResolver 获取包名
+      // 注意：使用 name_for_condition（真实文件路径）而不是 name（可读标识符）
       let package_name = if module.is_node_module {
-        resolver.resolve(&module.name).map(|info| info.name)
+        resolver
+          .resolve(&module.name_for_condition)
+          .map(|info| info.name)
       } else {
         None
       };
