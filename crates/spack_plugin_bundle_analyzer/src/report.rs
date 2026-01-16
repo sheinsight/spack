@@ -1,4 +1,7 @@
-use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package, summary::Summary};
+use crate::{
+  asset::Asset, chunk::Chunk, duplicate_packages::DuplicatePackage, module::Module, package::Package,
+  summary::Summary,
+};
 
 // 核心数据结构
 #[derive(Debug)]
@@ -13,6 +16,8 @@ pub struct Report {
   pub modules: Vec<Module>,
   // 代码块
   pub chunks: Vec<Chunk>,
-
+  // 包
   pub packages: Vec<Package>,
+  // 重复的包
+  pub duplicate_packages: Vec<DuplicatePackage>,
 }

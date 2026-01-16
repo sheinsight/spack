@@ -1,6 +1,7 @@
 #![feature(duration_millis_float)]
 mod asset;
 mod chunk;
+mod duplicate_packages;
 mod module;
 mod module_type;
 mod opts;
@@ -17,10 +18,11 @@ use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 
 pub use crate::{
-  asset::Asset, chunk::Chunk, module::Module, module_type::ModuleType, package::Package,
+  asset::Asset, chunk::Chunk, duplicate_packages::DuplicatePackage,
+  duplicate_packages::PackageVersion, module::Module, module_type::ModuleType, package::Package,
   performance_timings::PerformanceTimings, report::Report, summary::Summary,
 };
-use crate::{asset::Assets, module::Modules, package::Packages};
+use crate::{asset::Assets, duplicate_packages::DuplicatePackages, module::Modules, package::Packages};
 
 #[plugin]
 #[derive(Debug)]
@@ -71,6 +73,11 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let packages = Packages::from(&modules);
   let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
 
+  // 5. 检测重复包
+  let duplicates_start = Instant::now();
+  let duplicate_packages = DuplicatePackages::from(&packages[..]);
+  let _detect_duplicates_ms = duplicates_start.elapsed().as_millis_f64();
+
   // 计算总耗时
   let total_ms = start_time.elapsed().as_millis_f64();
 
@@ -120,6 +127,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     modules: modules.into(),
     chunks: chunks.into(),
     packages: packages.into(),
+    duplicate_packages: duplicate_packages.into(),
   };
 
   // 调用回调函数

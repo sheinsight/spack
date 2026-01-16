@@ -26,24 +26,23 @@ impl<'a> From<&'a Modules> for Packages {
   }
 }
 
-/// 分析包依赖,按包名聚合
+/// 分析包依赖,按 (包名, 版本) 聚合
 fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   use std::collections::HashMap;
 
-  // key 是包名, value 是 (版本号, 模块列表)
-  let mut package_map: HashMap<String, (String, Vec<&Module>)> = HashMap::new();
+  // key 是 (包名, 版本) 元组, value 是模块列表
+  let mut package_map: HashMap<(String, String), Vec<&Module>> = HashMap::new();
 
   // 创建包信息解析器
   let mut resolver = package_version_resolver::PackageVersionResolver::new();
 
-  // 1. 遍历所有模块,按包名分组
+  // 1. 遍历所有模块,按 (包名, 版本) 分组
   for module in modules {
     // 从 package.json 解析包名和版本
     if let Some((package_name, version)) = resolver.resolve(&module.name) {
       package_map
-        .entry(package_name)
-        .or_insert_with(|| (version.clone(), Vec::new()))
-        .1
+        .entry((package_name, version))
+        .or_insert_with(Vec::new)
         .push(module);
     }
   }
@@ -51,7 +50,7 @@ fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   // 2. 为每个包生成统计信息
   let mut packages: Vec<Package> = package_map
     .into_iter()
-    .map(|(name, (version, mods))| {
+    .map(|((name, version), mods)| {
       let size: u64 = mods.iter().map(|m| m.size).sum();
       let modules: Vec<String> = mods.iter().map(|m| m.id.clone()).collect();
 
