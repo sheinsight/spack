@@ -1,0 +1,6 @@
+{
+  "extends": ["./lint/.oxlintrc.json"],
+  "rules": {
+    "eslint/no-console": "off"
+  }
+}

@@ -21,13 +21,27 @@ pub struct OxlintPluginOpts {
 impl OxlintPluginOpts {
   /// 构建 Oxlintrc 配置
   ///
-  /// 如果提供了 `oxlint_config_file_path`，则从文件加载；
-  /// 否则根据选项生成配置并写入 `output_dir/.oxlintrc.json`
+  /// 总是先生成内置配置文件到 `output_dir/.oxlintrc.json`（用于用户 extends）
+  /// 如果提供了 `config_file_path`，则从用户文件加载；
+  /// 否则使用生成的内置配置
   pub fn build_oxlintrc(&self) -> Result<Oxlintrc, String> {
+    // 1. 总是生成内置配置文件（即使用户提供了自定义配置）
+    // 这样用户可以在自己的配置文件中 extends 这个生成的文件
+    let config_json = self
+      .build_config_json()
+      .map_err(|e| format!("Failed to build config JSON: {}", e))?;
+
+    let config_output_path = Path::new(&self.output_dir).join(".oxlintrc.json");
+    write_config_file(&config_json, &config_output_path, &self.output_dir)?;
+
+    // 2. 如果用户提供了自定义配置文件，加载用户的配置
+    // 否则使用生成的内置配置
     if let Some(file_path) = &self.config_file_path {
       Self::load_from_file(file_path)
     } else {
-      self.build_inner_oxlintrc()
+      // 使用生成的配置
+      from_value::<Oxlintrc>(config_json)
+        .map_err(|e| format!("Failed to deserialize Oxlintrc: {}", e))
     }
   }
 
@@ -39,22 +53,6 @@ impl OxlintPluginOpts {
         file_path, e
       )
     })
-  }
-
-  /// 从选项生成配置
-  fn build_inner_oxlintrc(&self) -> Result<Oxlintrc, String> {
-    // 1. 构建 JSON 配置
-    let config_json = self
-      .build_config_json()
-      .map_err(|e| format!("Failed to build config JSON: {}", e))?;
-
-    // 2. 写入配置文件（用于调试和审计）
-    let config_output_path = Path::new(&self.output_dir).join(".oxlintrc.json");
-    write_config_file(&config_json, &config_output_path, &self.output_dir)?;
-
-    // 3. 反序列化为 Oxlintrc
-    from_value::<Oxlintrc>(config_json)
-      .map_err(|e| format!("Failed to deserialize Oxlintrc: {}", e))
   }
 
   /// 构建 Oxlint 配置的 JSON 表示
