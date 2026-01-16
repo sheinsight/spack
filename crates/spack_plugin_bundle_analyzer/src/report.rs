@@ -1,5 +1,10 @@
 use crate::{
-  asset::Asset, chunk::Chunk, duplicate_packages::DuplicatePackage, module::Module, package::Package,
+  asset::Asset,
+  chunk::Chunk,
+  chunk_overlap::ChunkOverlapAnalysis,
+  duplicate_packages::DuplicatePackage,
+  module::Module,
+  package::Package,
   summary::Summary,
 };
 
@@ -20,4 +25,6 @@ pub struct Report {
   pub packages: Vec<Package>,
   // 重复的包
   pub duplicate_packages: Vec<DuplicatePackage>,
+  // Chunk 重叠度分析
+  pub chunk_overlap: ChunkOverlapAnalysis,
 }
