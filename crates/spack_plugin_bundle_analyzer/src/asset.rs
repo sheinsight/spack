@@ -97,8 +97,12 @@ fn build_asset_chunks_map(compilation: &Compilation) -> HashMap<String, Vec<Stri
 /// - data: 原始数据字节
 ///
 /// 返回: 压缩后的字节数,如果压缩失败返回 None
+///
+/// 注意: 使用快速压缩级别(1)以提升性能,因为我们只需要大小估算值
 fn calculate_gzip_size(data: &[u8]) -> Option<usize> {
-  let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+  // 使用压缩级别 1(最快),而非默认的级别 6
+  // 对于大小估算来说,速度更重要,且大小差异在可接受范围内
+  let mut encoder = GzEncoder::new(Vec::new(), Compression::new(1));
 
   // 写入数据
   if encoder.write_all(data).is_err() {
