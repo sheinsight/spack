@@ -1,6 +1,6 @@
 use derive_more::derive::{Deref, Into};
 
-use crate::{Module, module::Modules, package_version_resolver};
+use crate::{Module, module::Modules, package_version_resolver::{self, PackageInfo}};
 
 #[derive(Debug)]
 pub struct Package {
@@ -18,6 +18,39 @@ pub struct Package {
   pub package_json_path: String,
 }
 
+/// 包构建器（临时结构，仅用于 analyze_packages 函数内部）
+struct PackageBuilder<'a> {
+  info: PackageInfo,
+  modules: Vec<&'a Module>,
+}
+
+impl<'a> PackageBuilder<'a> {
+  fn new(info: PackageInfo) -> Self {
+    Self {
+      info,
+      modules: Vec::new(),
+    }
+  }
+
+  fn add_module(&mut self, module: &'a Module) {
+    self.modules.push(module);
+  }
+
+  fn build(self) -> Package {
+    let size: u64 = self.modules.iter().map(|m| m.size).sum();
+    let modules: Vec<String> = self.modules.iter().map(|m| m.id.clone()).collect();
+
+    Package {
+      name: self.info.name,
+      version: self.info.version,
+      size,
+      module_count: self.modules.len(),
+      modules,
+      package_json_path: self.info.path,
+    }
+  }
+}
+
 #[derive(Debug, Deref, Into)]
 pub struct Packages(pub Vec<Package>);
 
@@ -28,44 +61,35 @@ impl<'a> From<&'a Modules> for Packages {
   }
 }
 
-/// 分析包依赖,按 (包名, 版本) 聚合
+/// 分析包依赖,按 package.json 路径聚合
+///
+/// 使用 package.json 路径作为唯一标识,能够准确区分:
+/// - 同版本不同 peer 依赖的包实例 (pnpm 场景)
+/// - 不同位置的相同包
 fn analyze_packages(modules: &[Module]) -> Vec<Package> {
   use std::collections::HashMap;
 
-  // key 是 (包名, 版本) 元组, value 是 (package.json 路径, 模块列表)
-  let mut package_map: HashMap<(String, String), (String, Vec<&Module>)> = HashMap::new();
+  // key 是 package.json 路径, value 是包构建器
+  let mut package_map: HashMap<String, PackageBuilder> = HashMap::new();
 
   // 创建包信息解析器
   let mut resolver = package_version_resolver::PackageVersionResolver::new();
 
-  // 1. 遍历所有模块,按 (包名, 版本) 分组
+  // 1. 遍历所有模块,按 package.json 路径分组
   for module in modules {
     // 从 package.json 解析包名、版本和路径
     if let Some(info) = resolver.resolve(&module.name) {
       package_map
-        .entry((info.name, info.version))
-        .or_insert_with(|| (info.path, Vec::new()))
-        .1
-        .push(module);
+        .entry(info.path.clone())
+        .or_insert_with(|| PackageBuilder::new(info))
+        .add_module(module);
     }
   }
 
-  // 2. 为每个包生成统计信息
+  // 2. 构建最终的 Package 列表
   let mut packages: Vec<Package> = package_map
-    .into_iter()
-    .map(|((name, version), (package_json_path, mods))| {
-      let size: u64 = mods.iter().map(|m| m.size).sum();
-      let modules: Vec<String> = mods.iter().map(|m| m.id.clone()).collect();
-
-      Package {
-        name,
-        version,
-        size,
-        module_count: mods.len(),
-        modules,
-        package_json_path,
-      }
-    })
+    .into_values()
+    .map(|builder| builder.build())
     .collect();
 
   // 3. 按大小降序排序
