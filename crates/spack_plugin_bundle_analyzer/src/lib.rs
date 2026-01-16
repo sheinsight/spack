@@ -1,6 +1,7 @@
 #![feature(duration_millis_float)]
 mod asset;
 mod chunk;
+mod context;
 mod duplicate_packages;
 mod module;
 mod module_type;
@@ -22,7 +23,10 @@ pub use crate::{
   duplicate_packages::PackageVersion, module::Module, module_type::ModuleType, package::Package,
   performance_timings::PerformanceTimings, report::Report, summary::Summary,
 };
-use crate::{asset::Assets, duplicate_packages::DuplicatePackages, module::Modules, package::Packages};
+use crate::{
+  asset::Assets, context::ModuleChunkContext, duplicate_packages::DuplicatePackages,
+  module::Modules, package::Packages,
+};
 
 #[plugin]
 #[derive(Debug)]
@@ -51,29 +55,32 @@ impl Plugin for BundleAnalyzerPlugin {
 async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Result<()> {
   let start_time = Instant::now();
 
-  // 1. 收集 Assets（输出文件）
+  // 1. 预构建 module ↔ chunk 映射关系（性能优化）
+  let context_start = Instant::now();
+  let module_chunk_context = ModuleChunkContext::from(&*compilation);
+  let _build_context_ms = context_start.elapsed().as_millis_f64();
+
+  // 2. 收集 Assets（输出文件）
   let assets_start = Instant::now();
   let assets = Assets::from(&mut *compilation);
-
   let collect_assets_ms = assets_start.elapsed().as_millis_f64();
 
-  // 2. 收集 Modules（源文件）
+  // 3. 收集 Modules（源文件，使用预构建的映射）
   let modules_start = Instant::now();
-  // let modules = collect_modules(compilation);
-  let modules = Modules::from(&mut *compilation);
+  let modules = Modules::from_with_context(&mut *compilation, &module_chunk_context);
   let collect_modules_ms = modules_start.elapsed().as_millis_f64();
 
-  // 3. 收集 Chunks（代码块）
+  // 4. 收集 Chunks（代码块，使用预构建的映射）
   let chunks_start = Instant::now();
-  let chunks = chunk::Chunks::from(&mut *compilation);
+  let chunks = chunk::Chunks::from_with_context(&mut *compilation, &module_chunk_context);
   let collect_chunks_ms = chunks_start.elapsed().as_millis_f64();
 
-  // 4. 分析 Packages（按包名聚合）
+  // 5. 分析 Packages（按包名聚合）
   let packages_start = Instant::now();
   let packages = Packages::from(&modules);
   let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
 
-  // 5. 检测重复包
+  // 6. 检测重复包
   let duplicates_start = Instant::now();
   let duplicate_packages = DuplicatePackages::from(&packages[..]);
   let _detect_duplicates_ms = duplicates_start.elapsed().as_millis_f64();

@@ -1,6 +1,8 @@
 use derive_more::derive::{Deref, Into};
 use rspack_core::Compilation;
 
+use crate::context::ModuleChunkContext;
+
 #[derive(Debug)]
 pub struct Chunk {
   // chunk ID
@@ -30,24 +32,37 @@ pub struct Chunks(Vec<Chunk>);
 
 impl<'a> From<&'a mut Compilation> for Chunks {
   fn from(compilation: &'a mut Compilation) -> Self {
+    // 保留原有实现用于向后兼容
+    let context = ModuleChunkContext::from(&*compilation);
+    Self::from_with_context(compilation, &context)
+  }
+}
+
+impl Chunks {
+  /// 使用预构建的上下文来避免重复遍历 chunk_graph
+  ///
+  /// 参数:
+  /// - compilation: 编译上下文
+  /// - context: 预构建的 module ↔ chunk 映射关系
+  pub fn from_with_context(
+    compilation: &mut Compilation,
+    context: &ModuleChunkContext,
+  ) -> Self {
     let chunk_graph = &compilation.chunk_graph;
-    let module_graph = compilation.get_module_graph();
 
     let chunks = compilation
       .chunk_by_ukey
       .iter()
       .map(|(ukey, chunk)| {
-        // 一次遍历同时收集模块ID和计算大小，避免二次查找
-        let (modules, size) = chunk_graph
-          .get_chunk_modules(ukey, &module_graph)
-          .iter()
-          .fold((Vec::new(), 0u64), |(mut ids, total_size), m| {
-            ids.push(m.identifier().to_string());
-            let module_size = get_module_size(m.as_ref());
-            (ids, total_size + module_size)
-          });
-
         let id = ukey.as_u32().to_string();
+
+        // O(1) 查找，不需要再次遍历 chunk_graph
+        let (modules, size) = context
+          .chunk_to_modules
+          .get(&id)
+          .cloned()
+          .unwrap_or_default();
+
         let names = chunk
           .name()
           .map(|n| vec![n.to_string()])
@@ -76,11 +91,4 @@ impl<'a> From<&'a mut Compilation> for Chunks {
 
     Chunks(chunks)
   }
-}
-
-fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
-  // 使用 Module trait 的 size 方法获取模块大小
-  // source_type 参数为 None 表示获取所有类型的总大小
-  // compilation 参数为 None 因为我们不需要编译上下文
-  module.size(None, None) as u64
 }
