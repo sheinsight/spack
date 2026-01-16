@@ -13,8 +13,10 @@ mod performance_timings;
 mod report;
 mod summary;
 
+use std::env::current_dir;
+
 use derive_more::Debug;
-use napi::tokio::time::Instant;
+use napi::tokio::{fs, time::Instant};
 pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
@@ -97,7 +99,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 7. 分析 Chunk 重叠度
   let overlap_start = Instant::now();
   let chunk_overlap = chunk_overlap::ChunkOverlapAnalysis::from(&chunks[..], &modules[..]);
-  let _analyze_overlap_ms = overlap_start.elapsed().as_millis_f64();
+  let analyze_overlap_ms = overlap_start.elapsed().as_millis_f64();
 
   // 计算总耗时
   let total_ms = start_time.elapsed().as_millis_f64();
@@ -122,6 +124,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     collect_chunks_ms,
     analyze_packages_ms,
     compress_gzip_ms,
+    analyze_overlap_ms,
     total_ms,
   );
 
@@ -151,6 +154,12 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     duplicate_packages: duplicate_packages.into(),
     chunk_overlap,
   };
+
+  let dir = current_dir().unwrap();
+
+  let f = dir.join("db.json");
+
+  fs::write(f, format!("{:#?}", report)).await?;
 
   // 调用回调函数
   if let Some(on_analyzed) = &self.options.on_analyzed {

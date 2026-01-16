@@ -183,6 +183,7 @@ pub struct JsPerformanceTimings {
   pub collect_chunks_ms: f64,
   pub analyze_packages_ms: f64,
   pub compress_gzip_ms: f64,
+  pub analyze_overlap_ms: f64,
   pub total_ms: f64,
 }
 
@@ -194,6 +195,7 @@ impl From<PerformanceTimings> for JsPerformanceTimings {
       collect_chunks_ms: value.collect_chunks_ms,
       analyze_packages_ms: value.analyze_packages_ms,
       compress_gzip_ms: value.compress_gzip_ms,
+      analyze_overlap_ms: value.analyze_overlap_ms,
       total_ms: value.total_ms,
     }
   }
