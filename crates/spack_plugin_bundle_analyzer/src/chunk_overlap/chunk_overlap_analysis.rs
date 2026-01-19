@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-  Chunk, ChunkPairOverlap, Module, OverlappedModule, chunk_overlap::ChunkOverlapConfig,
-  package_version_resolver::PackageVersionResolver,
+  Chunk, ChunkPairOverlap, Module, OverlappedModule,
+  chunk_overlap::{ChunkOverlapConfig, OverlappedModules},
 };
 
 /// Chunk 重叠度分析报告
@@ -35,84 +35,23 @@ impl ChunkOverlapAnalysis {
     let module_map: HashMap<String, &Module> = modules.iter().map(|m| (m.id.clone(), m)).collect();
 
     // 1. 找出重叠的模块
-    let overlapped_modules = Self::find_overlapped_modules(modules, config);
+    let overlapped_modules = OverlappedModules::from_with_config(modules, config);
 
     // 2. 分析 chunk 对之间的重叠
     let chunk_pair_overlaps = Self::analyze_chunk_pairs(chunks, &module_map, config);
 
     // 3. 计算总浪费空间
-    let total_wasted_size: u64 = overlapped_modules.iter().map(|m| m.wasted_size).sum();
+    let total_wasted_size = overlapped_modules.total_wasted_size();
 
     // 4. 生成优化建议
     let recommendations = Self::generate_recommendations(&overlapped_modules, &chunk_pair_overlaps);
 
     Self {
-      overlapped_modules,
+      overlapped_modules: overlapped_modules.into(),
       chunk_pair_overlaps,
       total_wasted_size,
       recommendations,
     }
-  }
-
-  /// 找出重叠的模块
-  fn find_overlapped_modules(
-    modules: &[Module],
-    config: &ChunkOverlapConfig,
-  ) -> Vec<OverlappedModule> {
-    let mut overlapped = Vec::new();
-    let mut resolver = PackageVersionResolver::new();
-
-    for module in modules {
-      // 至少在 2 个 chunk 中
-      if module.chunks.len() < config.min_duplication_count {
-        continue;
-      }
-
-      // 检查模块大小阈值
-      if module.size < config.min_module_size {
-        continue;
-      }
-
-      // 如果不包含内部模块，跳过非 node_modules 模块
-      if !config.include_internal_modules && !module.is_node_module {
-        continue;
-      }
-
-      // 使用 PackageVersionResolver 获取包名
-      // 注意：使用 name_for_condition（真实文件路径）而不是 name（可读标识符）
-      let package_name = if module.is_node_module {
-        resolver
-          .resolve(&module.name_for_condition)
-          .map(|info| info.name)
-      } else {
-        None
-      };
-
-      let duplication_count = module.chunks.len();
-
-      // 浪费的空间 = 模块大小 * (重复次数 - 1)
-      let wasted_size = module.size * (duplication_count as u64 - 1);
-
-      // 检查浪费空间阈值
-      if wasted_size < config.min_wasted_size {
-        continue;
-      }
-
-      overlapped.push(OverlappedModule {
-        module_id: module.id.clone(),
-        module_name: module.name.clone(),
-        module_size: module.size,
-        chunks: module.chunks.clone(),
-        duplication_count,
-        wasted_size,
-        package_name,
-      });
-    }
-
-    // 按浪费空间降序排序
-    overlapped.sort_by_key(|m| std::cmp::Reverse(m.wasted_size));
-
-    overlapped
   }
 
   /// 分析 chunk 对之间的重叠
