@@ -5,9 +5,9 @@ use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
-  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ChunkOverlapAnalysis,
-  ChunkPairOverlap, DuplicatePackage, Module, OverlappedModule, Package, PackageVersion,
-  PerformanceTimings, Report, Summary,
+  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ChunkModuleBreakdown,
+  ChunkModuleStats, ChunkOverlapAnalysis, ChunkPairOverlap, DuplicatePackage, Module,
+  ModuleSizeInfo, OverlappedModule, Package, PackageVersion, PerformanceTimings, Report, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -309,6 +309,72 @@ impl From<ChunkOverlapAnalysis> for JsChunkOverlapAnalysis {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
+pub struct JsModuleSizeInfo {
+  pub module_id: String,
+  pub module_name: String,
+  pub size: u32,
+  pub size_ratio: f64,
+  pub package_name: Option<String>,
+}
+
+impl From<ModuleSizeInfo> for JsModuleSizeInfo {
+  fn from(value: ModuleSizeInfo) -> Self {
+    Self {
+      module_id: value.module_id,
+      module_name: value.module_name,
+      size: value.size as u32,
+      size_ratio: value.size_ratio,
+      package_name: value.package_name,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsChunkModuleStats {
+  pub total_modules: u32,
+  pub avg_module_size: u32,
+  pub median_module_size: u32,
+  pub largest_module_size: u32,
+  pub smallest_module_size: u32,
+}
+
+impl From<ChunkModuleStats> for JsChunkModuleStats {
+  fn from(value: ChunkModuleStats) -> Self {
+    Self {
+      total_modules: value.total_modules as u32,
+      avg_module_size: value.avg_module_size as u32,
+      median_module_size: value.median_module_size as u32,
+      largest_module_size: value.largest_module_size as u32,
+      smallest_module_size: value.smallest_module_size as u32,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsChunkModuleBreakdown {
+  pub chunk_id: String,
+  pub chunk_size: u32,
+  pub modules: Vec<JsModuleSizeInfo>,
+  pub top_modules: Vec<JsModuleSizeInfo>,
+  pub stats: JsChunkModuleStats,
+}
+
+impl From<ChunkModuleBreakdown> for JsChunkModuleBreakdown {
+  fn from(value: ChunkModuleBreakdown) -> Self {
+    Self {
+      chunk_id: value.chunk_id,
+      chunk_size: value.chunk_size as u32,
+      modules: value.modules.into_iter().map(|m| m.into()).collect(),
+      top_modules: value.top_modules.into_iter().map(|m| m.into()).collect(),
+      stats: value.stats.into(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
 pub struct JsBundleAnalyzerPluginResp {
   pub timestamp: u32,
   pub summary: JsSummary,
@@ -318,6 +384,7 @@ pub struct JsBundleAnalyzerPluginResp {
   pub packages: Vec<JsPackage>,
   pub duplicate_packages: Vec<JsDuplicatePackage>,
   pub chunk_overlap: JsChunkOverlapAnalysis,
+  pub chunk_module_breakdowns: Vec<JsChunkModuleBreakdown>,
 }
 
 impl From<Report> for JsBundleAnalyzerPluginResp {
@@ -331,6 +398,11 @@ impl From<Report> for JsBundleAnalyzerPluginResp {
       packages: value.packages.into_iter().map(|p| p.into()).collect(),
       duplicate_packages: value.duplicate_packages.into_iter().map(|d| d.into()).collect(),
       chunk_overlap: value.chunk_overlap.into(),
+      chunk_module_breakdowns: value
+        .chunk_module_breakdowns
+        .into_iter()
+        .map(|b| b.into())
+        .collect(),
     }
   }
 }

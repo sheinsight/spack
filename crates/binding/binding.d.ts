@@ -23,6 +23,7 @@ export interface JsBundleAnalyzerPluginResp {
   packages: Array<JsPackage>
   duplicatePackages: Array<JsDuplicatePackage>
   chunkOverlap: JsChunkOverlapAnalysis
+  chunkModuleBreakdowns: Array<JsChunkModuleBreakdown>
 }
 
 export interface JsChunk {
@@ -36,6 +37,22 @@ export interface JsChunk {
   runtime: boolean
   reason: string
   files: Array<string>
+}
+
+export interface JsChunkModuleBreakdown {
+  chunkId: string
+  chunkSize: number
+  modules: Array<JsModuleSizeInfo>
+  topModules: Array<JsModuleSizeInfo>
+  stats: JsChunkModuleStats
+}
+
+export interface JsChunkModuleStats {
+  totalModules: number
+  avgModuleSize: number
+  medianModuleSize: number
+  largestModuleSize: number
+  smallestModuleSize: number
 }
 
 export interface JsChunkOverlapAnalysis {
@@ -85,6 +102,14 @@ export interface JsModule {
   moduleType: string
   isNodeModule: boolean
   nameForCondition: string
+}
+
+export interface JsModuleSizeInfo {
+  moduleId: string
+  moduleName: string
+  size: number
+  sizeRatio: number
+  packageName?: string
 }
 
 export interface JsOverlappedModule {

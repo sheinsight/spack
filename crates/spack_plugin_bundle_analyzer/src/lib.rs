@@ -1,6 +1,7 @@
 #![feature(duration_millis_float)]
 mod asset;
 mod chunk;
+mod chunk_analysis;
 mod chunk_overlap;
 mod context;
 mod duplicate_packages;
@@ -24,6 +25,7 @@ use rspack_hook::{plugin, plugin_hook};
 pub use crate::{
   asset::Asset,
   chunk::Chunk,
+  chunk_analysis::{ChunkModuleBreakdown, ChunkModuleStats, ModuleSizeInfo},
   chunk_overlap::{
     ChunkOverlapAnalysis, ChunkPairOverlap, ChunkPairOverlaps, OverlappedModule, OverlappedModules,
   },
@@ -37,8 +39,12 @@ pub use crate::{
   summary::Summary,
 };
 use crate::{
-  asset::Assets, context::ModuleChunkContext, duplicate_packages::DuplicatePackages,
-  module::Modules, package::Packages,
+  asset::Assets,
+  chunk_analysis::ChunkModuleBreakdowns,
+  context::ModuleChunkContext,
+  duplicate_packages::DuplicatePackages,
+  module::Modules,
+  package::Packages,
 };
 
 #[plugin]
@@ -104,6 +110,11 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let chunk_overlap = ChunkOverlapAnalysis::from(&chunks[..], &modules[..]);
   let analyze_overlap_ms = overlap_start.elapsed().as_millis_f64();
 
+  // 8. 分析 Chunk 模块大小分解
+  let chunk_analysis_start = Instant::now();
+  let chunk_module_breakdowns = ChunkModuleBreakdowns::from(&chunks[..], &modules[..]);
+  let _analyze_chunk_modules_ms = chunk_analysis_start.elapsed().as_millis_f64();
+
   // 计算总耗时
   let total_ms = start_time.elapsed().as_millis_f64();
 
@@ -156,6 +167,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     packages: packages.into(),
     duplicate_packages: duplicate_packages.into(),
     chunk_overlap,
+    chunk_module_breakdowns: chunk_module_breakdowns.into(),
   };
 
   let dir = current_dir().unwrap();

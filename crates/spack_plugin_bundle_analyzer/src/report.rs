@@ -1,6 +1,7 @@
 use crate::{
   asset::Asset,
   chunk::Chunk,
+  chunk_analysis::ChunkModuleBreakdown,
   chunk_overlap::ChunkOverlapAnalysis,
   duplicate_packages::DuplicatePackage,
   module::Module,
@@ -27,4 +28,6 @@ pub struct Report {
   pub duplicate_packages: Vec<DuplicatePackage>,
   // Chunk 重叠度分析
   pub chunk_overlap: ChunkOverlapAnalysis,
+  // Chunk 模块大小分解分析
+  pub chunk_module_breakdowns: Vec<ChunkModuleBreakdown>,
 }
