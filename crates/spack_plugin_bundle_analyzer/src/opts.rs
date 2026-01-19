@@ -12,4 +12,7 @@ pub type CompilationHookFn =
 pub struct BundleAnalyzerPluginOpts {
   #[debug(skip)]
   pub on_analyzed: Option<CompilationHookFn>,
+  /// 是否计算 gzip 压缩后的大小（默认：false）
+  /// 注意：启用会增加构建时间
+  pub gzip_assets: Option<bool>,
 }

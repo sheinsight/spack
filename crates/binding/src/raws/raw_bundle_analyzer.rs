@@ -17,6 +17,8 @@ pub struct RawBundleAnalyzerPluginOpts {
   #[debug(skip)]
   #[threadsafe_callback]
   pub on_analyzed: Option<ThreadsafeFunction<JsBundleAnalyzerPluginResp, ()>>,
+  /// 是否计算 gzip 压缩后的大小（默认：false）
+  pub gzip_assets: Option<bool>,
 }
 
 // JavaScript 可用的数据结构

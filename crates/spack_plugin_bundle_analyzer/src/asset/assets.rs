@@ -12,6 +12,13 @@ pub struct Assets(Vec<Asset>);
 
 impl<'a> From<&'a mut Compilation> for Assets {
   fn from(compilation: &'a mut Compilation) -> Self {
+    Self::from_with_gzip(compilation, false)
+  }
+}
+
+impl Assets {
+  /// 从 Compilation 中收集 Assets，可选择是否计算 gzip 大小
+  pub fn from_with_gzip(compilation: &mut Compilation, enable_gzip: bool) -> Self {
     // 预先构建 asset -> chunks 映射，避免对每个 asset 都遍历所有 chunks
     let asset_to_chunks = build_asset_chunks_map(compilation);
 
@@ -28,9 +35,13 @@ impl<'a> From<&'a mut Compilation> for Assets {
     let assets = assets
       .par_iter()
       .map(|(name, size, buffer_opt)| {
-        let gzip_size = if let Some(buffer) = buffer_opt {
-          // 并行计算 gzip 压缩大小
-          calculate_gzip_size(buffer)
+        let gzip_size = if enable_gzip {
+          if let Some(buffer) = buffer_opt {
+            // 并行计算 gzip 压缩大小
+            calculate_gzip_size(buffer)
+          } else {
+            None
+          }
         } else {
           None
         };

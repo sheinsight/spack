@@ -135,6 +135,8 @@ export interface JsSummary {
 
 export interface RawBundleAnalyzerPluginOpts {
   onAnalyzed?: (response: JsBundleAnalyzerPluginResp) => void|Promise<void>
+  /** 是否计算 gzip 压缩后的大小（默认：false） */
+  gzipAssets?: boolean
 }
 
 export interface RawCaseSensitivePathsPluginOpts {

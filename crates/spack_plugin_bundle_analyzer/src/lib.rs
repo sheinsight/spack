@@ -75,7 +75,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   // 2. 收集 Assets（输出文件）
   let assets_start = Instant::now();
-  let assets = Assets::from(&mut *compilation);
+  let enable_gzip = self.options.gzip_assets.unwrap_or(false);
+  let assets = Assets::from_with_gzip(&mut *compilation, enable_gzip);
   let collect_assets_ms = assets_start.elapsed().as_millis_f64();
 
   // 3. 收集 Modules（源文件，使用预构建的映射）

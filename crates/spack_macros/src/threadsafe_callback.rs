@@ -52,7 +52,7 @@ pub fn expand_threadsafe_callback(input: DeriveInput) -> TokenStream {
     } else {
       // 普通字段直接复制
       field_conversions.push(quote! {
-        #field_name: value.#field_name
+        #field_name: self.#field_name
       });
     }
   }
