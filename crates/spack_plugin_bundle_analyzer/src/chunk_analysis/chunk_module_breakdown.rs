@@ -1,7 +1,5 @@
 use crate::{
-  Chunk, Module,
-  chunk_analysis::{ChunkModuleStats, ModuleSizeInfo},
-  package_version_resolver::PackageVersionResolver,
+  Chunk, Module, chunk_analysis::ModuleSizeInfo, package_version_resolver::PackageVersionResolver,
 };
 
 /// Chunk 模块大小分解分析
@@ -13,8 +11,6 @@ pub struct ChunkModuleBreakdown {
   pub chunk_size: u64,
   /// 所有模块信息（按大小降序）
   pub modules: Vec<ModuleSizeInfo>,
-  /// 统计信息
-  pub stats: ChunkModuleStats,
 }
 
 impl ChunkModuleBreakdown {
@@ -58,15 +54,10 @@ impl ChunkModuleBreakdown {
     // 3. 按大小降序排序
     modules_info.sort_by_key(|m| std::cmp::Reverse(m.size));
 
-    // 4. 计算统计信息
-    let sizes: Vec<u64> = modules_info.iter().map(|m| m.size).collect();
-    let stats = ChunkModuleStats::from_sizes(&sizes);
-
     Self {
       chunk_id: chunk.id.clone(),
       chunk_size: chunk.size,
       modules: modules_info,
-      stats,
     }
   }
 }

@@ -43,15 +43,6 @@ export interface JsChunkModuleBreakdown {
   chunkId: string
   chunkSize: number
   modules: Array<JsModuleSizeInfo>
-  stats: JsChunkModuleStats
-}
-
-export interface JsChunkModuleStats {
-  totalModules: number
-  avgModuleSize: number
-  medianModuleSize: number
-  largestModuleSize: number
-  smallestModuleSize: number
 }
 
 export interface JsChunkOverlapAnalysis {
