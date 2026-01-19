@@ -29,9 +29,7 @@ impl Modules {
       .modules()
       .into_iter()
       .map(|(id, module)| {
-        let name = module
-          .readable_identifier(&compilation.options.context)
-          .to_string();
+        let name = module.readable_identifier(&compilation.options.context);
 
         let name_for_condition = module
           .name_for_condition()
@@ -53,7 +51,7 @@ impl Modules {
 
         Module {
           id: id.to_string(),
-          name,
+          name: name.to_string(),
           name_for_condition,
           size: get_module_size(module.as_ref()),
           chunks,
