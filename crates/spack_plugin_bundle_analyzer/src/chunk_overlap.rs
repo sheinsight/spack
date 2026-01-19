@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use derive_more::derive::{Deref, Into};
 
@@ -201,18 +201,22 @@ impl ChunkOverlapAnalysis {
   ) -> Vec<ChunkPairOverlap> {
     let mut pairs = Vec::new();
 
+    // 预先将所有 chunk 的 modules 转换为 HashSet（性能优化）
+    let chunk_module_sets: Vec<HashSet<&String>> = chunks
+      .iter()
+      .map(|chunk| chunk.modules.iter().collect())
+      .collect();
+
     // 两两比较 chunks
     for i in 0..chunks.len() {
       for j in (i + 1)..chunks.len() {
         let chunk_a = &chunks[i];
         let chunk_b = &chunks[j];
 
-        // 找出共享的模块
-        let shared_modules: Vec<String> = chunk_a
-          .modules
-          .iter()
-          .filter(|m| chunk_b.modules.contains(m))
-          .cloned()
+        // 使用 HashSet intersection 找出共享的模块（O(m) 而非 O(m²)）
+        let shared_modules: Vec<String> = chunk_module_sets[i]
+          .intersection(&chunk_module_sets[j])
+          .map(|s| (*s).clone())
           .collect();
 
         if shared_modules.is_empty() {
