@@ -357,7 +357,6 @@ pub struct JsChunkModuleBreakdown {
   pub chunk_id: String,
   pub chunk_size: u32,
   pub modules: Vec<JsModuleSizeInfo>,
-  pub top_modules: Vec<JsModuleSizeInfo>,
   pub stats: JsChunkModuleStats,
 }
 
@@ -367,7 +366,6 @@ impl From<ChunkModuleBreakdown> for JsChunkModuleBreakdown {
       chunk_id: value.chunk_id,
       chunk_size: value.chunk_size as u32,
       modules: value.modules.into_iter().map(|m| m.into()).collect(),
-      top_modules: value.top_modules.into_iter().map(|m| m.into()).collect(),
       stats: value.stats.into(),
     }
   }

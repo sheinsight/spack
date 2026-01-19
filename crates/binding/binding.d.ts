@@ -43,7 +43,6 @@ export interface JsChunkModuleBreakdown {
   chunkId: string
   chunkSize: number
   modules: Array<JsModuleSizeInfo>
-  topModules: Array<JsModuleSizeInfo>
   stats: JsChunkModuleStats
 }
 

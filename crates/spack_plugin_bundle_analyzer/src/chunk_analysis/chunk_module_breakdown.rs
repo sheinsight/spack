@@ -1,4 +1,8 @@
-use crate::{Chunk, Module, chunk_analysis::{ChunkModuleStats, ModuleSizeInfo}, package_version_resolver::PackageVersionResolver};
+use crate::{
+  Chunk, Module,
+  chunk_analysis::{ChunkModuleStats, ModuleSizeInfo},
+  package_version_resolver::PackageVersionResolver,
+};
 
 /// Chunk 模块大小分解分析
 #[derive(Debug, Clone)]
@@ -9,8 +13,6 @@ pub struct ChunkModuleBreakdown {
   pub chunk_size: u64,
   /// 所有模块信息（按大小降序）
   pub modules: Vec<ModuleSizeInfo>,
-  /// Top N 大模块（默认 Top 10）
-  pub top_modules: Vec<ModuleSizeInfo>,
   /// 统计信息
   pub stats: ChunkModuleStats,
 }
@@ -18,11 +20,6 @@ pub struct ChunkModuleBreakdown {
 impl ChunkModuleBreakdown {
   /// 从 Chunk 和 Modules 构建分析
   pub fn from(chunk: &Chunk, modules: &[Module]) -> Self {
-    Self::from_with_top_n(chunk, modules, 10)
-  }
-
-  /// 从 Chunk 和 Modules 构建分析，指定 top N
-  pub fn from_with_top_n(chunk: &Chunk, modules: &[Module], top_n: usize) -> Self {
     let mut resolver = PackageVersionResolver::new();
 
     // 1. 找出这个 chunk 包含的所有模块
@@ -61,14 +58,7 @@ impl ChunkModuleBreakdown {
     // 3. 按大小降序排序
     modules_info.sort_by_key(|m| std::cmp::Reverse(m.size));
 
-    // 4. 获取 top N
-    let top_modules = modules_info
-      .iter()
-      .take(top_n)
-      .cloned()
-      .collect();
-
-    // 5. 计算统计信息
+    // 4. 计算统计信息
     let sizes: Vec<u64> = modules_info.iter().map(|m| m.size).collect();
     let stats = ChunkModuleStats::from_sizes(&sizes);
 
@@ -76,7 +66,6 @@ impl ChunkModuleBreakdown {
       chunk_id: chunk.id.clone(),
       chunk_size: chunk.size,
       modules: modules_info,
-      top_modules,
       stats,
     }
   }
