@@ -36,8 +36,8 @@ impl Modules {
           .unwrap_or_default()
           .into_string();
 
-        // 识别模块类型
-        let module_type = ModuleType::from_path(&name);
+        // 识别模块类型（使用 name_for_condition 而不是 name，避免 loader 信息干扰）
+        let module_type = ModuleType::from_path(&name_for_condition);
 
         // 判断是否来自 node_modules
         let is_node_module = name.contains("node_modules/");
