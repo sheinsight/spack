@@ -42,7 +42,8 @@ export interface JsChunk {
 export interface JsChunkModuleBreakdown {
   chunkId: string
   chunkSize: number
-  modules: Array<JsModuleSizeInfo>
+  source: JsSourceBreakdown
+  nodeModules: JsNodeModulesBreakdown
 }
 
 export interface JsChunkOverlapAnalysis {
@@ -98,8 +99,13 @@ export interface JsModuleSizeInfo {
   moduleId: string
   moduleName: string
   size: number
-  sizeRatio: number
-  packageName?: string
+  moduleType: string
+}
+
+export interface JsNodeModulesBreakdown {
+  totalSize: number
+  packageCount: number
+  packages: Array<JsPackageBreakdown>
 }
 
 export interface JsOverlappedModule {
@@ -121,6 +127,13 @@ export interface JsPackage {
   packageJsonPath: string
 }
 
+export interface JsPackageBreakdown {
+  packageName: string
+  totalSize: number
+  moduleCount: number
+  modules: Array<JsModuleSizeInfo>
+}
+
 export interface JsPackageVersion {
   version: string
   size: number
@@ -136,6 +149,12 @@ export interface JsPerformanceTimings {
   compressGzipMs: number
   analyzeOverlapMs: number
   totalMs: number
+}
+
+export interface JsSourceBreakdown {
+  totalSize: number
+  moduleCount: number
+  modules: Array<JsModuleSizeInfo>
 }
 
 export interface JsSummary {

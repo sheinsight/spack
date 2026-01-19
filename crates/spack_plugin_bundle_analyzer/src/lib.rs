@@ -25,7 +25,9 @@ use rspack_hook::{plugin, plugin_hook};
 pub use crate::{
   asset::Asset,
   chunk::Chunk,
-  chunk_analysis::{ChunkModuleBreakdown, ModuleSizeInfo},
+  chunk_analysis::{
+    ChunkModuleBreakdown, ModuleSizeInfo, NodeModulesBreakdown, PackageBreakdown, SourceBreakdown,
+  },
   chunk_overlap::{
     ChunkOverlapAnalysis, ChunkPairOverlap, ChunkPairOverlaps, OverlappedModule, OverlappedModules,
   },

@@ -7,7 +7,8 @@ use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
   Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ChunkModuleBreakdown,
   ChunkOverlapAnalysis, ChunkPairOverlap, DuplicatePackage, Module, ModuleSizeInfo,
-  OverlappedModule, Package, PackageVersion, PerformanceTimings, Report, Summary,
+  NodeModulesBreakdown, OverlappedModule, Package, PackageBreakdown, PackageVersion,
+  PerformanceTimings, Report, SourceBreakdown, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -313,8 +314,7 @@ pub struct JsModuleSizeInfo {
   pub module_id: String,
   pub module_name: String,
   pub size: u32,
-  pub size_ratio: f64,
-  pub package_name: Option<String>,
+  pub module_type: String,
 }
 
 impl From<ModuleSizeInfo> for JsModuleSizeInfo {
@@ -323,8 +323,63 @@ impl From<ModuleSizeInfo> for JsModuleSizeInfo {
       module_id: value.module_id,
       module_name: value.module_name,
       size: value.size as u32,
-      size_ratio: value.size_ratio,
+      module_type: value.module_type,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsSourceBreakdown {
+  pub total_size: u32,
+  pub module_count: u32,
+  pub modules: Vec<JsModuleSizeInfo>,
+}
+
+impl From<SourceBreakdown> for JsSourceBreakdown {
+  fn from(value: SourceBreakdown) -> Self {
+    Self {
+      total_size: value.total_size as u32,
+      module_count: value.module_count as u32,
+      modules: value.modules.into_iter().map(|m| m.into()).collect(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsPackageBreakdown {
+  pub package_name: String,
+  pub total_size: u32,
+  pub module_count: u32,
+  pub modules: Vec<JsModuleSizeInfo>,
+}
+
+impl From<PackageBreakdown> for JsPackageBreakdown {
+  fn from(value: PackageBreakdown) -> Self {
+    Self {
       package_name: value.package_name,
+      total_size: value.total_size as u32,
+      module_count: value.module_count as u32,
+      modules: value.modules.into_iter().map(|m| m.into()).collect(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsNodeModulesBreakdown {
+  pub total_size: u32,
+  pub package_count: u32,
+  pub packages: Vec<JsPackageBreakdown>,
+}
+
+impl From<NodeModulesBreakdown> for JsNodeModulesBreakdown {
+  fn from(value: NodeModulesBreakdown) -> Self {
+    Self {
+      total_size: value.total_size as u32,
+      package_count: value.package_count as u32,
+      packages: value.packages.into_iter().map(|p| p.into()).collect(),
     }
   }
 }
@@ -334,7 +389,8 @@ impl From<ModuleSizeInfo> for JsModuleSizeInfo {
 pub struct JsChunkModuleBreakdown {
   pub chunk_id: String,
   pub chunk_size: u32,
-  pub modules: Vec<JsModuleSizeInfo>,
+  pub source: JsSourceBreakdown,
+  pub node_modules: JsNodeModulesBreakdown,
 }
 
 impl From<ChunkModuleBreakdown> for JsChunkModuleBreakdown {
@@ -342,7 +398,8 @@ impl From<ChunkModuleBreakdown> for JsChunkModuleBreakdown {
     Self {
       chunk_id: value.chunk_id,
       chunk_size: value.chunk_size as u32,
-      modules: value.modules.into_iter().map(|m| m.into()).collect(),
+      source: value.source.into(),
+      node_modules: value.node_modules.into(),
     }
   }
 }
