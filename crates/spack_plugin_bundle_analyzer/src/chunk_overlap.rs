@@ -102,27 +102,19 @@ impl ChunkOverlapAnalysis {
     config: &ChunkOverlapConfig,
   ) -> Self {
     // 构建 module_id -> module 映射
-    let module_map: HashMap<String, &Module> = modules
-      .iter()
-      .map(|m| (m.id.clone(), m))
-      .collect();
+    let module_map: HashMap<String, &Module> = modules.iter().map(|m| (m.id.clone(), m)).collect();
 
     // 1. 找出重叠的模块
     let overlapped_modules = Self::find_overlapped_modules(modules, config);
 
     // 2. 分析 chunk 对之间的重叠
-    let chunk_pair_overlaps =
-      Self::analyze_chunk_pairs(chunks, &module_map, config);
+    let chunk_pair_overlaps = Self::analyze_chunk_pairs(chunks, &module_map, config);
 
     // 3. 计算总浪费空间
-    let total_wasted_size: u64 = overlapped_modules
-      .iter()
-      .map(|m| m.wasted_size)
-      .sum();
+    let total_wasted_size: u64 = overlapped_modules.iter().map(|m| m.wasted_size).sum();
 
     // 4. 生成优化建议
-    let recommendations =
-      Self::generate_recommendations(&overlapped_modules, &chunk_pair_overlaps);
+    let recommendations = Self::generate_recommendations(&overlapped_modules, &chunk_pair_overlaps);
 
     Self {
       overlapped_modules,
@@ -243,8 +235,7 @@ impl ChunkOverlapAnalysis {
         };
 
         // 检查重叠比例阈值
-        if overlap_ratio_a < config.min_overlap_ratio
-          && overlap_ratio_b < config.min_overlap_ratio
+        if overlap_ratio_a < config.min_overlap_ratio && overlap_ratio_b < config.min_overlap_ratio
         {
           continue;
         }

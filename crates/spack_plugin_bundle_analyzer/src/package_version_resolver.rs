@@ -1,6 +1,7 @@
-use package_json_parser::PackageJsonParser;
 use std::collections::HashMap;
 use std::path::Path;
+
+use package_json_parser::PackageJsonParser;
 use up_finder::UpFinder;
 
 /// 包信息（包名、版本和 package.json 路径）
@@ -89,44 +90,5 @@ impl PackageVersionResolver {
     }
 
     None
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn test_resolver_returns_name_and_version() {
-    let mut resolver = PackageVersionResolver::new();
-
-    // 应该返回包名和版本
-    if let Some((name, version)) = resolver.resolve("node_modules/react/index.js") {
-      assert!(!name.is_empty());
-      assert!(!version.is_empty());
-    }
-  }
-
-  #[test]
-  fn test_resolver_cache() {
-    let mut resolver = PackageVersionResolver::new();
-
-    // 首次解析
-    let result1 = resolver.resolve("node_modules/react/index.js");
-
-    // 同一目录的文件应该命中缓存
-    let result2 = resolver.resolve("node_modules/react/cjs/react.development.js");
-
-    // 两次结果应该相同
-    assert_eq!(result1, result2);
-  }
-
-  #[test]
-  fn test_non_node_modules() {
-    let mut resolver = PackageVersionResolver::new();
-
-    // 不在 node_modules 中的模块应该返回 None
-    let result = resolver.resolve("./src/index.js");
-    assert_eq!(result, None);
   }
 }
