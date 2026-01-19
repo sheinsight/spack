@@ -98,7 +98,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   // 7. 分析 Chunk 重叠度
   let overlap_start = Instant::now();
-  let chunk_overlap = chunk_overlap::ChunkOverlapAnalysis::from(&chunks[..], &modules[..]);
+  let chunk_overlap = ChunkOverlapAnalysis::from(&chunks[..], &modules[..]);
   let analyze_overlap_ms = overlap_start.elapsed().as_millis_f64();
 
   // 计算总耗时

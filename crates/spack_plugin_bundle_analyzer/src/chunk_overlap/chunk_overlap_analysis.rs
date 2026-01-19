@@ -1,44 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use derive_more::derive::{Deref, Into};
-
-use crate::{Chunk, Module, package_version_resolver::PackageVersionResolver};
-
-/// 重叠模块信息
-#[derive(Debug, Clone)]
-pub struct OverlappedModule {
-  /// 模块 ID
-  pub module_id: String,
-  /// 模块可读名称
-  pub module_name: String,
-  /// 模块大小（字节）
-  pub module_size: u64,
-  /// 包含此模块的 chunk IDs
-  pub chunks: Vec<String>,
-  /// 重复次数（chunks.len()）
-  pub duplication_count: usize,
-  /// 浪费的空间（size * (count - 1)）
-  pub wasted_size: u64,
-  /// 包名（如果是 node_modules 中的模块）
-  pub package_name: Option<String>,
-}
-
-/// Chunk 对之间的重叠信息
-#[derive(Debug, Clone)]
-pub struct ChunkPairOverlap {
-  /// Chunk A 的 ID
-  pub chunk_a: String,
-  /// Chunk B 的 ID
-  pub chunk_b: String,
-  /// 共享的模块 ID 列表
-  pub shared_modules: Vec<String>,
-  /// 共享部分的总大小（字节）
-  pub shared_size: u64,
-  /// 占 Chunk A 的比例
-  pub overlap_ratio_a: f64,
-  /// 占 Chunk B 的比例
-  pub overlap_ratio_b: f64,
-}
+use crate::{
+  Chunk, ChunkPairOverlap, Module, OverlappedModule, chunk_overlap::ChunkOverlapConfig,
+  package_version_resolver::PackageVersionResolver,
+};
 
 /// Chunk 重叠度分析报告
 #[derive(Debug)]
@@ -52,41 +17,6 @@ pub struct ChunkOverlapAnalysis {
   /// 优化建议
   pub recommendations: Vec<String>,
 }
-
-/// Chunk 重叠分析配置
-#[derive(Debug, Clone)]
-pub struct ChunkOverlapConfig {
-  /// 最小模块大小阈值（小于此不报告）
-  pub min_module_size: u64,
-  /// 最小重复次数（少于此不报告）
-  pub min_duplication_count: usize,
-  /// 最小浪费空间阈值（小于此不报告）
-  pub min_wasted_size: u64,
-  /// Chunk 对重叠比例阈值（低于此不报告）
-  pub min_overlap_ratio: f64,
-  /// 是否包含内部模块（非 node_modules）
-  pub include_internal_modules: bool,
-}
-
-impl Default for ChunkOverlapConfig {
-  fn default() -> Self {
-    Self {
-      // 1KB - 太小的模块不值得优化
-      min_module_size: 1024,
-      // 至少重复 2 次
-      min_duplication_count: 2,
-      // 浪费至少 10KB 才报告
-      min_wasted_size: 10 * 1024,
-      // chunk 对重叠至少 10%
-      min_overlap_ratio: 0.1,
-      // 包含内部模块
-      include_internal_modules: true,
-    }
-  }
-}
-
-#[derive(Debug, Deref, Into)]
-pub struct ChunkOverlapAnalyses(pub ChunkOverlapAnalysis);
 
 impl ChunkOverlapAnalysis {
   /// 分析 Chunk 重叠度
