@@ -1,7 +1,7 @@
 use derive_more::derive::{Deref, Into};
-use rspack_core::Compilation;
+use rspack_core::{ConcatenatedModule, Compilation};
 
-use crate::Module;
+use crate::{ConcatenatedModuleInfo, Module};
 use crate::context::ModuleChunkContext;
 use crate::module_type::ModuleType;
 
@@ -49,6 +49,22 @@ impl Modules {
           .cloned()
           .unwrap_or_default();
 
+        // 尝试 downcast 到 ConcatenatedModule 以获取合并模块信息
+        let concatenated_modules = module
+          .as_any()
+          .downcast_ref::<ConcatenatedModule>()
+          .map(|concat_mod| {
+            concat_mod
+              .get_modules()
+              .iter()
+              .map(|inner| ConcatenatedModuleInfo {
+                id: inner.id.to_string(),
+                name: inner.shorten_id.clone(),
+                size: inner.size as u64,
+              })
+              .collect()
+          });
+
         Module {
           id: id.to_string(),
           name: name.to_string(),
@@ -57,6 +73,7 @@ impl Modules {
           chunks,
           module_type,
           is_node_module,
+          concatenated_modules,
         }
       })
       .collect();

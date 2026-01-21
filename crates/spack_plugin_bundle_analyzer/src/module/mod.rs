@@ -1,4 +1,4 @@
 mod module;
 mod modules;
-pub use module::Module;
+pub use module::{ConcatenatedModuleInfo, Module};
 pub use modules::Modules;

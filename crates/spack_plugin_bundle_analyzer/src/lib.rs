@@ -33,7 +33,7 @@ pub use crate::{
   },
   duplicate_packages::DuplicatePackage,
   duplicate_packages::PackageVersion,
-  module::Module,
+  module::{ConcatenatedModuleInfo, Module},
   module_type::ModuleType,
   package::Package,
   performance_timings::PerformanceTimings,

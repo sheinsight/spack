@@ -39,6 +39,7 @@ impl ChunkModuleBreakdown {
         module_name: module.name.clone(),
         size: module.size,
         module_type: module.module_type.as_str().to_string(),
+        concatenated_modules: module.concatenated_modules.clone(),
       };
 
       if module.is_node_module {

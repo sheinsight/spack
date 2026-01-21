@@ -6,9 +6,9 @@ use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
   Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ChunkModuleBreakdown,
-  ChunkOverlapAnalysis, ChunkPairOverlap, DuplicatePackage, Module, ModuleSizeInfo,
-  NodeModulesBreakdown, OverlappedModule, Package, PackageBreakdown, PackageVersion,
-  PerformanceTimings, Report, SourceBreakdown, Summary,
+  ChunkOverlapAnalysis, ChunkPairOverlap, ConcatenatedModuleInfo, DuplicatePackage, Module,
+  ModuleSizeInfo, NodeModulesBreakdown, OverlappedModule, Package, PackageBreakdown,
+  PackageVersion, PerformanceTimings, Report, SourceBreakdown, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -310,11 +310,30 @@ impl From<ChunkOverlapAnalysis> for JsChunkOverlapAnalysis {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
+pub struct JsConcatenatedModuleInfo {
+  pub id: String,
+  pub name: String,
+  pub size: u32,
+}
+
+impl From<ConcatenatedModuleInfo> for JsConcatenatedModuleInfo {
+  fn from(value: ConcatenatedModuleInfo) -> Self {
+    Self {
+      id: value.id,
+      name: value.name,
+      size: value.size as u32,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
 pub struct JsModuleSizeInfo {
   pub module_id: String,
   pub module_name: String,
   pub size: u32,
   pub module_type: String,
+  pub concatenated_modules: Option<Vec<JsConcatenatedModuleInfo>>,
 }
 
 impl From<ModuleSizeInfo> for JsModuleSizeInfo {
@@ -324,6 +343,9 @@ impl From<ModuleSizeInfo> for JsModuleSizeInfo {
       module_name: value.module_name,
       size: value.size as u32,
       module_type: value.module_type,
+      concatenated_modules: value
+        .concatenated_modules
+        .map(|modules| modules.into_iter().map(|m| m.into()).collect()),
     }
   }
 }

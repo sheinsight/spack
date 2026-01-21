@@ -62,6 +62,12 @@ export interface JsChunkPairOverlap {
   overlapRatioB: number
 }
 
+export interface JsConcatenatedModuleInfo {
+  id: string
+  name: string
+  size: number
+}
+
 export interface JsDuplicateDependencyPluginResp {
   groups: Array<JsLibraryGroup>
   duration: number
@@ -100,6 +106,7 @@ export interface JsModuleSizeInfo {
   moduleName: string
   size: number
   moduleType: string
+  concatenatedModules?: Array<JsConcatenatedModuleInfo>
 }
 
 export interface JsNodeModulesBreakdown {
