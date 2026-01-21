@@ -80,10 +80,35 @@ pub enum AssetType {
 - **实现方式**: 集成 Brotli 压缩库（类似现有的 gzip）
 - **代码量**: 约 50-100 行（参考 gzip 实现）
 - **依赖**: 需添加 `brotli` crate
+- **配置选项**: 需要添加可选配置开关
 
 ```rust
-// 参考现有 gzip 实现
+// 1. 在 opts.rs 中添加配置字段
+pub struct BundleAnalyzerPluginOpts {
+  pub on_analyzed: Option<CompilationHookFn>,
+  pub gzip_assets: Option<bool>,
+  /// 是否计算 brotli 压缩后的大小（默认：false）
+  /// 注意：启用会增加构建时间，且比 gzip 慢 2-3 倍
+  pub brotli_assets: Option<bool>,
+}
+
+// 2. 在 NAPI bindings (raw_bundle_analyzer.rs) 中同步
+#[napi(object, object_to_js = false)]
+pub struct RawBundleAnalyzerPluginOpts {
+  pub on_analyzed: Option<ThreadsafeFunction<JsBundleAnalyzerPluginResp, ()>>,
+  /// 是否计算 gzip 压缩后的大小（默认：false）
+  pub gzip_assets: Option<bool>,
+  /// 是否计算 brotli 压缩后的大小（默认：false）
+  pub brotli_assets: Option<bool>,
+}
+
+// 3. 在 lib.rs 中使用配置
+let enable_brotli = self.options.brotli_assets.unwrap_or(false);
+let assets = Assets::from_with_compression(&mut *compilation, enable_gzip, enable_brotli);
+
+// 4. 参考 gzip 实现 brotli 压缩逻辑
 async fn calculate_brotli_size(content: &[u8]) -> Option<usize> {
+  use brotli::enc::BrotliEncoderParams;
   // Brotli 压缩实现
 }
 ```
@@ -102,7 +127,10 @@ async fn calculate_brotli_size(content: &[u8]) -> Option<usize> {
   - 但可以与 gzip 并行计算
   - 典型文件（100KB）: 约 50-150ms
 - **内存开销**: 与 gzip 相当（压缩过程需要临时缓冲区）
-- **建议**: 设为可选配置（默认关闭）
+- **配置要求**:
+  - 必须通过 `brotli_assets: true` 显式启用
+  - 默认值：`false`（不计算 brotli 大小）
+  - 建议仅在需要精确传输大小评估时启用
 
 ### 可实现功能列表
 
@@ -132,11 +160,46 @@ async fn calculate_brotli_size(content: &[u8]) -> Option<usize> {
 
 2. **brotli_size** (中优先级)
    - 适合对传输大小敏感的项目
-   - 仅在明确需要时启用
+   - 需要通过配置选项 `brotli_assets: true` 显式启用
+   - 默认值为 `false`，避免不必要的构建时间开销
+   - 仅在需要精确评估现代浏览器传输大小时启用
 
 ### 性能对比
 
-| 字段            | 采集开销          | 数据增长 | 传输影响 |
-| --------------- | ----------------- | -------- | -------- |
-| asset_type      | ~0ms              | < 0.1%   | 低       |
-| brotli_size     | 50-150ms/文件     | < 0.05%  | 低       |
+| 字段            | 采集开销          | 数据增长 | 传输影响 | 默认启用 |
+| --------------- | ----------------- | -------- | -------- | -------- |
+| asset_type      | ~0ms              | < 0.1%   | 低       | 待实现   |
+| brotli_size     | 50-150ms/文件     | < 0.05%  | 低       | ❌ false |
+
+### 配置示例
+
+```typescript
+// JavaScript/TypeScript 配置
+import { registerBundleAnalyzerPlugin } from '@shined/spack-binding';
+
+registerBundleAnalyzerPlugin();
+
+const config = {
+  plugins: [
+    {
+      name: 'BundleAnalyzerPlugin',
+      options: {
+        gzipAssets: true,     // 计算 gzip 大小
+        brotliAssets: true,   // 计算 brotli 大小（默认 false）
+        onAnalyzed: (report) => {
+          console.log('Assets with compression info:', report.assets);
+        }
+      }
+    }
+  ]
+};
+```
+
+```rust
+// Rust 配置（内部实现）
+let options = BundleAnalyzerPluginOpts {
+  on_analyzed: Some(callback),
+  gzip_assets: Some(true),
+  brotli_assets: Some(true), // 默认 false，需显式启用
+};
+```
