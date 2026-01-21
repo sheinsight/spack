@@ -78,8 +78,10 @@ impl Assets {
 fn build_asset_chunks_map(compilation: &Compilation) -> HashMap<String, Vec<String>> {
   let mut map: HashMap<String, Vec<String>> = HashMap::new();
 
-  for chunk in compilation.chunk_by_ukey.values() {
-    let chunk_id = chunk.id().map(|id| id.to_string()).unwrap_or_default();
+  for (ukey, chunk) in compilation.chunk_by_ukey.iter() {
+    // 使用 ukey 作为 chunk_id，与 chunks.rs 保持一致
+    // ukey 总是存在且唯一，而 chunk.id() 可能为 None
+    let chunk_id = ukey.as_u32().to_string();
 
     // 将 chunk_id 添加到所有关联的 asset 中
     for file in chunk.files() {
