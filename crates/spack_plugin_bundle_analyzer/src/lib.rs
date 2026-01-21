@@ -20,7 +20,7 @@ use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 
 pub use crate::{
-  asset::Asset,
+  asset::{Asset, AssetType},
   chunk::Chunk,
   module::{ConcatenatedModuleInfo, Module, ModuleKind},
   module_type::ModuleType,
@@ -66,7 +66,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 2. 收集 Assets（输出文件）
   let assets_start = Instant::now();
   let enable_gzip = self.options.gzip_assets.unwrap_or(false);
-  let assets = Assets::from_with_gzip(&mut *compilation, enable_gzip);
+  let enable_brotli = self.options.brotli_assets.unwrap_or(false);
+  let assets = Assets::from_with_compression(&mut *compilation, enable_gzip, enable_brotli);
   let collect_assets_ms = assets_start.elapsed().as_millis_f64();
 
   // 3. 收集 Modules（源文件，使用预构建的映射）

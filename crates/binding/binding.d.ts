@@ -10,8 +10,10 @@ export interface JsAsset {
   name: string
   size: number
   gzipSize?: number
+  brotliSize?: number
   chunks: Array<string>
   emitted: boolean
+  assetType: string
 }
 
 export interface JsBundleAnalyzerPluginResp {
@@ -101,6 +103,8 @@ export interface RawBundleAnalyzerPluginOpts {
   onAnalyzed?: (response: JsBundleAnalyzerPluginResp) => void|Promise<void>
   /** 是否计算 gzip 压缩后的大小（默认：false） */
   gzipAssets?: boolean
+  /** 是否计算 brotli 压缩后的大小（默认：false） */
+  brotliAssets?: boolean
 }
 
 export interface RawCaseSensitivePathsPluginOpts {

@@ -18,6 +18,8 @@ pub struct RawBundleAnalyzerPluginOpts {
   pub on_analyzed: Option<ThreadsafeFunction<JsBundleAnalyzerPluginResp, ()>>,
   /// 是否计算 gzip 压缩后的大小（默认：false）
   pub gzip_assets: Option<bool>,
+  /// 是否计算 brotli 压缩后的大小（默认：false）
+  pub brotli_assets: Option<bool>,
 }
 
 // JavaScript 可用的数据结构
@@ -28,8 +30,10 @@ pub struct JsAsset {
   pub name: String,
   pub size: u32,
   pub gzip_size: Option<u32>,
+  pub brotli_size: Option<u32>,
   pub chunks: Vec<String>,
   pub emitted: bool,
+  pub asset_type: String,
 }
 
 impl From<Asset> for JsAsset {
@@ -38,8 +42,10 @@ impl From<Asset> for JsAsset {
       name: value.name,
       size: value.size as u32,
       gzip_size: value.gzip_size.map(|s| s as u32),
+      brotli_size: value.brotli_size.map(|s| s as u32),
       chunks: value.chunks,
       emitted: value.emitted,
+      asset_type: value.asset_type.as_str().to_string(),
     }
   }
 }

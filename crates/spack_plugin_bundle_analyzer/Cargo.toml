@@ -39,6 +39,7 @@ tracing-subscriber = { workspace = true }
 serde      = { workspace = true }
 serde_json = { workspace = true }
 
+brotli    = { workspace = true }
 byte-unit = { workspace = true }
 flate2    = { workspace = true }
 rayon     = { workspace = true }

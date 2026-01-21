@@ -1,24 +1,29 @@
 use std::{collections::HashMap, io::Write as _};
 
+use brotli::enc::BrotliEncoderParams;
 use derive_more::derive::{Deref, Into};
 use flate2::{Compression, write::GzEncoder};
 use rayon::iter::{IntoParallelRefIterator as _, ParallelIterator as _};
 use rspack_core::Compilation;
 
-use crate::Asset;
+use crate::{Asset, AssetType};
 
 #[derive(Debug, Default, Deref, Into)]
 pub struct Assets(Vec<Asset>);
 
 impl<'a> From<&'a mut Compilation> for Assets {
   fn from(compilation: &'a mut Compilation) -> Self {
-    Self::from_with_gzip(compilation, false)
+    Self::from_with_compression(compilation, false, false)
   }
 }
 
 impl Assets {
-  /// 从 Compilation 中收集 Assets，可选择是否计算 gzip 大小
-  pub fn from_with_gzip(compilation: &mut Compilation, enable_gzip: bool) -> Self {
+  /// 从 Compilation 中收集 Assets，可选择是否计算 gzip 和 brotli 大小
+  pub fn from_with_compression(
+    compilation: &mut Compilation,
+    enable_gzip: bool,
+    enable_brotli: bool,
+  ) -> Self {
     // 预先构建 asset -> chunks 映射，避免对每个 asset 都遍历所有 chunks
     let asset_to_chunks = build_asset_chunks_map(compilation);
 
@@ -36,12 +41,13 @@ impl Assets {
       .par_iter()
       .map(|(name, size, buffer_opt)| {
         let gzip_size = if enable_gzip {
-          if let Some(buffer) = buffer_opt {
-            // 并行计算 gzip 压缩大小
-            calculate_gzip_size(buffer)
-          } else {
-            None
-          }
+          buffer_opt.as_ref().and_then(|buffer| calculate_gzip_size(buffer))
+        } else {
+          None
+        };
+
+        let brotli_size = if enable_brotli {
+          buffer_opt.as_ref().and_then(|buffer| calculate_brotli_size(buffer))
         } else {
           None
         };
@@ -56,8 +62,10 @@ impl Assets {
           name: name.clone(),
           size: *size,
           gzip_size,
+          brotli_size,
           chunks,
           emitted: true,
+          asset_type: AssetType::from_filename(name),
         }
       })
       .collect();
@@ -108,6 +116,33 @@ fn calculate_gzip_size(data: &[u8]) -> Option<usize> {
     Ok(compressed) => Some(compressed.len()),
     Err(e) => {
       tracing::error!("{}", e);
+      None
+    }
+  }
+}
+
+/// 计算 brotli 压缩后的大小
+///
+/// 参数:
+/// - data: 原始数据字节
+///
+/// 返回: 压缩后的字节数,如果压缩失败返回 None
+///
+/// 注意: 使用快速压缩质量(1)以提升性能,因为我们只需要大小估算值
+fn calculate_brotli_size(data: &[u8]) -> Option<usize> {
+  let mut output = Vec::new();
+
+  // 使用压缩质量 1(最快),而非默认的质量 11
+  // Brotli 的质量范围是 0-11,1 提供快速压缩但压缩率稍低
+  let params = BrotliEncoderParams {
+    quality: 1,
+    ..Default::default()
+  };
+
+  match brotli::BrotliCompress(&mut &data[..], &mut output, &params) {
+    Ok(_) => Some(output.len()),
+    Err(e) => {
+      tracing::error!("Brotli compression failed: {}", e);
       None
     }
   }
