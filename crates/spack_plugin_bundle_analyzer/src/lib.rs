@@ -1,8 +1,6 @@
 #![feature(duration_millis_float)]
 mod asset;
 mod chunk;
-mod chunk_analysis;
-mod chunk_overlap;
 mod context;
 mod duplicate_packages;
 mod module;
