@@ -97,19 +97,24 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let chunks = chunk::Chunks::from_with_context(&mut *compilation, &module_chunk_context);
   let collect_chunks_ms = chunks_start.elapsed().as_millis_f64();
 
-  // 5. 分析 Packages（按包名聚合）
+  // 5. 创建包版本解析器（在多个分析阶段复用，避免重复创建和缓存失效）
+  let mut resolver = package_version_resolver::PackageVersionResolver::new();
+
+  // 6. 分析 Packages（按包名聚合，复用 resolver）
   let packages_start = Instant::now();
-  let packages = Packages::from(&modules);
+  let packages = Packages::from_with_resolver(&modules, &mut resolver);
   let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
 
-  // 6. 检测重复包
+  // 7. 检测重复包
   let duplicates_start = Instant::now();
   let duplicate_packages = DuplicatePackages::from(&packages[..]);
   let _detect_duplicates_ms = duplicates_start.elapsed().as_millis_f64();
 
-  // 7. 分析 Chunk 重叠度
+  // 8. 分析 Chunk 重叠度（复用 resolver）
   let overlap_start = Instant::now();
-  let chunk_overlap = ChunkOverlapAnalysis::from(&chunks[..], &modules[..]);
+  let overlap_config = chunk_overlap::ChunkOverlapConfig::default();
+  let chunk_overlap =
+    ChunkOverlapAnalysis::from_with_resolver(&chunks[..], &modules[..], &overlap_config, &mut resolver);
   let analyze_overlap_ms = overlap_start.elapsed().as_millis_f64();
 
   // 8. 分析 Chunk 模块大小分解

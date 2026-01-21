@@ -31,8 +31,25 @@ impl ChunkOverlapAnalysis {
     modules: &[Module],
     config: &ChunkOverlapConfig,
   ) -> Self {
+    let mut resolver = crate::package_version_resolver::PackageVersionResolver::new();
+    Self::from_with_resolver(chunks, modules, config, &mut resolver)
+  }
+
+  /// 使用自定义配置和 resolver 分析 Chunk 重叠度（推荐）
+  ///
+  /// 参数:
+  /// - chunks: chunk 列表
+  /// - modules: 模块列表
+  /// - config: 重叠度分析配置
+  /// - resolver: 可复用的包版本解析器（避免重复创建和缓存失效）
+  pub fn from_with_resolver(
+    chunks: &[Chunk],
+    modules: &[Module],
+    config: &ChunkOverlapConfig,
+    resolver: &mut crate::package_version_resolver::PackageVersionResolver,
+  ) -> Self {
     // 1. 找出重叠的模块
-    let overlapped_modules = OverlappedModules::from_with_config(modules, config);
+    let overlapped_modules = OverlappedModules::from_with_config(modules, config, resolver);
 
     // 2. 分析 chunk 对之间的重叠
     let chunk_pair_overlaps = ChunkPairOverlaps::from_with_config(chunks, modules, config);

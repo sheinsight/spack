@@ -35,7 +35,7 @@ impl<'a> From<&'a Compilation> for ModuleChunkContext {
           // 构建 module → chunks 反向映射
           module_to_chunks
             .entry(module_id)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(chunk_id.clone());
 
           let module_size = m.size(None, None) as u64;

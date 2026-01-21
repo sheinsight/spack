@@ -77,7 +77,7 @@ fn build_asset_chunks_map(compilation: &Compilation) -> HashMap<String, Vec<Stri
     for file in chunk.files() {
       map
         .entry(file.to_string())
-        .or_insert_with(Vec::new)
+        .or_default()
         .push(chunk_id.clone());
     }
   }

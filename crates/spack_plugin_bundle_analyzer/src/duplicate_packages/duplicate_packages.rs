@@ -24,7 +24,7 @@ fn detect_duplicates(packages: &[Package]) -> Vec<DuplicatePackage> {
   for package in packages {
     grouped
       .entry(package.name.clone())
-      .or_insert_with(Vec::new)
+      .or_default()
       .push(package);
   }
 

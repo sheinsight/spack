@@ -9,13 +9,22 @@ impl OverlappedModules {
   /// 从模块列表中找出重叠的模块
   pub fn from(modules: &[Module]) -> Self {
     let config = ChunkOverlapConfig::default();
-    Self::from_with_config(modules, &config)
+    let mut resolver = PackageVersionResolver::new();
+    Self::from_with_config(modules, &config, &mut resolver)
   }
 
   /// 使用自定义配置找出重叠的模块
-  pub fn from_with_config(modules: &[Module], config: &ChunkOverlapConfig) -> Self {
+  ///
+  /// 参数:
+  /// - modules: 模块列表
+  /// - config: 重叠度分析配置
+  /// - resolver: 可复用的包版本解析器（避免重复创建和缓存失效）
+  pub fn from_with_config(
+    modules: &[Module],
+    config: &ChunkOverlapConfig,
+    resolver: &mut PackageVersionResolver,
+  ) -> Self {
     let mut overlapped = Vec::new();
-    let mut resolver = PackageVersionResolver::new();
 
     for module in modules {
       // 至少在 2 个 chunk 中

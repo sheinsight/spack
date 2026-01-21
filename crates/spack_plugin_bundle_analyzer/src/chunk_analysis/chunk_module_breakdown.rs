@@ -47,7 +47,7 @@ impl ChunkModuleBreakdown {
         if let Some(package_info) = resolver.resolve(&module.name_for_condition) {
           node_modules_map
             .entry(package_info.name.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(module_info);
         }
       } else {
