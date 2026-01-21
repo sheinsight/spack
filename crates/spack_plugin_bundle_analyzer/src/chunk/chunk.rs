@@ -20,4 +20,8 @@ pub struct Chunk {
   pub async_chunks: bool,
   // 是否包含运行时代码
   pub runtime: bool,
+  // 父 chunk ID 列表（哪些 chunk 引用了当前 chunk）
+  pub parents: Vec<String>,
+  // 子 chunk ID 列表（当前 chunk 引用了哪些 chunk）
+  pub children: Vec<String>,
 }

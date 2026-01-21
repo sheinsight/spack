@@ -36,6 +36,8 @@ export interface JsChunk {
   runtime: boolean
   reason: string
   files: Array<string>
+  parents: Array<string>
+  children: Array<string>
 }
 
 export interface JsConcatenatedModuleInfo {

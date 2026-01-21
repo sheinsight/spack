@@ -105,6 +105,10 @@ pub struct JsChunk {
   pub reason: String,
   // chunk 生成的输出文件列表
   pub files: Vec<String>,
+  // 父 chunk ID 列表（哪些 chunk 引用了当前 chunk）
+  pub parents: Vec<String>,
+  // 子 chunk ID 列表（当前 chunk 引用了哪些 chunk）
+  pub children: Vec<String>,
 }
 
 impl From<Chunk> for JsChunk {
@@ -120,6 +124,8 @@ impl From<Chunk> for JsChunk {
       files: value.files,
       async_chunks: value.async_chunks,
       runtime: value.runtime,
+      parents: value.parents,
+      children: value.children,
     }
   }
 }
