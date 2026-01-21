@@ -72,6 +72,11 @@ export interface JsModule {
   isNodeModule: boolean
   nameForCondition: string
   concatenatedModules?: Array<JsConcatenatedModuleInfo>
+  /**
+   * 关联的 Package 的 package.json 路径（唯一标识）
+   * 仅三方包模块有值，用于精确匹配对应的 Package
+   */
+  packageJsonPath?: string
 }
 
 export interface JsPackage {

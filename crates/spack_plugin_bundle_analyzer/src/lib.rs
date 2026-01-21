@@ -19,6 +19,7 @@ pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
 use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 
+use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package::Packages};
 pub use crate::{
   asset::{Asset, AssetType},
   chunk::Chunk,
@@ -29,7 +30,6 @@ pub use crate::{
   report::Report,
   summary::Summary,
 };
-use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package::Packages};
 
 #[plugin]
 #[derive(Debug)]
@@ -72,7 +72,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   // 3. 收集 Modules（源文件，使用预构建的映射）
   let modules_start = Instant::now();
-  let modules = Modules::from_with_context(&mut *compilation, &module_chunk_context);
+  let mut modules = Modules::from_with_context(&mut *compilation, &module_chunk_context);
   let collect_modules_ms = modules_start.elapsed().as_millis_f64();
 
   // 4. 收集 Chunks（代码块，使用预构建的映射）
@@ -87,6 +87,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let packages_start = Instant::now();
   let packages = Packages::from_with_resolver(&modules, &mut resolver);
   let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
+
+  // 7. 关联 Module 和 Package（填充 package_json_path）
+  modules.associate_packages(&packages);
 
   // 计算总耗时
   let total_ms = start_time.elapsed().as_millis_f64();

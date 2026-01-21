@@ -62,6 +62,9 @@ pub struct JsModule {
   pub is_node_module: bool,
   pub name_for_condition: String,
   pub concatenated_modules: Option<Vec<JsConcatenatedModuleInfo>>,
+  /// 关联的 Package 的 package.json 路径（唯一标识）
+  /// 仅三方包模块有值，用于精确匹配对应的 Package
+  pub package_json_path: Option<String>,
 }
 
 impl From<Module> for JsModule {
@@ -78,6 +81,7 @@ impl From<Module> for JsModule {
       concatenated_modules: value
         .concatenated_modules
         .map(|modules| modules.into_iter().map(|m| m.into()).collect()),
+      package_json_path: value.package_json_path,
     }
   }
 }

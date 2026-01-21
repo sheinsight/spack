@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use derive_more::derive::{Deref, Into};
 use rspack_core::{
   ConcatenatedModule, Compilation, ContextModule, ExternalModule, NormalModule, RawModule,
@@ -7,6 +9,7 @@ use rspack_core::{
 use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
 use crate::context::ModuleChunkContext;
 use crate::module_type::ModuleType;
+use crate::package::Packages;
 
 #[derive(Debug, Deref, Into)]
 pub struct Modules(pub Vec<Module>);
@@ -81,10 +84,36 @@ impl Modules {
           module_type,
           is_node_module,
           concatenated_modules,
+          package_json_path: None, // 初始为 None，后续通过 associate_packages 关联
         }
       })
       .collect();
     Modules(modules)
+  }
+
+  /// 将 Modules 与 Packages 关联
+  ///
+  /// 通过 Package.modules 建立 module_id → package 的映射，
+  /// 为每个来自三方包的 Module 填充 package_json_path 字段
+  ///
+  /// 参数:
+  /// - packages: 已分析的 Packages
+  pub fn associate_packages(&mut self, packages: &Packages) {
+    // 构建 module_id → package 映射（O(n)）
+    let mut module_package_map: HashMap<String, &crate::Package> = HashMap::new();
+
+    for package in packages.iter() {
+      for module_id in &package.modules {
+        module_package_map.insert(module_id.clone(), package);
+      }
+    }
+
+    // 为每个 Module 填充 package_json_path（O(m)）
+    for module in &mut self.0 {
+      if let Some(package) = module_package_map.get(&module.id) {
+        module.package_json_path = Some(package.package_json_path.clone());
+      }
+    }
   }
 }
 

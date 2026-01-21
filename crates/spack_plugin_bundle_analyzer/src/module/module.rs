@@ -31,4 +31,7 @@ pub struct Module {
   pub name_for_condition: String,
   // 合并的模块列表（如果这是一个 ConcatenatedModule）
   pub concatenated_modules: Option<Vec<ConcatenatedModuleInfo>>,
+  // 关联的 Package 的 package.json 路径（唯一标识）
+  // 仅三方包模块有值，用于精确匹配对应的 Package
+  pub package_json_path: Option<String>,
 }
