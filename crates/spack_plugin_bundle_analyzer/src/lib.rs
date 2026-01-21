@@ -2,7 +2,6 @@
 mod asset;
 mod chunk;
 mod context;
-mod duplicate_packages;
 mod module;
 mod module_type;
 mod opts;
@@ -23,8 +22,6 @@ use rspack_hook::{plugin, plugin_hook};
 pub use crate::{
   asset::Asset,
   chunk::Chunk,
-  duplicate_packages::DuplicatePackage,
-  duplicate_packages::PackageVersion,
   module::{ConcatenatedModuleInfo, Module, ModuleKind},
   module_type::ModuleType,
   package::Package,
@@ -32,10 +29,7 @@ pub use crate::{
   report::Report,
   summary::Summary,
 };
-use crate::{
-  asset::Assets, context::ModuleChunkContext, duplicate_packages::DuplicatePackages,
-  module::Modules, package::Packages,
-};
+use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package::Packages};
 
 #[plugin]
 #[derive(Debug)]
@@ -93,11 +87,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let packages = Packages::from_with_resolver(&modules, &mut resolver);
   let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
 
-  // 7. 检测重复包
-  let duplicates_start = Instant::now();
-  let duplicate_packages = DuplicatePackages::from(&packages[..]);
-  let _detect_duplicates_ms = duplicates_start.elapsed().as_millis_f64();
-
   // 计算总耗时
   let total_ms = start_time.elapsed().as_millis_f64();
 
@@ -142,7 +131,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     modules: modules.into(),
     chunks: chunks.into(),
     packages: packages.into(),
-    duplicate_packages: duplicate_packages.into(),
   };
 
   let dir = current_dir().unwrap();

@@ -5,8 +5,8 @@ use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
-  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ConcatenatedModuleInfo,
-  DuplicatePackage, Module, Package, PackageVersion, PerformanceTimings, Report, Summary,
+  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ConcatenatedModuleInfo, Module,
+  Package, PerformanceTimings, Report, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -144,46 +144,6 @@ impl From<Package> for JsPackage {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsPackageVersion {
-  pub version: String,
-  pub size: u32,
-  pub module_count: u32,
-  pub package_json_path: String,
-}
-
-impl From<PackageVersion> for JsPackageVersion {
-  fn from(value: PackageVersion) -> Self {
-    Self {
-      version: value.version,
-      size: value.size as u32,
-      module_count: value.module_count as u32,
-      package_json_path: value.package_json_path,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsDuplicatePackage {
-  pub name: String,
-  pub versions: Vec<JsPackageVersion>,
-  pub total_size: u32,
-  pub wasted_size: u32,
-}
-
-impl From<DuplicatePackage> for JsDuplicatePackage {
-  fn from(value: DuplicatePackage) -> Self {
-    Self {
-      name: value.name,
-      versions: value.versions.into_iter().map(|v| v.into()).collect(),
-      total_size: value.total_size as u32,
-      wasted_size: value.wasted_size as u32,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
 pub struct JsPerformanceTimings {
   pub collect_assets_ms: f64,
   pub collect_modules_ms: f64,
@@ -257,7 +217,6 @@ pub struct JsBundleAnalyzerPluginResp {
   pub modules: Vec<JsModule>,
   pub chunks: Vec<JsChunk>,
   pub packages: Vec<JsPackage>,
-  pub duplicate_packages: Vec<JsDuplicatePackage>,
 }
 
 impl From<Report> for JsBundleAnalyzerPluginResp {
@@ -269,11 +228,6 @@ impl From<Report> for JsBundleAnalyzerPluginResp {
       modules: value.modules.into_iter().map(|m| m.into()).collect(),
       chunks: value.chunks.into_iter().map(|c| c.into()).collect(),
       packages: value.packages.into_iter().map(|p| p.into()).collect(),
-      duplicate_packages: value
-        .duplicate_packages
-        .into_iter()
-        .map(|d| d.into())
-        .collect(),
     }
   }
 }
