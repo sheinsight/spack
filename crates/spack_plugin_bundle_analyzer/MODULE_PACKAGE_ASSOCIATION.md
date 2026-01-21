@@ -113,17 +113,34 @@ pub struct Module {
 ```rust
 pub struct Module {
   // ... 现有字段
-  pub package_id: Option<String>,  // 引用 Package.name
+  pub package_id: Option<String>,  // 引用 Package.package_json_path（唯一标识）
 }
 ```
 
+**说明**：
+- `package_id` 实际存储的是 `package_json_path` 的值
+- 因为只有 `package_json_path` 才能唯一标识一个 Package
+- 例如：`"/path/to/node_modules/react/package.json"`
+
 **优点**：
-- ✅ 数据冗余最小
+- ✅ 数据冗余最小（只存一个路径字符串）
 - ✅ 类似数据库外键设计
+- ✅ 精确唯一匹配
 
 **缺点**：
-- ❌ 前端仍需要根据 package_id 查找 Package
-- ❌ 相比方案 A 并没有简化太多
+- ❌ 前端每次显示都需要查找 Package
+- ❌ 无法直接显示包名和版本
+- ❌ 相比方案 A 前端代码更复杂
+
+**前端使用对比**：
+```typescript
+// 方案 B：需要查找
+const pkg = packages.find(p => p.package_json_path === module.package_id);
+const displayText = pkg ? `${pkg.name}@${pkg.version}` : 'Unknown';
+
+// 方案 A：直接使用
+const displayText = `${module.package_name}@${module.package_version}`;
+```
 
 ---
 
