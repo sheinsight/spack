@@ -25,7 +25,7 @@
   继续展开显示内部的 concatenated_modules
 ```
 
-### 数据结构
+### 数据结构概览
 
 ```typescript
 // 单个 Chunk 的树形视图
@@ -37,6 +37,449 @@ interface ChunkTreeView {
 interface ModuleTreeNode {
   module: Module;
   children?: ModuleTreeNode[];  // 仅 Concatenated Module 有子节点
+}
+```
+
+---
+
+## 完整数据结构定义
+
+### TypeScript 接口定义
+
+```typescript
+// ============================================
+// 基础数据结构
+// ============================================
+
+/**
+ * 输出文件
+ */
+interface Asset {
+  // 文件名
+  name: string;
+  // 文件大小（字节）
+  size: number;
+  // gzip 压缩后的大小（可选）
+  gzip_size?: number;
+  // brotli 压缩后的大小（可选）
+  brotli_size?: number;
+  // 关联的 chunk IDs
+  chunks: string[];
+  // 是否已生成到磁盘
+  emitted: boolean;
+  // 文件类型
+  asset_type: AssetType;
+}
+
+/**
+ * 资源类型枚举
+ */
+type AssetType =
+  | 'JavaScript'
+  | 'CSS'
+  | 'HTML'
+  | 'Image'
+  | 'Font'
+  | 'Video'
+  | 'Audio'
+  | 'Other';
+
+/**
+ * 代码块
+ */
+interface Chunk {
+  // chunk ID
+  id: string;
+  // chunk 名称列表
+  names: string[];
+  // chunk 总大小（字节）
+  size: number;
+  // 包含的模块 ID 列表
+  modules: string[];
+  // 是否入口 chunk
+  entry: boolean;
+  // 是否初始 chunk
+  initial: boolean;
+  // 是否包含异步 chunk
+  async_chunks: boolean;
+  // 是否包含运行时代码
+  runtime: boolean;
+  // chunk 创建原因
+  reason: string;
+  // chunk 生成的输出文件列表
+  files: string[];
+  // 父 chunk ID 列表
+  parents: string[];
+  // 子 chunk ID 列表
+  children: string[];
+}
+
+/**
+ * 模块
+ */
+interface Module {
+  // 模块唯一 ID
+  id: string;
+  // 可读名称，如 "./src/index.js"
+  name: string;
+  // 模块大小（字节）
+  size: number;
+  // 包含此模块的 chunk IDs
+  chunks: string[];
+  // 模块种类
+  module_kind: ModuleKind;
+  // 模块文件类型
+  module_type: ModuleType;
+  // 是否来自 node_modules
+  is_node_module: boolean;
+  // 模块条件名称（用于模块解析）
+  name_for_condition: string;
+  // 合并的模块列表（如果是 ConcatenatedModule）
+  concatenated_modules?: ConcatenatedModuleInfo[];
+}
+
+/**
+ * 模块种类枚举
+ */
+type ModuleKind =
+  | 'Normal'        // 普通模块
+  | 'Concatenated'  // 合并模块（Scope Hoisting）
+  | 'External'      // 外部模块
+  | 'Context'       // 上下文模块（require.context）
+  | 'Raw'           // 原始模块
+  | 'SelfRef';      // 自引用模块
+
+/**
+ * 模块类型枚举
+ */
+type ModuleType =
+  | 'JavaScript'
+  | 'TypeScript'
+  | 'JSX'
+  | 'TSX'
+  | 'CSS'
+  | 'SCSS'
+  | 'LESS'
+  | 'JSON'
+  | 'WebAssembly'
+  | 'Asset'
+  | 'Unknown';
+
+/**
+ * 合并模块中的单个内部模块信息
+ */
+interface ConcatenatedModuleInfo {
+  // 模块 ID
+  id: string;
+  // 模块名称
+  name: string;
+  // 模块大小（字节）
+  size: number;
+}
+
+/**
+ * npm 包
+ */
+interface Package {
+  // 包名，如 "react" 或 "@babel/core"
+  name: string;
+  // 版本号
+  version: string;
+  // 该包的总大小（字节）
+  size: number;
+  // 包含的模块数量
+  module_count: number;
+  // 该包包含的所有模块 ID 列表
+  modules: string[];
+  // package.json 文件路径
+  package_json_path: string;
+}
+
+// ============================================
+// 树视图专用数据结构
+// ============================================
+
+/**
+ * 单个 Chunk 的树形视图
+ */
+interface ChunkTreeView {
+  // Chunk 信息
+  chunk: Chunk;
+  // 模块树节点列表
+  children: ModuleTreeNode[];
+}
+
+/**
+ * 模块树节点
+ */
+interface ModuleTreeNode {
+  // 模块信息
+  module: Module;
+  // 子节点（仅 Concatenated Module 有）
+  children?: ModuleTreeNode[];
+}
+
+// ============================================
+// 列表视图专用数据结构
+// ============================================
+
+/**
+ * Chunk 列表项（用于首页展示）
+ */
+interface ChunkListItem {
+  // Chunk ID
+  id: string;
+  // Chunk 名称列表
+  names: string[];
+  // 总大小（字节）
+  size: number;
+  // 包含的模块数量
+  module_count: number;
+  // 关联的输出文件
+  output_files: OutputFile[];
+  // 标签
+  badges: ChunkBadge[];
+}
+
+/**
+ * 输出文件简要信息
+ */
+interface OutputFile {
+  // 文件名
+  name: string;
+  // 文件大小（字节）
+  size: number;
+  // 文件类型
+  type: AssetType;
+}
+
+/**
+ * Chunk 标签
+ */
+type ChunkBadge =
+  | 'Entry'
+  | 'Initial'
+  | 'Async'
+  | 'Runtime';
+
+// ============================================
+// 统计信息
+// ============================================
+
+/**
+ * 性能计时信息
+ */
+interface PerformanceTimings {
+  // 收集 Assets 耗时（毫秒）
+  collect_assets_ms: number;
+  // 收集 Modules 耗时（毫秒）
+  collect_modules_ms: number;
+  // 收集 Chunks 耗时（毫秒）
+  collect_chunks_ms: number;
+  // 分析 Packages 耗时（毫秒）
+  analyze_packages_ms: number;
+  // 总耗时（毫秒）
+  total_ms: number;
+}
+
+/**
+ * 汇总信息
+ */
+interface Summary {
+  // 总大小（字节）
+  total_size: number;
+  // gzip 压缩后总大小（字节）
+  total_gzip_size: number;
+  // Assets 总数
+  total_assets: number;
+  // Modules 总数
+  total_modules: number;
+  // Chunks 总数
+  total_chunks: number;
+  // 构建耗时（毫秒）
+  build_time: number;
+  // 性能计时详情
+  timings: PerformanceTimings;
+}
+
+/**
+ * 完整报告
+ */
+interface Report {
+  // 时间戳（Unix 毫秒）
+  timestamp: number;
+  // 汇总信息
+  summary: Summary;
+  // 所有 Assets
+  assets: Asset[];
+  // 所有 Modules
+  modules: Module[];
+  // 所有 Chunks
+  chunks: Chunk[];
+  // 所有 Packages
+  packages: Package[];
+}
+```
+
+### Rust Struct 定义
+
+```rust
+use napi_derive::napi;
+
+// ============================================
+// 基础数据结构
+// ============================================
+
+/// 输出文件
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsAsset {
+  pub name: String,
+  pub size: u32,
+  pub gzip_size: Option<u32>,
+  pub brotli_size: Option<u32>,
+  pub chunks: Vec<String>,
+  pub emitted: bool,
+  pub asset_type: String,
+}
+
+/// 代码块
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsChunk {
+  pub id: String,
+  pub names: Vec<String>,
+  pub size: u32,
+  pub modules: Vec<String>,
+  pub entry: bool,
+  pub initial: bool,
+  pub async_chunks: bool,
+  pub runtime: bool,
+  pub reason: String,
+  pub files: Vec<String>,
+  pub parents: Vec<String>,
+  pub children: Vec<String>,
+}
+
+/// 模块
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsModule {
+  pub id: String,
+  pub name: String,
+  pub size: u32,
+  pub chunks: Vec<String>,
+  pub module_kind: String,
+  pub module_type: String,
+  pub is_node_module: bool,
+  pub name_for_condition: String,
+  pub concatenated_modules: Option<Vec<JsConcatenatedModuleInfo>>,
+}
+
+/// 合并模块中的单个内部模块信息
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsConcatenatedModuleInfo {
+  pub id: String,
+  pub name: String,
+  pub size: u32,
+}
+
+/// npm 包
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsPackage {
+  pub name: String,
+  pub version: String,
+  pub size: u32,
+  pub module_count: u32,
+  pub modules: Vec<String>,
+  pub package_json_path: String,
+}
+
+// ============================================
+// 树视图专用数据结构
+// ============================================
+
+/// 单个 Chunk 的树形视图
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsChunkTreeView {
+  pub chunk: JsChunk,
+  pub children: Vec<JsModuleTreeNode>,
+}
+
+/// 模块树节点
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsModuleTreeNode {
+  pub module: JsModule,
+  pub children: Option<Vec<JsModuleTreeNode>>,
+}
+
+// ============================================
+// 列表视图专用数据结构
+// ============================================
+
+/// Chunk 列表项（用于首页展示）
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsChunkListItem {
+  pub id: String,
+  pub names: Vec<String>,
+  pub size: u32,
+  pub module_count: u32,
+  pub output_files: Vec<JsOutputFile>,
+  pub badges: Vec<String>,
+}
+
+/// 输出文件简要信息
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsOutputFile {
+  pub name: String,
+  pub size: u32,
+  pub r#type: String,  // 'type' 是 Rust 关键字，用 r#type
+}
+
+// ============================================
+// 统计信息
+// ============================================
+
+/// 性能计时信息
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsPerformanceTimings {
+  pub collect_assets_ms: f64,
+  pub collect_modules_ms: f64,
+  pub collect_chunks_ms: f64,
+  pub analyze_packages_ms: f64,
+  pub total_ms: f64,
+}
+
+/// 汇总信息
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsSummary {
+  pub total_size: u32,
+  pub total_gzip_size: u32,
+  pub total_assets: u32,
+  pub total_modules: u32,
+  pub total_chunks: u32,
+  pub build_time: f64,
+  pub timings: JsPerformanceTimings,
+}
+
+/// 完整报告
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsBundleAnalyzerPluginResp {
+  pub timestamp: u32,
+  pub summary: JsSummary,
+  pub assets: Vec<JsAsset>,
+  pub modules: Vec<JsModule>,
+  pub chunks: Vec<JsChunk>,
+  pub packages: Vec<JsPackage>,
 }
 ```
 
