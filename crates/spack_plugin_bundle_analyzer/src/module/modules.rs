@@ -1,7 +1,10 @@
 use derive_more::derive::{Deref, Into};
-use rspack_core::{ConcatenatedModule, Compilation};
+use rspack_core::{
+  ConcatenatedModule, Compilation, ContextModule, ExternalModule, NormalModule, RawModule,
+  SelfModule,
+};
 
-use crate::{ConcatenatedModuleInfo, Module};
+use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
 use crate::context::ModuleChunkContext;
 use crate::module_type::ModuleType;
 
@@ -49,6 +52,9 @@ impl Modules {
           .cloned()
           .unwrap_or_default();
 
+        // 判断模块种类
+        let module_kind = get_module_kind(module.as_ref());
+
         // 尝试 downcast 到 ConcatenatedModule 以获取合并模块信息
         let concatenated_modules = module
           .as_any()
@@ -71,6 +77,7 @@ impl Modules {
           name_for_condition,
           size: get_module_size(module.as_ref()),
           chunks,
+          module_kind,
           module_type,
           is_node_module,
           concatenated_modules,
@@ -86,4 +93,26 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
   // source_type 参数为 None 表示获取所有类型的总大小
   // compilation 参数为 None 因为我们不需要编译上下文
   module.size(None, None) as u64
+}
+
+/// 通过 downcast 判断模块种类
+fn get_module_kind(module: &dyn rspack_core::Module) -> ModuleKind {
+  let any_module = module.as_any();
+
+  if any_module.downcast_ref::<ConcatenatedModule>().is_some() {
+    ModuleKind::Concatenated
+  } else if any_module.downcast_ref::<ExternalModule>().is_some() {
+    ModuleKind::External
+  } else if any_module.downcast_ref::<ContextModule>().is_some() {
+    ModuleKind::Context
+  } else if any_module.downcast_ref::<RawModule>().is_some() {
+    ModuleKind::Raw
+  } else if any_module.downcast_ref::<SelfModule>().is_some() {
+    ModuleKind::SelfRef
+  } else if any_module.downcast_ref::<NormalModule>().is_some() {
+    ModuleKind::Normal
+  } else {
+    // 如果都不匹配，默认为 Normal（这种情况理论上不应该发生）
+    ModuleKind::Normal
+  }
 }

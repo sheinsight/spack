@@ -1,4 +1,4 @@
-use crate::ModuleType;
+use crate::{ModuleKind, ModuleType};
 
 /// 合并模块中的单个内部模块信息
 #[derive(Debug, Clone)]
@@ -21,7 +21,9 @@ pub struct Module {
   pub size: u64,
   // 包含此模块的 chunks
   pub chunks: Vec<String>,
-  // 模块类型
+  // 模块种类（rspack 内部类型：Normal/Concatenated/External 等）
+  pub module_kind: ModuleKind,
+  // 模块文件类型（JavaScript/CSS/JSON 等）
   pub module_type: ModuleType,
   // 是否来自 node_modules
   pub is_node_module: bool,

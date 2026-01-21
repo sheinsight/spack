@@ -96,6 +96,7 @@ export interface JsModule {
   name: string
   size: number
   chunks: Array<string>
+  moduleKind: string
   moduleType: string
   isNodeModule: boolean
   nameForCondition: string
