@@ -100,6 +100,7 @@ export interface JsModule {
   moduleType: string
   isNodeModule: boolean
   nameForCondition: string
+  concatenatedModules?: Array<JsConcatenatedModuleInfo>
 }
 
 export interface JsModuleSizeInfo {

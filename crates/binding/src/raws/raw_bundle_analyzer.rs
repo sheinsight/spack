@@ -57,6 +57,7 @@ pub struct JsModule {
   pub module_type: String,
   pub is_node_module: bool,
   pub name_for_condition: String,
+  pub concatenated_modules: Option<Vec<JsConcatenatedModuleInfo>>,
 }
 
 impl From<Module> for JsModule {
@@ -70,6 +71,9 @@ impl From<Module> for JsModule {
       module_type: value.module_type.as_str().to_string(),
       is_node_module: value.is_node_module,
       name_for_condition: value.name_for_condition,
+      concatenated_modules: value
+        .concatenated_modules
+        .map(|modules| modules.into_iter().map(|m| m.into()).collect()),
     }
   }
 }
