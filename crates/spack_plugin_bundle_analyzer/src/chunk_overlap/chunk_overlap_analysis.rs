@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use crate::{
-  Chunk, ChunkPairOverlap, Module, OverlappedModule,
-  chunk_overlap::{ChunkOverlapConfig, ChunkPairOverlaps, OverlappedModules},
+  Chunk, Module,
+  chunk_overlap::{
+    ChunkOverlapConfig, ChunkPairOverlap, ChunkPairOverlaps, OverlappedModule, OverlappedModules,
+  },
 };
 
 /// Chunk 重叠度分析报告

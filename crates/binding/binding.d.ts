@@ -22,8 +22,6 @@ export interface JsBundleAnalyzerPluginResp {
   chunks: Array<JsChunk>
   packages: Array<JsPackage>
   duplicatePackages: Array<JsDuplicatePackage>
-  chunkOverlap: JsChunkOverlapAnalysis
-  chunkModuleBreakdowns: Array<JsChunkModuleBreakdown>
 }
 
 export interface JsChunk {
@@ -37,29 +35,6 @@ export interface JsChunk {
   runtime: boolean
   reason: string
   files: Array<string>
-}
-
-export interface JsChunkModuleBreakdown {
-  chunkId: string
-  chunkSize: number
-  source: JsSourceBreakdown
-  nodeModules: JsNodeModulesBreakdown
-}
-
-export interface JsChunkOverlapAnalysis {
-  overlappedModules: Array<JsOverlappedModule>
-  chunkPairOverlaps: Array<JsChunkPairOverlap>
-  totalWastedSize: number
-  recommendations: Array<string>
-}
-
-export interface JsChunkPairOverlap {
-  chunkA: string
-  chunkB: string
-  sharedModules: Array<string>
-  sharedSize: number
-  overlapRatioA: number
-  overlapRatioB: number
 }
 
 export interface JsConcatenatedModuleInfo {
@@ -103,30 +78,6 @@ export interface JsModule {
   concatenatedModules?: Array<JsConcatenatedModuleInfo>
 }
 
-export interface JsModuleSizeInfo {
-  moduleId: string
-  moduleName: string
-  size: number
-  moduleType: string
-  concatenatedModules?: Array<JsConcatenatedModuleInfo>
-}
-
-export interface JsNodeModulesBreakdown {
-  totalSize: number
-  packageCount: number
-  packages: Array<JsPackageBreakdown>
-}
-
-export interface JsOverlappedModule {
-  moduleId: string
-  moduleName: string
-  moduleSize: number
-  chunks: Array<string>
-  duplicationCount: number
-  wastedSize: number
-  packageName?: string
-}
-
 export interface JsPackage {
   name: string
   version: string
@@ -134,13 +85,6 @@ export interface JsPackage {
   moduleCount: number
   modules: Array<string>
   packageJsonPath: string
-}
-
-export interface JsPackageBreakdown {
-  packageName: string
-  totalSize: number
-  moduleCount: number
-  modules: Array<JsModuleSizeInfo>
 }
 
 export interface JsPackageVersion {
@@ -155,15 +99,7 @@ export interface JsPerformanceTimings {
   collectModulesMs: number
   collectChunksMs: number
   analyzePackagesMs: number
-  compressGzipMs: number
-  analyzeOverlapMs: number
   totalMs: number
-}
-
-export interface JsSourceBreakdown {
-  totalSize: number
-  moduleCount: number
-  modules: Array<JsModuleSizeInfo>
 }
 
 export interface JsSummary {

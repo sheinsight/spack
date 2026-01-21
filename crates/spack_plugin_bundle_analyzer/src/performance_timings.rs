@@ -9,10 +9,6 @@ pub struct PerformanceTimings {
   pub collect_chunks_ms: f64,
   /// 分析 Packages 耗时（毫秒）
   pub analyze_packages_ms: f64,
-  /// Gzip 压缩耗时（毫秒）
-  pub compress_gzip_ms: f64,
-  /// 分析 Chunk 重叠度耗时（毫秒）
-  pub analyze_overlap_ms: f64,
   /// 总耗时（毫秒）
   pub total_ms: f64,
 }
@@ -23,8 +19,6 @@ impl PerformanceTimings {
     collect_modules_ms: f64,
     collect_chunks_ms: f64,
     analyze_packages_ms: f64,
-    compress_gzip_ms: f64,
-    analyze_overlap_ms: f64,
     total_ms: f64,
   ) -> Self {
     Self {
@@ -32,8 +26,6 @@ impl PerformanceTimings {
       collect_modules_ms,
       collect_chunks_ms,
       analyze_packages_ms,
-      compress_gzip_ms,
-      analyze_overlap_ms,
       total_ms,
     }
   }

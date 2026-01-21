@@ -1,6 +1,10 @@
 use derive_more::derive::{Deref, Into};
 
-use crate::{Module, OverlappedModule, chunk_overlap::ChunkOverlapConfig, package_version_resolver::PackageVersionResolver};
+use crate::{
+  Module,
+  chunk_overlap::{ChunkOverlapConfig, OverlappedModule},
+  package_version_resolver::PackageVersionResolver,
+};
 
 #[derive(Debug, Deref, Into)]
 pub struct OverlappedModules(pub Vec<OverlappedModule>);

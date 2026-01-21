@@ -1,14 +1,12 @@
 use derive_more::Debug;
-use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
+use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
-  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ChunkModuleBreakdown,
-  ChunkOverlapAnalysis, ChunkPairOverlap, ConcatenatedModuleInfo, DuplicatePackage, Module,
-  ModuleSizeInfo, NodeModulesBreakdown, OverlappedModule, Package, PackageBreakdown,
-  PackageVersion, PerformanceTimings, Report, SourceBreakdown, Summary,
+  Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ConcatenatedModuleInfo,
+  DuplicatePackage, Module, Package, PackageVersion, PerformanceTimings, Report, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -191,8 +189,6 @@ pub struct JsPerformanceTimings {
   pub collect_modules_ms: f64,
   pub collect_chunks_ms: f64,
   pub analyze_packages_ms: f64,
-  pub compress_gzip_ms: f64,
-  pub analyze_overlap_ms: f64,
   pub total_ms: f64,
 }
 
@@ -203,8 +199,6 @@ impl From<PerformanceTimings> for JsPerformanceTimings {
       collect_modules_ms: value.collect_modules_ms,
       collect_chunks_ms: value.collect_chunks_ms,
       analyze_packages_ms: value.analyze_packages_ms,
-      compress_gzip_ms: value.compress_gzip_ms,
-      analyze_overlap_ms: value.analyze_overlap_ms,
       total_ms: value.total_ms,
     }
   }
@@ -238,84 +232,6 @@ impl From<Summary> for JsSummary {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsOverlappedModule {
-  pub module_id: String,
-  pub module_name: String,
-  pub module_size: u32,
-  pub chunks: Vec<String>,
-  pub duplication_count: u32,
-  pub wasted_size: u32,
-  pub package_name: Option<String>,
-}
-
-impl From<OverlappedModule> for JsOverlappedModule {
-  fn from(value: OverlappedModule) -> Self {
-    Self {
-      module_id: value.module_id,
-      module_name: value.module_name,
-      module_size: value.module_size as u32,
-      chunks: value.chunks,
-      duplication_count: value.duplication_count as u32,
-      wasted_size: value.wasted_size as u32,
-      package_name: value.package_name,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsChunkPairOverlap {
-  pub chunk_a: String,
-  pub chunk_b: String,
-  pub shared_modules: Vec<String>,
-  pub shared_size: u32,
-  pub overlap_ratio_a: f64,
-  pub overlap_ratio_b: f64,
-}
-
-impl From<ChunkPairOverlap> for JsChunkPairOverlap {
-  fn from(value: ChunkPairOverlap) -> Self {
-    Self {
-      chunk_a: value.chunk_a,
-      chunk_b: value.chunk_b,
-      shared_modules: value.shared_modules,
-      shared_size: value.shared_size as u32,
-      overlap_ratio_a: value.overlap_ratio_a,
-      overlap_ratio_b: value.overlap_ratio_b,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsChunkOverlapAnalysis {
-  pub overlapped_modules: Vec<JsOverlappedModule>,
-  pub chunk_pair_overlaps: Vec<JsChunkPairOverlap>,
-  pub total_wasted_size: u32,
-  pub recommendations: Vec<String>,
-}
-
-impl From<ChunkOverlapAnalysis> for JsChunkOverlapAnalysis {
-  fn from(value: ChunkOverlapAnalysis) -> Self {
-    Self {
-      overlapped_modules: value
-        .overlapped_modules
-        .into_iter()
-        .map(|m| m.into())
-        .collect(),
-      chunk_pair_overlaps: value
-        .chunk_pair_overlaps
-        .into_iter()
-        .map(|p| p.into())
-        .collect(),
-      total_wasted_size: value.total_wasted_size as u32,
-      recommendations: value.recommendations,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
 pub struct JsConcatenatedModuleInfo {
   pub id: String,
   pub name: String,
@@ -334,106 +250,6 @@ impl From<ConcatenatedModuleInfo> for JsConcatenatedModuleInfo {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
-pub struct JsModuleSizeInfo {
-  pub module_id: String,
-  pub module_name: String,
-  pub size: u32,
-  pub module_type: String,
-  pub concatenated_modules: Option<Vec<JsConcatenatedModuleInfo>>,
-}
-
-impl From<ModuleSizeInfo> for JsModuleSizeInfo {
-  fn from(value: ModuleSizeInfo) -> Self {
-    Self {
-      module_id: value.module_id,
-      module_name: value.module_name,
-      size: value.size as u32,
-      module_type: value.module_type,
-      concatenated_modules: value
-        .concatenated_modules
-        .map(|modules| modules.into_iter().map(|m| m.into()).collect()),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsSourceBreakdown {
-  pub total_size: u32,
-  pub module_count: u32,
-  pub modules: Vec<JsModuleSizeInfo>,
-}
-
-impl From<SourceBreakdown> for JsSourceBreakdown {
-  fn from(value: SourceBreakdown) -> Self {
-    Self {
-      total_size: value.total_size as u32,
-      module_count: value.module_count as u32,
-      modules: value.modules.into_iter().map(|m| m.into()).collect(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsPackageBreakdown {
-  pub package_name: String,
-  pub total_size: u32,
-  pub module_count: u32,
-  pub modules: Vec<JsModuleSizeInfo>,
-}
-
-impl From<PackageBreakdown> for JsPackageBreakdown {
-  fn from(value: PackageBreakdown) -> Self {
-    Self {
-      package_name: value.package_name,
-      total_size: value.total_size as u32,
-      module_count: value.module_count as u32,
-      modules: value.modules.into_iter().map(|m| m.into()).collect(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsNodeModulesBreakdown {
-  pub total_size: u32,
-  pub package_count: u32,
-  pub packages: Vec<JsPackageBreakdown>,
-}
-
-impl From<NodeModulesBreakdown> for JsNodeModulesBreakdown {
-  fn from(value: NodeModulesBreakdown) -> Self {
-    Self {
-      total_size: value.total_size as u32,
-      package_count: value.package_count as u32,
-      packages: value.packages.into_iter().map(|p| p.into()).collect(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
-pub struct JsChunkModuleBreakdown {
-  pub chunk_id: String,
-  pub chunk_size: u32,
-  pub source: JsSourceBreakdown,
-  pub node_modules: JsNodeModulesBreakdown,
-}
-
-impl From<ChunkModuleBreakdown> for JsChunkModuleBreakdown {
-  fn from(value: ChunkModuleBreakdown) -> Self {
-    Self {
-      chunk_id: value.chunk_id,
-      chunk_size: value.chunk_size as u32,
-      source: value.source.into(),
-      node_modules: value.node_modules.into(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-#[napi(object)]
 pub struct JsBundleAnalyzerPluginResp {
   pub timestamp: u32,
   pub summary: JsSummary,
@@ -442,8 +258,6 @@ pub struct JsBundleAnalyzerPluginResp {
   pub chunks: Vec<JsChunk>,
   pub packages: Vec<JsPackage>,
   pub duplicate_packages: Vec<JsDuplicatePackage>,
-  pub chunk_overlap: JsChunkOverlapAnalysis,
-  pub chunk_module_breakdowns: Vec<JsChunkModuleBreakdown>,
 }
 
 impl From<Report> for JsBundleAnalyzerPluginResp {
@@ -455,12 +269,10 @@ impl From<Report> for JsBundleAnalyzerPluginResp {
       modules: value.modules.into_iter().map(|m| m.into()).collect(),
       chunks: value.chunks.into_iter().map(|c| c.into()).collect(),
       packages: value.packages.into_iter().map(|p| p.into()).collect(),
-      duplicate_packages: value.duplicate_packages.into_iter().map(|d| d.into()).collect(),
-      chunk_overlap: value.chunk_overlap.into(),
-      chunk_module_breakdowns: value
-        .chunk_module_breakdowns
+      duplicate_packages: value
+        .duplicate_packages
         .into_iter()
-        .map(|b| b.into())
+        .map(|d| d.into())
         .collect(),
     }
   }

@@ -1,12 +1,6 @@
 use crate::{
-  asset::Asset,
-  chunk::Chunk,
-  chunk_analysis::ChunkModuleBreakdown,
-  chunk_overlap::ChunkOverlapAnalysis,
-  duplicate_packages::DuplicatePackage,
-  module::Module,
-  package::Package,
-  summary::Summary,
+  asset::Asset, chunk::Chunk, duplicate_packages::DuplicatePackage, module::Module,
+  package::Package, summary::Summary,
 };
 
 // 核心数据结构
@@ -26,8 +20,4 @@ pub struct Report {
   pub packages: Vec<Package>,
   // 重复的包
   pub duplicate_packages: Vec<DuplicatePackage>,
-  // Chunk 重叠度分析
-  pub chunk_overlap: ChunkOverlapAnalysis,
-  // Chunk 模块大小分解分析
-  pub chunk_module_breakdowns: Vec<ChunkModuleBreakdown>,
 }

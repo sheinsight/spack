@@ -2,7 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use derive_more::derive::{Deref, Into};
 
-use crate::{Chunk, ChunkPairOverlap, Module, chunk_overlap::ChunkOverlapConfig};
+use crate::{
+  Chunk, Module,
+  chunk_overlap::{ChunkOverlapConfig, ChunkPairOverlap},
+};
 
 #[derive(Debug, Deref, Into)]
 pub struct ChunkPairOverlaps(pub Vec<ChunkPairOverlap>);

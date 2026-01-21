@@ -25,12 +25,6 @@ use rspack_hook::{plugin, plugin_hook};
 pub use crate::{
   asset::Asset,
   chunk::Chunk,
-  chunk_analysis::{
-    ChunkModuleBreakdown, ModuleSizeInfo, NodeModulesBreakdown, PackageBreakdown, SourceBreakdown,
-  },
-  chunk_overlap::{
-    ChunkOverlapAnalysis, ChunkPairOverlap, ChunkPairOverlaps, OverlappedModule, OverlappedModules,
-  },
   duplicate_packages::DuplicatePackage,
   duplicate_packages::PackageVersion,
   module::{ConcatenatedModuleInfo, Module, ModuleKind},
@@ -41,12 +35,8 @@ pub use crate::{
   summary::Summary,
 };
 use crate::{
-  asset::Assets,
-  chunk_analysis::ChunkModuleBreakdowns,
-  context::ModuleChunkContext,
-  duplicate_packages::DuplicatePackages,
-  module::Modules,
-  package::Packages,
+  asset::Assets, context::ModuleChunkContext, duplicate_packages::DuplicatePackages,
+  module::Modules, package::Packages,
 };
 
 #[plugin]
@@ -110,24 +100,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let duplicate_packages = DuplicatePackages::from(&packages[..]);
   let _detect_duplicates_ms = duplicates_start.elapsed().as_millis_f64();
 
-  // 8. 分析 Chunk 重叠度（复用 resolver）
-  let overlap_start = Instant::now();
-  let overlap_config = chunk_overlap::ChunkOverlapConfig::default();
-  let chunk_overlap =
-    ChunkOverlapAnalysis::from_with_resolver(&chunks[..], &modules[..], &overlap_config, &mut resolver);
-  let analyze_overlap_ms = overlap_start.elapsed().as_millis_f64();
-
-  // 8. 分析 Chunk 模块大小分解
-  let chunk_analysis_start = Instant::now();
-  let chunk_module_breakdowns = ChunkModuleBreakdowns::from(&chunks[..], &modules[..]);
-  let _analyze_chunk_modules_ms = chunk_analysis_start.elapsed().as_millis_f64();
-
   // 计算总耗时
   let total_ms = start_time.elapsed().as_millis_f64();
-
-  // Gzip 压缩耗时已经在 collect_assets 中并行计算，这里统计的是总耗时中用于压缩的部分
-  // 实际压缩时间已包含在 collect_assets_ms 中
-  let compress_gzip_ms = collect_assets_ms; // 压缩主要发生在 collect_assets 阶段
 
   // 计算总大小：累加所有 assets 的大小
   let total_size: u64 = assets.iter().map(|a| a.size as u64).sum();
@@ -144,8 +118,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     collect_modules_ms,
     collect_chunks_ms,
     analyze_packages_ms,
-    compress_gzip_ms,
-    analyze_overlap_ms,
     total_ms,
   );
 
@@ -173,8 +145,6 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     chunks: chunks.into(),
     packages: packages.into(),
     duplicate_packages: duplicate_packages.into(),
-    chunk_overlap,
-    chunk_module_breakdowns: chunk_module_breakdowns.into(),
   };
 
   let dir = current_dir().unwrap();
