@@ -398,7 +398,7 @@ pub struct JsPackage {
 }
 
 // ============================================
-// 树视图专用数据结构
+// 树视图专用数据结构（核心重点）
 // ============================================
 
 /// 单个 Chunk 的树形视图
@@ -406,14 +406,71 @@ pub struct JsPackage {
 #[napi(object)]
 pub struct JsChunkTreeView {
   pub chunk: JsChunk,
+  /// 模块树节点列表
   pub children: Vec<JsModuleTreeNode>,
 }
 
-/// 模块树节点
+/// 模块来源枚举
+#[derive(Debug, Clone)]
+pub enum ModuleSource {
+  /// 源码（用户代码，./src/**）
+  Source,
+  /// 三方包（node_modules/**）
+  ThirdParty,
+  /// 内部模块（webpack runtime 等）
+  Internal,
+}
+
+impl ModuleSource {
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      ModuleSource::Source => "Source",
+      ModuleSource::ThirdParty => "ThirdParty",
+      ModuleSource::Internal => "Internal",
+    }
+  }
+
+  /// 从模块路径判断来源
+  pub fn from_module_name(name: &str) -> Self {
+    if name.contains("node_modules/") {
+      ModuleSource::ThirdParty
+    } else if name.starts_with("webpack/runtime/") || name.starts_with("(webpack)") {
+      ModuleSource::Internal
+    } else {
+      ModuleSource::Source
+    }
+  }
+}
+
+/// 三方包信息（仅当 module_source = ThirdParty 时有值）
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsPackageInfo {
+  /// 包名（如 "react" 或 "@babel/core"）
+  pub package_name: String,
+  /// 版本号（如 "18.2.0"）
+  pub version: String,
+  /// 模块在包内的相对路径（如 "index.js" 或 "lib/utils.js"）
+  pub relative_path: String,
+}
+
+/// 模块树节点（增强版，包含来源信息）
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsModuleTreeNode {
+  /// 模块基础信息
   pub module: JsModule,
+
+  /// 模块来源分类（Source/ThirdParty/Internal）
+  pub module_source: String,
+
+  /// 包信息（仅三方包有值）
+  pub package_info: Option<JsPackageInfo>,
+
+  /// 是否被多个 chunk 共享
+  pub is_shared: bool,
+
+  /// 子节点（仅 Concatenated Module 有）
   pub children: Option<Vec<JsModuleTreeNode>>,
 }
 
@@ -483,17 +540,419 @@ pub struct JsBundleAnalyzerPluginResp {
 }
 ```
 
-### 树形结构示例
+### 构建增强版树节点的函数
+
+```rust
+impl JsChunkTreeView {
+  /// 从 Chunk 和 Modules 构建树视图
+  pub fn from_chunk(
+    chunk: &Chunk,
+    modules: &[Module],
+    packages: &[Package],
+  ) -> Self {
+    // 1. 筛选属于该 chunk 的模块
+    let chunk_modules: Vec<_> = modules
+      .iter()
+      .filter(|m| m.chunks.contains(&chunk.id))
+      .collect();
+
+    // 2. 构建树节点
+    let children = chunk_modules
+      .into_iter()
+      .map(|module| Self::build_module_tree_node(module, packages))
+      .collect();
+
+    JsChunkTreeView {
+      chunk: chunk.clone().into(),
+      children,
+    }
+  }
+
+  /// 构建单个模块树节点
+  fn build_module_tree_node(
+    module: &Module,
+    packages: &[Package],
+  ) -> JsModuleTreeNode {
+    // 判断模块来源
+    let module_source = ModuleSource::from_module_name(&module.name);
+
+    // 如果是三方包，提取包信息
+    let package_info = if matches!(module_source, ModuleSource::ThirdParty) {
+      Self::extract_package_info(module, packages)
+    } else {
+      None
+    };
+
+    // 判断是否被多个 chunk 共享
+    let is_shared = module.chunks.len() > 1;
+
+    // 处理 Concatenated Module 的子节点
+    let children = if module.module_kind == ModuleKind::Concatenated {
+      module.concatenated_modules.as_ref().map(|inner_modules| {
+        inner_modules
+          .iter()
+          .map(|inner| {
+            // 为内部模块构建简化的树节点
+            let inner_source = ModuleSource::from_module_name(&inner.name);
+            JsModuleTreeNode {
+              module: JsModule {
+                id: inner.id.clone(),
+                name: inner.name.clone(),
+                size: inner.size as u32,
+                chunks: vec![],  // 内部模块不属于任何 chunk
+                module_kind: "Normal".to_string(),
+                module_type: "JavaScript".to_string(),
+                is_node_module: inner_source == ModuleSource::ThirdParty,
+                name_for_condition: inner.name.clone(),
+                concatenated_modules: None,
+              },
+              module_source: inner_source.as_str().to_string(),
+              package_info: None,  // 简化：内部模块不单独提取包信息
+              is_shared: false,
+              children: None,
+            }
+          })
+          .collect()
+      })
+    } else {
+      None
+    };
+
+    JsModuleTreeNode {
+      module: module.clone().into(),
+      module_source: module_source.as_str().to_string(),
+      package_info,
+      is_shared,
+      children,
+    }
+  }
+
+  /// 从模块路径提取包信息
+  fn extract_package_info(
+    module: &Module,
+    packages: &[Package],
+  ) -> Option<JsPackageInfo> {
+    // 从路径中提取包名
+    // 例如：./node_modules/react/index.js -> react
+    // 例如：./node_modules/@babel/core/lib/index.js -> @babel/core
+    let parts: Vec<&str> = module.name.split("node_modules/").collect();
+    if parts.len() < 2 {
+      return None;
+    }
+
+    let after_node_modules = parts[1];
+    let path_parts: Vec<&str> = after_node_modules.split('/').collect();
+
+    // 处理 scoped package (@babel/core)
+    let (package_name, relative_path) = if path_parts[0].starts_with('@') {
+      if path_parts.len() < 2 {
+        return None;
+      }
+      let pkg_name = format!("{}/{}", path_parts[0], path_parts[1]);
+      let rel_path = path_parts[2..].join("/");
+      (pkg_name, rel_path)
+    } else {
+      // 普通包 (react)
+      let pkg_name = path_parts[0].to_string();
+      let rel_path = path_parts[1..].join("/");
+      (pkg_name, rel_path)
+    };
+
+    // 从 packages 中查找版本号
+    let version = packages
+      .iter()
+      .find(|p| p.name == package_name)
+      .map(|p| p.version.clone())
+      .unwrap_or_else(|| "unknown".to_string());
+
+    Some(JsPackageInfo {
+      package_name,
+      version,
+      relative_path,
+    })
+  }
+}
+```
+
+### 树形结构示例（增强版）
 
 ```
-main.chunk (root)
-  ├─ Module: ./src/index.js
-  ├─ Module: ./src/app.js
-  ├─ Module: ./node_modules/react/index.js
-  └─ Module: ./src/utils.js (Concatenated) ← 可以展开
-       ├─ Inner: ./src/utils/format.js
-       ├─ Inner: ./src/utils/validate.js
-       └─ Inner: ./src/utils/helper.js
+main.chunk (120KB, 45 modules)
+  │
+  ├─ 📁 源码 (Source) - 15 modules, 30KB
+  │   ├─ 📄 ./src/index.js (2KB)
+  │   ├─ 📄 ./src/app.js (5KB) [Shared in 2 chunks]
+  │   ├─ ▼ 📦 ./src/utils.js (10KB) [Concatenated]
+  │   │    ├─ 📄 ./src/utils/format.js (3KB)
+  │   │    ├─ 📄 ./src/utils/validate.js (4KB)
+  │   │    └─ 📄 ./src/utils/helper.js (3KB)
+  │   └─ 📄 ./src/components/Header.js (3KB)
+  │
+  ├─ 📦 三方包 (ThirdParty) - 25 modules, 85KB
+  │   ├─ ▼ 📦 react@18.2.0 (5 modules, 70KB)
+  │   │    ├─ 📄 index.js (50KB) [Shared in 3 chunks]
+  │   │    ├─ 📄 jsx-runtime.js (15KB)
+  │   │    └─ 📄 jsx-dev-runtime.js (5KB)
+  │   │
+  │   ├─ ▼ 📦 lodash@4.17.21 (8 modules, 12KB)
+  │   │    ├─ 📄 index.js (2KB)
+  │   │    ├─ 📄 map.js (3KB)
+  │   │    └─ 📄 filter.js (2KB)
+  │   │
+  │   └─ ▼ 📦 @babel/runtime@7.22.0 (12 modules, 3KB)
+  │        ├─ 📄 helpers/esm/objectSpread2.js (500B)
+  │        └─ 📄 helpers/esm/defineProperty.js (300B)
+  │
+  └─ ⚙️ 内部模块 (Internal) - 5 modules, 5KB
+       ├─ 📄 webpack/runtime/define property getters (1KB)
+       ├─ 📄 webpack/runtime/hasOwnProperty (500B)
+       └─ 📄 webpack/runtime/make namespace object (800B)
+```
+
+### UI 分组展示建议
+
+```tsx
+// 方案 1: 扁平列表 + 标签
+function ChunkTreeFlat({ nodes }: { nodes: JsModuleTreeNode[] }) {
+  return (
+    <div>
+      {nodes.map(node => (
+        <ModuleRow key={node.module.id}>
+          {/* 来源标签 */}
+          <SourceBadge source={node.module_source} />
+
+          {/* 包信息 */}
+          {node.package_info && (
+            <PackageBadge>
+              {node.package_info.package_name}@{node.package_info.version}
+            </PackageBadge>
+          )}
+
+          {/* 共享标记 */}
+          {node.is_shared && <SharedBadge />}
+
+          <ModuleName>{node.module.name}</ModuleName>
+          <ModuleSize>{formatSize(node.module.size)}</ModuleSize>
+        </ModuleRow>
+      ))}
+    </div>
+  );
+}
+
+// 方案 2: 分组展示（推荐）
+function ChunkTreeGrouped({ nodes }: { nodes: JsModuleTreeNode[] }) {
+  // 按来源分组
+  const grouped = groupBy(nodes, node => node.module_source);
+
+  return (
+    <div>
+      {/* 源码组 */}
+      <ModuleGroup title="源码" icon="📁" count={grouped.Source?.length}>
+        {grouped.Source?.map(node => (
+          <ModuleNode key={node.module.id} node={node} />
+        ))}
+      </ModuleGroup>
+
+      {/* 三方包组 - 进一步按包名分组 */}
+      <ModuleGroup title="三方包" icon="📦" count={grouped.ThirdParty?.length}>
+        {groupByPackage(grouped.ThirdParty).map(([pkgName, pkgNodes]) => (
+          <PackageGroup key={pkgName} packageName={pkgName}>
+            {pkgNodes.map(node => (
+              <ModuleNode key={node.module.id} node={node} />
+            ))}
+          </PackageGroup>
+        ))}
+      </ModuleGroup>
+
+      {/* 内部模块组 */}
+      {grouped.Internal && (
+        <ModuleGroup title="内部模块" icon="⚙️" count={grouped.Internal.length}>
+          {grouped.Internal.map(node => (
+            <ModuleNode key={node.module.id} node={node} />
+          ))}
+        </ModuleGroup>
+      )}
+    </div>
+  );
+}
+
+// 辅助函数：按包名分组三方包模块
+function groupByPackage(nodes: JsModuleTreeNode[]): Map<string, JsModuleTreeNode[]> {
+  const map = new Map<string, JsModuleTreeNode[]>();
+
+  nodes.forEach(node => {
+    const pkgName = node.package_info?.package_name || 'unknown';
+    if (!map.has(pkgName)) {
+      map.set(pkgName, []);
+    }
+    map.get(pkgName)!.push(node);
+  });
+
+  return map;
+}
+```
+
+---
+
+## 增强版设计的优势
+
+### 1. 清晰的来源区分
+
+**原始设计**：
+```rust
+pub struct JsModuleTreeNode {
+  pub module: JsModule,  // 只有 is_node_module: bool
+  pub children: Option<Vec<JsModuleTreeNode>>,
+}
+```
+- ❌ 只能区分是否来自 node_modules
+- ❌ 无法区分 webpack runtime 等内部模块
+- ❌ 无法直接获取包信息
+
+**增强设计**：
+```rust
+pub struct JsModuleTreeNode {
+  pub module: JsModule,
+  pub module_source: String,        // Source/ThirdParty/Internal
+  pub package_info: Option<JsPackageInfo>,  // 包名、版本、相对路径
+  pub is_shared: bool,              // 是否被多个 chunk 共享
+  pub children: Option<Vec<JsModuleTreeNode>>,
+}
+```
+- ✅ 三种来源分类：源码、三方包、内部模块
+- ✅ 三方包直接关联包名和版本
+- ✅ 一眼看出哪些模块被共享
+
+### 2. 更好的 UI 分组
+
+```
+原始：扁平列表，无分组
+  ./src/index.js
+  ./node_modules/react/index.js
+  ./src/app.js
+  ./node_modules/lodash/map.js
+  webpack/runtime/...
+
+增强：按来源分组 + 三方包再按包名分组
+  📁 源码 (15 modules, 30KB)
+    ├─ ./src/index.js
+    └─ ./src/app.js
+
+  📦 三方包 (25 modules, 85KB)
+    ├─ react@18.2.0 (5 modules, 70KB)
+    └─ lodash@4.17.21 (8 modules, 12KB)
+
+  ⚙️ 内部模块 (5 modules, 5KB)
+    └─ webpack/runtime/...
+```
+
+### 3. 快速定位优化目标
+
+**场景 1：发现某个包占用太大**
+```tsx
+// 直接看到包级别的统计
+📦 三方包
+  ├─ moment@2.29.4 (50 modules, 500KB) ⚠️ 太大！
+  └─ date-fns@2.30.0 (10 modules, 50KB) ✅ 可替代
+```
+
+**场景 2：查看哪些模块被共享**
+```tsx
+📁 源码
+  ├─ ./src/utils.js (10KB) [Shared in 3 chunks] ⭐ 重要！
+  └─ ./src/rarely-used.js (5KB) [Shared in 2 chunks] ⚠️ 不应共享
+```
+
+**场景 3：识别不必要的 webpack runtime**
+```tsx
+⚙️ 内部模块 (5KB)
+  └─ webpack/runtime/... ℹ️ 如果过多可能需要优化配置
+```
+
+### 4. 实现示例对比
+
+**原始实现（前端需要自己判断）**：
+```tsx
+function ModuleNode({ module }: { module: Module }) {
+  // 前端需要解析路径判断来源
+  const isThirdParty = module.name.includes('node_modules/');
+  const isInternal = module.name.startsWith('webpack/runtime/');
+
+  // 前端需要自己提取包名
+  const packageName = isThirdParty
+    ? extractPackageNameFromPath(module.name)
+    : null;
+
+  return (
+    <div>
+      {isThirdParty && <Badge>📦 {packageName}</Badge>}
+      {isInternal && <Badge>⚙️ Internal</Badge>}
+      <span>{module.name}</span>
+    </div>
+  );
+}
+```
+
+**增强实现（后端已处理好）**：
+```tsx
+function ModuleNode({ node }: { node: JsModuleTreeNode }) {
+  return (
+    <div>
+      {/* 来源标记 */}
+      <SourceBadge source={node.module_source} />
+
+      {/* 包信息（已处理好） */}
+      {node.package_info && (
+        <PackageBadge>
+          📦 {node.package_info.package_name}@{node.package_info.version}
+        </PackageBadge>
+      )}
+
+      {/* 共享标记（已计算好） */}
+      {node.is_shared && (
+        <SharedBadge>
+          Shared in {node.module.chunks.length} chunks
+        </SharedBadge>
+      )}
+
+      <span>{node.module.name}</span>
+    </div>
+  );
+}
+```
+
+### 5. 性能优化
+
+**包信息提取**：
+- ✅ 在 Rust 端一次性处理
+- ✅ 复用已有的 `packages` 数据
+- ✅ 前端无需重复解析路径
+
+**分组数据**：
+- ✅ 后端可以预先计算各组的统计信息
+- ✅ 前端可以延迟加载大组（如三方包）
+- ✅ 支持虚拟滚动优化
+
+### 6. 数据一致性
+
+**问题**：前端自己解析可能出错
+```tsx
+// 前端可能错误地判断：
+'./node_modules/@babel/core/lib/index.js'
+  → 包名 = '@babel' ❌ 错误！
+  → 正确应该是 '@babel/core'
+
+'./src/vendor/lodash.js'
+  → 误判为 node_modules ❌
+```
+
+**解决**：后端统一处理
+```rust
+// Rust 端正确处理 scoped package
+let (package_name, relative_path) = if path_parts[0].starts_with('@') {
+  let pkg_name = format!("{}/{}", path_parts[0], path_parts[1]);
+  // ...
+}
 ```
 
 ---
