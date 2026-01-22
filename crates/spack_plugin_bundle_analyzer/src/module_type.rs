@@ -19,10 +19,7 @@ impl ModuleType {
     let path = Path::new(path);
 
     // 获取文件扩展名
-    let extension = path
-      .extension()
-      .and_then(|s| s.to_str())
-      .unwrap_or("");
+    let extension = path.extension().and_then(|s| s.to_str()).unwrap_or("");
 
     match extension.to_lowercase().as_str() {
       // JavaScript
@@ -53,14 +50,14 @@ impl ModuleType {
   /// 转换为字符串表示
   pub fn as_str(&self) -> &'static str {
     match self {
-      Self::JavaScript => "javascript",
-      Self::TypeScript => "typescript",
-      Self::CSS => "css",
-      Self::Image => "image",
-      Self::Font => "font",
-      Self::JSON => "json",
-      Self::WebAssembly => "wasm",
-      Self::Unknown => "unknown",
+      Self::JavaScript => "JavaScript",
+      Self::TypeScript => "TypeScript",
+      Self::CSS => "CSS",
+      Self::Image => "Image",
+      Self::Font => "Font",
+      Self::JSON => "JSON",
+      Self::WebAssembly => "WebAssembly",
+      Self::Unknown => "Unknown",
     }
   }
 }
@@ -113,7 +110,10 @@ mod tests {
 
   #[test]
   fn test_wasm() {
-    assert_eq!(ModuleType::from_path("module.wasm"), ModuleType::WebAssembly);
+    assert_eq!(
+      ModuleType::from_path("module.wasm"),
+      ModuleType::WebAssembly
+    );
   }
 
   #[test]

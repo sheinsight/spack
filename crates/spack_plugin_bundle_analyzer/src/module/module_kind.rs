@@ -18,12 +18,12 @@ pub enum ModuleKind {
 impl ModuleKind {
   pub fn as_str(&self) -> &'static str {
     match self {
-      ModuleKind::Normal => "normal",
-      ModuleKind::Concatenated => "concatenated",
-      ModuleKind::External => "external",
-      ModuleKind::Context => "context",
-      ModuleKind::Raw => "raw",
-      ModuleKind::SelfRef => "self",
+      ModuleKind::Normal => "Normal",
+      ModuleKind::Concatenated => "Concatenated",
+      ModuleKind::External => "External",
+      ModuleKind::Context => "Context",
+      ModuleKind::Raw => "Raw",
+      ModuleKind::SelfRef => "SelfRef",
     }
   }
 }
