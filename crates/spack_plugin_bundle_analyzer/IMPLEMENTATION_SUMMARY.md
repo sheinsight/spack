@@ -11,6 +11,8 @@
 ### 1. Rust 核心数据结构
 
 #### `module/module.rs`
+
+**Module 结构**：
 ```rust
 pub struct Module {
   // ... 现有字段
@@ -21,10 +23,35 @@ pub struct Module {
 }
 ```
 
+**ConcatenatedModuleInfo 结构**（同样支持 Package 关联 ✅）：
+```rust
+pub struct ConcatenatedModuleInfo {
+  pub id: String,
+  pub name: String,
+  pub size: u64,
+
+  // 🆕 扩展字段
+  pub module_type: ModuleType,           // 文件类型（JS/CSS/JSON）
+  pub is_node_module: bool,              // 是否三方包
+  pub name_for_condition: String,        // 条件名称
+  pub package_json_path: Option<String>, // 关联的 Package
+}
+```
+
 #### `module/modules.rs`
-- 新增 `associate_packages(&mut self, packages: &Packages)` 方法
+
+**构建 ConcatenatedModuleInfo**：
+- 从 `module_graph` 查找原始模块获取完整信息（精确）
+- Fallback 到从路径解析（容错）
+- 提取 `module_type`, `is_node_module`, `name_for_condition`
+
+**associate_packages() 方法**：
 - 通过 `Package.modules` 反向建立 `module_id → package` 映射
-- 时间复杂度：O(n + m)，n = packages 数量，m = modules 数量
+- **递归处理内部模块**：同时为 `ConcatenatedModuleInfo` 填充 `package_json_path`
+- 时间复杂度：O(n + m + k)
+  - n = packages 数量
+  - m = modules 数量
+  - k = 内部模块数量
 
 ```rust
 impl Modules {
@@ -38,10 +65,20 @@ impl Modules {
       }
     }
 
-    // 为每个 Module 填充 package_json_path（O(m)）
+    // 为每个 Module 填充 package_json_path（O(m + k)）
     for module in &mut self.0 {
+      // 1. 处理外层模块
       if let Some(package) = module_package_map.get(&module.id) {
         module.package_json_path = Some(package.package_json_path.clone());
+      }
+
+      // 2. 递归处理内部的 ConcatenatedModuleInfo
+      if let Some(ref mut inner_modules) = module.concatenated_modules {
+        for inner in inner_modules {
+          if let Some(package) = module_package_map.get(&inner.id) {
+            inner.package_json_path = Some(package.package_json_path.clone());
+          }
+        }
       }
     }
   }
@@ -106,6 +143,18 @@ interface Module {
 
   // 🆕 新增字段
   packageJsonPath?: string;  // 关联的 package.json 路径
+}
+
+interface ConcatenatedModuleInfo {
+  id: string;
+  name: string;
+  size: number;
+
+  // 🆕 扩展字段
+  moduleType: string;         // 文件类型
+  isNodeModule: boolean;      // 是否三方包
+  nameForCondition: string;   // 条件名称
+  packageJsonPath?: string;   // 关联的 package.json 路径
 }
 
 interface Package {
@@ -232,6 +281,94 @@ function analyzePackageUsage(modules: Module[], packages: Package[]) {
 
 ---
 
+### 使用方式 4：展开 ConcatenatedModule（树视图）
+
+展示如何渲染 Concatenated Module 及其内部模块，并正确显示它们的包信息：
+
+```typescript
+function ModuleTreeView({ module }: { module: Module }) {
+  const packageMap = usePackageMap();
+
+  // 获取外层模块的包信息
+  const pkg = module.packageJsonPath
+    ? packageMap.get(module.packageJsonPath)
+    : undefined;
+
+  // 判断是否有内部模块
+  const hasInnerModules = module.concatenatedModules && module.concatenatedModules.length > 0;
+
+  return (
+    <div className="module-tree">
+      {/* 外层模块 */}
+      <div className="module-item">
+        <div className="module-header">
+          <FileTypeIcon type={module.moduleType} />
+          <span className="module-name">{module.name}</span>
+          <span className="module-size">{formatSize(module.size)}</span>
+
+          {pkg && (
+            <Badge color="blue">
+              📦 {pkg.name}@{pkg.version}
+            </Badge>
+          )}
+
+          {module.chunks.length > 1 && (
+            <Badge color="orange">🔗 Shared</Badge>
+          )}
+        </div>
+
+        {/* 展开内部模块 */}
+        {hasInnerModules && (
+          <div className="inner-modules">
+            {module.concatenatedModules!.map(inner => {
+              // 🆕 内部模块也能关联到 Package
+              const innerPkg = inner.packageJsonPath
+                ? packageMap.get(inner.packageJsonPath)
+                : undefined;
+
+              return (
+                <div key={inner.id} className="inner-module-item">
+                  <FileTypeIcon type={inner.moduleType} />
+                  <span className="inner-module-name">{inner.name}</span>
+                  <span className="inner-module-size">{formatSize(inner.size)}</span>
+
+                  {/* 🆕 显示内部模块的包信息 */}
+                  {innerPkg && (
+                    <Badge color="blue" size="sm">
+                      📦 {innerPkg.name}@{innerPkg.version}
+                    </Badge>
+                  )}
+
+                  {/* 🆕 显示内部模块的来源类型 */}
+                  {inner.isNodeModule ? (
+                    <Badge color="purple" size="sm">Third-party</Badge>
+                  ) : (
+                    <Badge color="green" size="sm">Source</Badge>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+**效果展示**：
+
+```
+📦 lodash-es@4.17.21
+  ├─ ConcatenatedModule (100KB) 🔗 Shared
+  │   ├─ 📄 lodash-es/add.js (2KB) 📦 lodash-es@4.17.21 [Third-party]
+  │   ├─ 📄 lodash-es/debounce.js (5KB) 📦 lodash-es@4.17.21 [Third-party]
+  │   ├─ 📄 lodash-es/throttle.js (4KB) 📦 lodash-es@4.17.21 [Third-party]
+  │   └─ 📄 ./src/utils.js (1KB) [Source]
+```
+
+---
+
 ### Context 实现示例
 
 ```typescript
@@ -353,15 +490,24 @@ pub struct Module {
 - `is_node_module` 字段保留
 - 可选字段，不影响现有代码
 
+### 6. 完整支持内部模块 ✅
+- **`ConcatenatedModuleInfo` 同样支持所有功能**
+- 内部模块也能：
+  - 判断是否三方包（`is_node_module`）
+  - 显示文件类型（`module_type`）
+  - 关联到 Package（`package_json_path`）
+- 递归处理，无遗漏
+
 ---
 
 ## 性能分析
 
 ### Rust 端
-- 关联操作：O(n + m)
+- 关联操作：O(n + m + k)
   - n = packages 数量（~100）
   - m = modules 数量（~1000）
-- 典型项目：~1-2ms（可忽略）
+  - k = 内部模块数量（~100-500）
+- 典型项目：~1-3ms（可忽略）
 
 ### 前端
 - 预处理索引：O(n)，n = packages 数量
@@ -406,5 +552,10 @@ pub struct Module {
 ✅ 数据最精简（-23% vs 方案 A）
 
 ✅ 精确唯一匹配
+
+✅ **完整支持 ConcatenatedModuleInfo**
+- 内部模块同样具备完整字段
+- 可判断来源、文件类型、关联 Package
+- 支持树视图完整展开
 
 **下一步**：等待前端集成反馈，根据实际使用情况决定是否需要添加快捷字段。
