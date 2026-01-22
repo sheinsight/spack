@@ -212,6 +212,14 @@ pub struct JsConcatenatedModuleInfo {
   pub id: String,
   pub name: String,
   pub size: u32,
+  /// 模块文件类型
+  pub module_type: String,
+  /// 是否来自 node_modules
+  pub is_node_module: bool,
+  /// 模块条件名称
+  pub name_for_condition: String,
+  /// 关联的 Package 的 package.json 路径
+  pub package_json_path: Option<String>,
 }
 
 impl From<ConcatenatedModuleInfo> for JsConcatenatedModuleInfo {
@@ -220,6 +228,10 @@ impl From<ConcatenatedModuleInfo> for JsConcatenatedModuleInfo {
       id: value.id,
       name: value.name,
       size: value.size as u32,
+      module_type: value.module_type.as_str().to_string(),
+      is_node_module: value.is_node_module,
+      name_for_condition: value.name_for_condition,
+      package_json_path: value.package_json_path,
     }
   }
 }

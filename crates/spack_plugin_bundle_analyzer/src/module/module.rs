@@ -9,6 +9,14 @@ pub struct ConcatenatedModuleInfo {
   pub name: String,
   /// 模块大小
   pub size: u64,
+  /// 模块文件类型（JavaScript/CSS/JSON 等）
+  pub module_type: ModuleType,
+  /// 是否来自 node_modules
+  pub is_node_module: bool,
+  /// 模块条件名称
+  pub name_for_condition: String,
+  /// 关联的 Package 的 package.json 路径（唯一标识）
+  pub package_json_path: Option<String>,
 }
 
 #[derive(Debug)]

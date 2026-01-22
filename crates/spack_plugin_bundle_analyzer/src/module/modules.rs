@@ -66,10 +66,38 @@ impl Modules {
             concat_mod
               .get_modules()
               .iter()
-              .map(|inner| ConcatenatedModuleInfo {
-                id: inner.id.to_string(),
-                name: inner.shorten_id.clone(),
-                size: inner.size as u64,
+              .map(|inner| {
+                // 尝试在 module_graph 中查找原始模块以获取完整信息
+                let (inner_name_for_condition, inner_is_node_module, inner_module_type) =
+                  if let Some(inner_module) = module_graph.module_by_identifier(&inner.id) {
+                    let inner_name =
+                      inner_module.readable_identifier(&compilation.options.context);
+                    let inner_name_for_condition = inner_module
+                      .name_for_condition()
+                      .unwrap_or_default()
+                      .into_string();
+                    let inner_is_node_module = inner_name.contains("node_modules/");
+                    let inner_module_type = ModuleType::from_path(&inner_name_for_condition);
+
+                    (inner_name_for_condition, inner_is_node_module, inner_module_type)
+                  } else {
+                    // Fallback: 从 shorten_id 解析
+                    let fallback_name = inner.shorten_id.clone();
+                    let fallback_is_node_module = fallback_name.contains("node_modules/");
+                    let fallback_module_type = ModuleType::from_path(&fallback_name);
+
+                    (fallback_name.clone(), fallback_is_node_module, fallback_module_type)
+                  };
+
+                ConcatenatedModuleInfo {
+                  id: inner.id.to_string(),
+                  name: inner.shorten_id.clone(),
+                  size: inner.size as u64,
+                  module_type: inner_module_type,
+                  is_node_module: inner_is_node_module,
+                  name_for_condition: inner_name_for_condition,
+                  package_json_path: None, // 后续通过 associate_packages 填充
+                }
               })
               .collect()
           });
@@ -94,7 +122,8 @@ impl Modules {
   /// 将 Modules 与 Packages 关联
   ///
   /// 通过 Package.modules 建立 module_id → package 的映射，
-  /// 为每个来自三方包的 Module 填充 package_json_path 字段
+  /// 为每个来自三方包的 Module 填充 package_json_path 字段，
+  /// 同时递归处理 ConcatenatedModuleInfo 中的内部模块
   ///
   /// 参数:
   /// - packages: 已分析的 Packages
@@ -110,8 +139,18 @@ impl Modules {
 
     // 为每个 Module 填充 package_json_path（O(m)）
     for module in &mut self.0 {
+      // 1. 处理外层模块
       if let Some(package) = module_package_map.get(&module.id) {
         module.package_json_path = Some(package.package_json_path.clone());
+      }
+
+      // 2. 递归处理内部的 ConcatenatedModuleInfo
+      if let Some(ref mut inner_modules) = module.concatenated_modules {
+        for inner in inner_modules {
+          if let Some(package) = module_package_map.get(&inner.id) {
+            inner.package_json_path = Some(package.package_json_path.clone());
+          }
+        }
       }
     }
   }

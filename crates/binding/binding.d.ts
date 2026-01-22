@@ -44,6 +44,14 @@ export interface JsConcatenatedModuleInfo {
   id: string
   name: string
   size: number
+  /** 模块文件类型 */
+  moduleType: string
+  /** 是否来自 node_modules */
+  isNodeModule: boolean
+  /** 模块条件名称 */
+  nameForCondition: string
+  /** 关联的 Package 的 package.json 路径 */
+  packageJsonPath?: string
 }
 
 export interface JsDuplicateDependencyPluginResp {
