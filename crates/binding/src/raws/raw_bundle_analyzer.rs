@@ -1,5 +1,5 @@
 use derive_more::Debug;
-use napi::{bindgen_prelude::FromNapiValue, Env, Unknown};
+use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
 use rspack_core::BoxPlugin;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
