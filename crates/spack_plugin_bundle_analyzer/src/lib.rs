@@ -132,9 +132,31 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   let dir = current_dir().unwrap();
 
-  let f = dir.join("db.json");
+  // 1. 写出 JSON 数据文件（用于调试）
+  let json_file = dir.join("bundle-analyzer.json");
+  let json_data = serde_json::to_string_pretty(&report)
+    .map_err(|e| rspack_error::error!("Failed to serialize report: {}", e))?;
+  fs::write(&json_file, &json_data).await?;
 
-  fs::write(f, format!("{:#?}", report)).await?;
+  // 2. 生成 HTML 报告
+  let html_file = dir.join("bundle-analyzer.html");
+
+  // 读取 HTML 模板（编译时嵌入）
+  let template = include_str!("index.html");
+
+  // 替换数据注入点
+  let html_content = template.replace(
+    "window.__bundle_viewer_data__ = null;",
+    &format!("window.__bundle_viewer_data__ = {};", json_data)
+  );
+
+  fs::write(&html_file, html_content).await?;
+
+  tracing::info!(
+    "Bundle analysis complete:\n  - JSON: {}\n  - HTML: {}",
+    json_file.display(),
+    html_file.display()
+  );
 
   // 调用回调函数
   if let Some(on_analyzed) = &self.options.on_analyzed {
