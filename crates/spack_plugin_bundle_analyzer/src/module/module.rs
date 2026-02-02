@@ -1,4 +1,4 @@
-use crate::{ModuleKind, ModuleType};
+use super::{ModuleKind, ModuleType};
 
 /// 合并模块中的单个内部模块信息
 #[derive(Debug, Clone)]

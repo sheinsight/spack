@@ -8,8 +8,9 @@ use rspack_core::{
 
 use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
 use crate::context::ModuleChunkContext;
-use crate::module_type::ModuleType;
 use crate::package::Packages;
+
+use super::ModuleType;
 
 #[derive(Debug, Deref, Into)]
 pub struct Modules(pub Vec<Module>);

@@ -3,7 +3,6 @@ mod asset;
 mod chunk;
 mod context;
 mod module;
-mod module_type;
 mod opts;
 mod package;
 mod reporting;
@@ -20,8 +19,7 @@ use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package
 pub use crate::{
   asset::{Asset, AssetType},
   chunk::Chunk,
-  module::{ConcatenatedModuleInfo, Module, ModuleKind},
-  module_type::ModuleType,
+  module::{ConcatenatedModuleInfo, Module, ModuleKind, ModuleType},
   package::Package,
   reporting::{PerformanceTimings, Report, Summary},
 };
