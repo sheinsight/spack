@@ -1,7 +1,7 @@
 use derive_more::Debug;
 use futures::future::BoxFuture;
 
-use crate::report::Report;
+use crate::reporting::Report;
 
 // use crate::resp::BundleAnalysisResult;
 

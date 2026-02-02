@@ -1,4 +1,4 @@
-use crate::performance_timings::PerformanceTimings;
+use super::PerformanceTimings;
 
 #[derive(Debug)]
 pub struct Summary {

@@ -7,9 +7,7 @@ mod module_type;
 mod opts;
 mod package;
 mod package_version_resolver;
-mod performance_timings;
-mod report;
-mod summary;
+mod reporting;
 
 use std::env::current_dir;
 
@@ -26,9 +24,7 @@ pub use crate::{
   module::{ConcatenatedModuleInfo, Module, ModuleKind},
   module_type::ModuleType,
   package::Package,
-  performance_timings::PerformanceTimings,
-  report::Report,
-  summary::Summary,
+  reporting::{PerformanceTimings, Report, Summary},
 };
 
 #[plugin]

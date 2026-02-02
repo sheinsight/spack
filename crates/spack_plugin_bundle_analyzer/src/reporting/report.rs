@@ -1,4 +1,6 @@
-use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package, summary::Summary};
+use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package};
+
+use super::Summary;
 
 // 核心数据结构
 #[derive(Debug)]
