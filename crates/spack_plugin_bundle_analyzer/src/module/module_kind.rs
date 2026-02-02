@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Module 的种类（rspack 内部类型）
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModuleKind {
@@ -16,6 +18,9 @@ pub enum ModuleKind {
 }
 
 impl ModuleKind {
+  /// 返回模块种类的字符串表示
+  ///
+  /// 注意：推荐使用 Display trait (`format!("{}", kind)`)
   pub fn as_str(&self) -> &'static str {
     match self {
       ModuleKind::Normal => "Normal",
@@ -25,5 +30,11 @@ impl ModuleKind {
       ModuleKind::Raw => "Raw",
       ModuleKind::SelfRef => "SelfRef",
     }
+  }
+}
+
+impl fmt::Display for ModuleKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str(self.as_str())
   }
 }

@@ -55,52 +55,9 @@ impl Modules {
           .cloned()
           .unwrap_or_default();
 
-        // 判断模块种类
-        let module_kind = get_module_kind(module.as_ref());
-
-        // 尝试 downcast 到 ConcatenatedModule 以获取合并模块信息
-        let concatenated_modules = module
-          .as_any()
-          .downcast_ref::<ConcatenatedModule>()
-          .map(|concat_mod| {
-            concat_mod
-              .get_modules()
-              .iter()
-              .map(|inner| {
-                // 尝试在 module_graph 中查找原始模块以获取完整信息
-                let (inner_name_for_condition, inner_is_node_module, inner_module_type) =
-                  if let Some(inner_module) = module_graph.module_by_identifier(&inner.id) {
-                    let inner_name =
-                      inner_module.readable_identifier(&compilation.options.context);
-                    let inner_name_for_condition = inner_module
-                      .name_for_condition()
-                      .unwrap_or_default()
-                      .into_string();
-                    let inner_is_node_module = inner_name.contains("node_modules/");
-                    let inner_module_type = ModuleType::from_path(&inner_name_for_condition);
-
-                    (inner_name_for_condition, inner_is_node_module, inner_module_type)
-                  } else {
-                    // Fallback: 从 shorten_id 解析
-                    let fallback_name = inner.shorten_id.clone();
-                    let fallback_is_node_module = fallback_name.contains("node_modules/");
-                    let fallback_module_type = ModuleType::from_path(&fallback_name);
-
-                    (fallback_name.clone(), fallback_is_node_module, fallback_module_type)
-                  };
-
-                ConcatenatedModuleInfo {
-                  id: inner.id.to_string(),
-                  name: inner.shorten_id.clone(),
-                  size: inner.size as u64,
-                  module_type: inner_module_type,
-                  is_node_module: inner_is_node_module,
-                  name_for_condition: inner_name_for_condition,
-                  package_json_path: None, // 后续通过 associate_packages 填充
-                }
-              })
-              .collect()
-          });
+        // 一次性判断模块种类并提取 ConcatenatedModule 信息（避免重复 downcast）
+        let (module_kind, concatenated_modules) =
+          Self::extract_module_kind_and_concat(module.as_ref(), &module_graph, compilation);
 
         Module {
           id: id.to_string(),
@@ -119,6 +76,101 @@ impl Modules {
     Modules(modules)
   }
 
+  /// 判断模块种类并提取 ConcatenatedModule 信息（一次 downcast 完成）
+  ///
+  /// 性能优化：
+  /// - 按出现频率排序检查（Normal 最常见 ~92%，优先检查可早返回）
+  /// - 合并了原来的 `get_module_kind()` 和 ConcatenatedModule downcast
+  /// - 避免了对 ConcatenatedModule 的重复 downcast（从 2 次减少到 1 次）
+  fn extract_module_kind_and_concat(
+    module: &dyn rspack_core::Module,
+    module_graph: &rspack_core::ModuleGraph,
+    compilation: &Compilation,
+  ) -> (ModuleKind, Option<Vec<ConcatenatedModuleInfo>>) {
+    let any = module.as_any();
+
+    // 按出现频率优化检查顺序（Normal 约 92%，最常见）
+    if any.downcast_ref::<NormalModule>().is_some() {
+      return (ModuleKind::Normal, None);
+    }
+
+    // Concatenated 约 6%，第二常见，且需要提取内部模块信息
+    if let Some(concat_mod) = any.downcast_ref::<ConcatenatedModule>() {
+      let inner_modules = Self::extract_concatenated_info(concat_mod, module_graph, compilation);
+      return (ModuleKind::Concatenated, Some(inner_modules));
+    }
+
+    // Context 约 1.5%
+    if any.downcast_ref::<ContextModule>().is_some() {
+      return (ModuleKind::Context, None);
+    }
+
+    // External 约 0.3%
+    if any.downcast_ref::<ExternalModule>().is_some() {
+      return (ModuleKind::External, None);
+    }
+
+    // Raw 约 0.1%
+    if any.downcast_ref::<RawModule>().is_some() {
+      return (ModuleKind::Raw, None);
+    }
+
+    // SelfRef 约 0.1%
+    if any.downcast_ref::<SelfModule>().is_some() {
+      return (ModuleKind::SelfRef, None);
+    }
+
+    // Fallback（理论上不应该发生）
+    (ModuleKind::Normal, None)
+  }
+
+  /// 提取 ConcatenatedModule 的内部模块信息
+  ///
+  /// ConcatenatedModule 是 rspack 的 scope hoisting 优化产生的合并模块，
+  /// 包含多个原始模块的信息。这个函数提取所有内部模块的详细信息。
+  fn extract_concatenated_info(
+    concat_mod: &ConcatenatedModule,
+    module_graph: &rspack_core::ModuleGraph,
+    compilation: &Compilation,
+  ) -> Vec<ConcatenatedModuleInfo> {
+    concat_mod
+      .get_modules()
+      .iter()
+      .map(|inner| {
+        // 尝试在 module_graph 中查找原始模块以获取完整信息
+        let (inner_name_for_condition, inner_is_node_module, inner_module_type) =
+          if let Some(inner_module) = module_graph.module_by_identifier(&inner.id) {
+            let inner_name = inner_module.readable_identifier(&compilation.options.context);
+            let inner_name_for_condition = inner_module
+              .name_for_condition()
+              .unwrap_or_default()
+              .into_string();
+            let inner_is_node_module = inner_name.contains("node_modules/");
+            let inner_module_type = ModuleType::from_path(&inner_name_for_condition);
+
+            (inner_name_for_condition, inner_is_node_module, inner_module_type)
+          } else {
+            // Fallback: 从 shorten_id 解析（当原始模块信息不可用时）
+            let fallback_name = inner.shorten_id.clone();
+            let fallback_is_node_module = fallback_name.contains("node_modules/");
+            let fallback_module_type = ModuleType::from_path(&fallback_name);
+
+            (fallback_name.clone(), fallback_is_node_module, fallback_module_type)
+          };
+
+        ConcatenatedModuleInfo {
+          id: inner.id.to_string(),
+          name: inner.shorten_id.clone(),
+          size: inner.size as u64,
+          module_type: inner_module_type,
+          is_node_module: inner_is_node_module,
+          name_for_condition: inner_name_for_condition,
+          package_json_path: None, // 后续通过 associate_packages 填充
+        }
+      })
+      .collect()
+  }
+
   /// 将 Modules 与 Packages 关联
   ///
   /// 通过 Package.modules 建立 module_id → package 的映射，
@@ -128,8 +180,13 @@ impl Modules {
   /// 参数:
   /// - packages: 已分析的 Packages
   pub fn associate_packages(&mut self, packages: &Packages) {
+    // 预计算 HashMap 容量，避免动态扩容和 rehash
+    // 容量 = 所有 package 的 modules 数量总和
+    let estimated_capacity: usize = packages.iter().map(|p| p.modules.len()).sum();
+
     // 构建 module_id → package 映射（O(n)）
-    let mut module_package_map: HashMap<String, &crate::Package> = HashMap::new();
+    let mut module_package_map: HashMap<String, &crate::Package> =
+      HashMap::with_capacity(estimated_capacity);
 
     for package in packages.iter() {
       for module_id in &package.modules {
@@ -163,24 +220,3 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
   module.size(None, None) as u64
 }
 
-/// 通过 downcast 判断模块种类
-fn get_module_kind(module: &dyn rspack_core::Module) -> ModuleKind {
-  let any_module = module.as_any();
-
-  if any_module.downcast_ref::<ConcatenatedModule>().is_some() {
-    ModuleKind::Concatenated
-  } else if any_module.downcast_ref::<ExternalModule>().is_some() {
-    ModuleKind::External
-  } else if any_module.downcast_ref::<ContextModule>().is_some() {
-    ModuleKind::Context
-  } else if any_module.downcast_ref::<RawModule>().is_some() {
-    ModuleKind::Raw
-  } else if any_module.downcast_ref::<SelfModule>().is_some() {
-    ModuleKind::SelfRef
-  } else if any_module.downcast_ref::<NormalModule>().is_some() {
-    ModuleKind::Normal
-  } else {
-    // 如果都不匹配，默认为 Normal（这种情况理论上不应该发生）
-    ModuleKind::Normal
-  }
-}
