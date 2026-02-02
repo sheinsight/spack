@@ -1,4 +1,6 @@
-use crate::{Module, Package, package_version_resolver::PackageInfo};
+use crate::{Module, Package};
+
+use super::version_resolver::PackageInfo;
 
 /// 包构建器（临时结构，仅用于 analyze_packages 函数内部）
 pub struct PackageBuilder<'a> {

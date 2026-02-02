@@ -6,7 +6,6 @@ mod module;
 mod module_type;
 mod opts;
 mod package;
-mod package_version_resolver;
 mod reporting;
 
 use std::env::current_dir;
@@ -77,7 +76,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let collect_chunks_ms = chunks_start.elapsed().as_millis_f64();
 
   // 5. 创建包版本解析器（在多个分析阶段复用，避免重复创建和缓存失效）
-  let mut resolver = package_version_resolver::PackageVersionResolver::new();
+  let mut resolver = package::PackageVersionResolver::new();
 
   // 6. 分析 Packages（按包名聚合，复用 resolver）
   let packages_start = Instant::now();

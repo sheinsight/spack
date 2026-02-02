@@ -1,6 +1,6 @@
 use derive_more::derive::{Deref, Into};
 
-use crate::{Module, Package, module::Modules, package::PackageBuilder, package_version_resolver};
+use crate::{Module, Package, module::Modules, package::PackageBuilder};
 
 #[derive(Debug, Deref, Into)]
 pub struct Packages(pub Vec<Package>);
@@ -13,7 +13,7 @@ impl Packages {
   /// - resolver: 可复用的包版本解析器（避免重复创建和缓存失效）
   pub fn from_with_resolver(
     modules: &Modules,
-    resolver: &mut package_version_resolver::PackageVersionResolver,
+    resolver: &mut super::PackageVersionResolver,
   ) -> Self {
     let packages = analyze_packages(modules, resolver);
     Packages(packages)
@@ -22,7 +22,7 @@ impl Packages {
 
 impl<'a> From<&'a Modules> for Packages {
   fn from(modules: &'a Modules) -> Self {
-    let mut resolver = package_version_resolver::PackageVersionResolver::new();
+    let mut resolver = super::PackageVersionResolver::new();
     Self::from_with_resolver(modules, &mut resolver)
   }
 }
@@ -38,7 +38,7 @@ impl<'a> From<&'a Modules> for Packages {
 /// - resolver: 可复用的包版本解析器（避免重复创建和缓存失效）
 fn analyze_packages(
   modules: &[Module],
-  resolver: &mut package_version_resolver::PackageVersionResolver,
+  resolver: &mut super::PackageVersionResolver,
 ) -> Vec<Package> {
   use std::collections::HashMap;
 
