@@ -3,7 +3,7 @@ use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package};
 use super::Summary;
 
 // 核心数据结构
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct Report {
   // 元数据
   pub timestamp: u64,

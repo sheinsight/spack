@@ -1,7 +1,7 @@
 use super::{ModuleKind, ModuleType};
 
 /// 合并模块中的单个内部模块信息
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ConcatenatedModuleInfo {
   /// 模块 ID
   pub id: String,
@@ -19,7 +19,7 @@ pub struct ConcatenatedModuleInfo {
   pub package_json_path: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct Module {
   // 模块唯一 ID
   pub id: String,

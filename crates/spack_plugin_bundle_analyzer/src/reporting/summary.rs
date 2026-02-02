@@ -1,6 +1,6 @@
 use super::PerformanceTimings;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct Summary {
   // 总大小（字节）- 原始大小
   pub total_size: u64,

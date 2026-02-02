@@ -1,5 +1,5 @@
 /// Asset 文件类型
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum AssetType {
   JavaScript,
   CSS,
@@ -59,7 +59,7 @@ impl AssetType {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct Asset {
   // 文件名，如 "main.js"
   pub name: String,

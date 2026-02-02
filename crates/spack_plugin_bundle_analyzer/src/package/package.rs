@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct Package {
   // 包名,如 "react" 或 "@babel/core"
   pub name: String,

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 /// 模块类型枚举
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub enum ModuleType {
   JavaScript,
   TypeScript,

@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct Chunk {
   // chunk ID
   pub id: String,

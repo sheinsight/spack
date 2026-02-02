@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Module 的种类（rspack 内部类型）
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub enum ModuleKind {
   /// 普通模块（最常见，约 92%）
   Normal,
