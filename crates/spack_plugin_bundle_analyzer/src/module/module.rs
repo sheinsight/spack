@@ -19,28 +19,6 @@ pub struct ConcatenatedModuleInfo {
   pub package_json_path: Option<String>,
 }
 
-/// 模块依赖信息（出站依赖：当前模块依赖谁）
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct ModuleDependency {
-  /// 被依赖模块的 ID
-  pub module_id: String,
-  /// 被依赖模块的名称
-  pub module_name: String,
-  /// 依赖 ID（rspack 内部数字标识）
-  pub dependency_id: String,
-}
-
-/// 模块被引用原因（入站依赖：谁依赖了当前模块）
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct ModuleReason {
-  /// 依赖当前模块的模块 ID
-  pub module_id: String,
-  /// 依赖当前模块的模块名称
-  pub module_name: String,
-  /// 依赖 ID（rspack 内部数字标识）
-  pub dependency_id: String,
-}
-
 #[derive(Debug, serde::Serialize)]
 pub struct Module {
   // 模块唯一 ID
@@ -68,8 +46,8 @@ pub struct Module {
   pub user_request: Option<String>,
   /// 原始请求路径（如 loader 链中的完整请求）
   pub raw_request: Option<String>,
-  /// 当前模块的出站依赖列表（当前模块依赖哪些模块）
-  pub dependencies: Option<Vec<ModuleDependency>>,
-  /// 当前模块的入站依赖列表（哪些模块依赖当前模块，为什么被包含）
-  pub reasons: Option<Vec<ModuleReason>>,
+  /// 当前模块的出站依赖列表（当前模块依赖哪些模块的 ID）
+  pub dependencies: Option<Vec<String>>,
+  /// 当前模块的入站依赖列表（哪些模块依赖当前模块的 ID）
+  pub reasons: Option<Vec<String>>,
 }

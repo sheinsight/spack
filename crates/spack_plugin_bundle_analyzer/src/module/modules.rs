@@ -9,7 +9,7 @@ use rspack_core::{
 use super::ModuleType;
 use crate::context::ModuleChunkContext;
 use crate::package::Packages;
-use crate::{ConcatenatedModuleInfo, Module, ModuleDependency, ModuleKind, ModuleReason};
+use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
 
 #[derive(Debug, Deref, Into)]
 pub struct Modules(pub Vec<Module>);
@@ -248,20 +248,16 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
 fn collect_dependencies(
   module_graph: &rspack_core::ModuleGraph,
   module_id: &rspack_core::ModuleIdentifier,
-) -> Vec<ModuleDependency> {
+) -> Vec<String> {
   let connections = module_graph.get_outgoing_connections(module_id);
 
   connections
     .into_iter()
     .filter_map(|connection| {
       let target_module_id = connection.module_identifier();
-      let target_module = module_graph.module_by_identifier(target_module_id)?;
-
-      Some(ModuleDependency {
-        module_id: target_module_id.to_string(),
-        module_name: target_module.readable_identifier(&Default::default()).to_string(),
-        dependency_id: connection.dependency_id.to_string(),
-      })
+      // 验证模块存在
+      module_graph.module_by_identifier(target_module_id)?;
+      Some(target_module_id.to_string())
     })
     .collect()
 }
@@ -270,20 +266,16 @@ fn collect_dependencies(
 fn collect_reasons(
   module_graph: &rspack_core::ModuleGraph,
   module_id: &rspack_core::ModuleIdentifier,
-) -> Vec<ModuleReason> {
+) -> Vec<String> {
   let connections = module_graph.get_incoming_connections(module_id);
 
   connections
     .into_iter()
     .filter_map(|connection| {
       let source_module_id = connection.original_module_identifier.as_ref()?;
-      let source_module = module_graph.module_by_identifier(source_module_id)?;
-
-      Some(ModuleReason {
-        module_id: source_module_id.to_string(),
-        module_name: source_module.readable_identifier(&Default::default()).to_string(),
-        dependency_id: connection.dependency_id.to_string(),
-      })
+      // 验证模块存在
+      module_graph.module_by_identifier(source_module_id)?;
+      Some(source_module_id.to_string())
     })
     .collect()
 }
