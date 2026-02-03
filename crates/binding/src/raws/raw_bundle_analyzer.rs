@@ -6,7 +6,7 @@ use rspack_napi::threadsafe_function::ThreadsafeFunction;
 use spack_macros::ThreadsafeCallback;
 use spack_plugin_bundle_analyzer::{
   Asset, BundleAnalyzerPlugin, BundleAnalyzerPluginOpts, Chunk, ConcatenatedModuleInfo, Module,
-  Package, PerformanceTimings, Report, Summary,
+  ModuleDependency, ModuleReason, Package, PerformanceTimings, Report, Summary,
 };
 
 #[derive(Debug, ThreadsafeCallback)]
@@ -52,6 +52,42 @@ impl From<Asset> for JsAsset {
 
 #[derive(Debug, Clone)]
 #[napi(object)]
+pub struct JsModuleDependency {
+  pub module_id: String,
+  pub module_name: String,
+  pub dependency_type: String,
+}
+
+impl From<ModuleDependency> for JsModuleDependency {
+  fn from(value: ModuleDependency) -> Self {
+    Self {
+      module_id: value.module_id,
+      module_name: value.module_name,
+      dependency_type: value.dependency_type,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
+pub struct JsModuleReason {
+  pub module_id: String,
+  pub module_name: String,
+  pub dependency_type: String,
+}
+
+impl From<ModuleReason> for JsModuleReason {
+  fn from(value: ModuleReason) -> Self {
+    Self {
+      module_id: value.module_id,
+      module_name: value.module_name,
+      dependency_type: value.dependency_type,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+#[napi(object)]
 pub struct JsModule {
   pub id: String,
   pub name: String,
@@ -69,6 +105,10 @@ pub struct JsModule {
   pub user_request: Option<String>,
   /// 原始请求路径（如 loader 链中的完整请求）
   pub raw_request: Option<String>,
+  /// 当前模块的出站依赖列表（当前模块依赖哪些模块）
+  pub dependencies: Option<Vec<JsModuleDependency>>,
+  /// 当前模块的入站依赖列表（哪些模块依赖当前模块，为什么被包含）
+  pub reasons: Option<Vec<JsModuleReason>>,
 }
 
 impl From<Module> for JsModule {
@@ -88,6 +128,12 @@ impl From<Module> for JsModule {
       package_json_path: value.package_json_path,
       user_request: value.user_request,
       raw_request: value.raw_request,
+      dependencies: value
+        .dependencies
+        .map(|deps| deps.into_iter().map(|d| d.into()).collect()),
+      reasons: value
+        .reasons
+        .map(|reasons| reasons.into_iter().map(|r| r.into()).collect()),
     }
   }
 }

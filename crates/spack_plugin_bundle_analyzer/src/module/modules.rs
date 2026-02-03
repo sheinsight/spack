@@ -9,7 +9,7 @@ use rspack_core::{
 use super::ModuleType;
 use crate::context::ModuleChunkContext;
 use crate::package::Packages;
-use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
+use crate::{ConcatenatedModuleInfo, Module, ModuleDependency, ModuleKind, ModuleReason};
 
 #[derive(Debug, Deref, Into)]
 pub struct Modules(pub Vec<Module>);
@@ -67,6 +67,10 @@ impl Modules {
           .as_normal_module()
           .map(|m| m.raw_request().to_string());
 
+        // 收集依赖关系
+        let dependencies = collect_dependencies(&module_graph, &id);
+        let reasons = collect_reasons(&module_graph, &id);
+
         Module {
           id: id.to_string(),
           name: name.to_string(),
@@ -80,6 +84,8 @@ impl Modules {
           is_node_module,
           concatenated_modules,
           package_json_path: None, // 初始为 None，后续通过 associate_packages 关联
+          dependencies: Some(dependencies),
+          reasons: Some(reasons),
         }
       })
       .collect();
@@ -236,4 +242,48 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
   // source_type 参数为 None 表示获取所有类型的总大小
   // compilation 参数为 None 因为我们不需要编译上下文
   module.size(None, None) as u64
+}
+
+/// 收集模块的出站依赖（当前模块依赖哪些模块）
+fn collect_dependencies(
+  module_graph: &rspack_core::ModuleGraph,
+  module_id: &rspack_core::ModuleIdentifier,
+) -> Vec<ModuleDependency> {
+  let connections = module_graph.get_outgoing_connections(module_id);
+
+  connections
+    .into_iter()
+    .filter_map(|connection| {
+      let target_module_id = connection.module_identifier();
+      let target_module = module_graph.module_by_identifier(target_module_id)?;
+
+      Some(ModuleDependency {
+        module_id: target_module_id.to_string(),
+        module_name: target_module.readable_identifier(&Default::default()).to_string(),
+        dependency_type: format!("{:?}", connection.dependency_id),
+      })
+    })
+    .collect()
+}
+
+/// 收集模块的入站依赖（哪些模块依赖当前模块）
+fn collect_reasons(
+  module_graph: &rspack_core::ModuleGraph,
+  module_id: &rspack_core::ModuleIdentifier,
+) -> Vec<ModuleReason> {
+  let connections = module_graph.get_incoming_connections(module_id);
+
+  connections
+    .into_iter()
+    .filter_map(|connection| {
+      let source_module_id = connection.original_module_identifier.as_ref()?;
+      let source_module = module_graph.module_by_identifier(source_module_id)?;
+
+      Some(ModuleReason {
+        module_id: source_module_id.to_string(),
+        module_name: source_module.readable_identifier(&Default::default()).to_string(),
+        dependency_type: format!("{:?}", connection.dependency_id),
+      })
+    })
+    .collect()
 }

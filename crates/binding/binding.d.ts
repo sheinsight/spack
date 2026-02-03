@@ -89,6 +89,22 @@ export interface JsModule {
   userRequest?: string
   /** 原始请求路径（如 loader 链中的完整请求） */
   rawRequest?: string
+  /** 当前模块的出站依赖列表（当前模块依赖哪些模块） */
+  dependencies?: Array<JsModuleDependency>
+  /** 当前模块的入站依赖列表（哪些模块依赖当前模块，为什么被包含） */
+  reasons?: Array<JsModuleReason>
+}
+
+export interface JsModuleDependency {
+  moduleId: string
+  moduleName: string
+  dependencyType: string
+}
+
+export interface JsModuleReason {
+  moduleId: string
+  moduleName: string
+  dependencyType: string
 }
 
 export interface JsPackage {

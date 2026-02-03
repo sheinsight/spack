@@ -19,7 +19,7 @@ use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package
 pub use crate::{
   asset::{Asset, AssetType},
   chunk::Chunk,
-  module::{ConcatenatedModuleInfo, Module, ModuleKind, ModuleType},
+  module::{ConcatenatedModuleInfo, Module, ModuleDependency, ModuleKind, ModuleReason, ModuleType},
   package::Package,
   reporting::{PerformanceTimings, Report, Summary},
 };
