@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use derive_more::Debug;
 use napi::{Env, Unknown, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
@@ -53,7 +55,7 @@ impl From<Asset> for JsAsset {
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsModule {
-  pub id: String,
+  pub id: u32,
   // pub name: String,
   pub size: u32,
   pub chunks: Vec<String>,
@@ -71,8 +73,8 @@ pub struct JsModule {
   pub raw_request: Option<String>,
   // /// 当前模块的出站依赖列表（当前模块依赖哪些模块的 ID）
   // pub dependencies: Option<Vec<String>>,
-  /// 当前模块的入站依赖列表（哪些模块依赖当前模块的 ID）
-  pub reasons: Option<Vec<String>>,
+  /// 当前模块的入站依赖列表（哪些模块依赖当前模块的数字 ID）
+  pub reasons: Option<Vec<u32>>,
 }
 
 impl From<Module> for JsModule {
@@ -107,8 +109,8 @@ pub struct JsChunk {
   pub names: Vec<String>,
   // chunk 大小
   pub size: u32,
-  // 包含的模块 ID 列表
-  pub modules: Vec<String>,
+  // 包含的模块数字 ID 列表
+  pub modules: Vec<u32>,
   // 是否入口 chunk
   pub entry: bool,
   // 是否初始 chunk
@@ -153,7 +155,7 @@ pub struct JsPackage {
   pub version: String,
   pub size: u32,
   pub module_count: u32,
-  pub modules: Vec<String>,
+  pub modules: Vec<u32>,
   pub package_json_path: String,
 }
 
@@ -221,7 +223,7 @@ impl From<Summary> for JsSummary {
 #[derive(Debug, Clone)]
 #[napi(object)]
 pub struct JsConcatenatedModuleInfo {
-  pub id: String,
+  pub id: u32,
   // pub name: String,
   pub size: u32,
   // /// 模块文件类型
@@ -253,6 +255,7 @@ impl From<ConcatenatedModuleInfo> for JsConcatenatedModuleInfo {
 pub struct JsBundleAnalyzerPluginResp {
   pub timestamp: u32,
   pub summary: JsSummary,
+  pub module_id_map: HashMap<String, String>,
   pub assets: Vec<JsAsset>,
   pub modules: Vec<JsModule>,
   pub chunks: Vec<JsChunk>,
@@ -264,6 +267,7 @@ impl From<Report> for JsBundleAnalyzerPluginResp {
     Self {
       timestamp: value.timestamp as u32,
       summary: value.summary.into(),
+      module_id_map: value.module_id_map,
       assets: value.assets.into_iter().map(|a| a.into()).collect(),
       modules: value.modules.into_iter().map(|m| m.into()).collect(),
       chunks: value.chunks.into_iter().map(|c| c.into()).collect(),

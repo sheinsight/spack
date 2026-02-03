@@ -9,7 +9,7 @@ use rspack_core::{
 // use super::ModuleType;
 use crate::context::ModuleChunkContext;
 use crate::package::Packages;
-use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
+use crate::{ConcatenatedModuleInfo, Module, ModuleIdMapper, ModuleKind};
 
 #[derive(Debug, Deref, Into)]
 pub struct Modules(pub Vec<Module>);
@@ -29,12 +29,31 @@ impl Modules {
   /// - compilation: 编译上下文
   /// - context: 预构建的 module ↔ chunk 映射关系
   pub fn from_with_context(compilation: &mut Compilation, context: &ModuleChunkContext) -> Self {
+    // 保留原有实现用于向后兼容（不使用 ID 映射）
+    let mut id_mapper = ModuleIdMapper::new();
+    Self::from_with_context_and_mapper(compilation, context, &mut id_mapper)
+  }
+
+  /// 使用预构建的上下文和 ID 映射器来避免重复遍历 chunk_graph
+  ///
+  /// 参数:
+  /// - compilation: 编译上下文
+  /// - context: 预构建的 module ↔ chunk 映射关系
+  /// - id_mapper: 模块 ID 映射器（将原始路径映射为数字 ID）
+  pub fn from_with_context_and_mapper(
+    compilation: &mut Compilation,
+    context: &ModuleChunkContext,
+    id_mapper: &mut ModuleIdMapper,
+  ) -> Self {
     let module_graph = compilation.get_module_graph();
 
     let modules = module_graph
       .modules()
       .into_iter()
       .map(|(id, module)| {
+        // 分配数字 ID
+        let numeric_id = id_mapper.get_or_create(&id.to_string());
+
         // let name = module.readable_identifier(&compilation.options.context);
 
         let name_for_condition = module
@@ -57,7 +76,12 @@ impl Modules {
 
         // 一次性判断模块种类并提取 ConcatenatedModule 信息（避免重复 downcast）
         let (module_kind, concatenated_modules) =
-          Self::extract_module_kind_and_concat(module.as_ref(), &module_graph, compilation);
+          Self::extract_module_kind_and_concat_with_mapper(
+            module.as_ref(),
+            &module_graph,
+            compilation,
+            id_mapper,
+          );
 
         // let user_request = module
         //   .as_normal_module()
@@ -67,12 +91,12 @@ impl Modules {
           .as_normal_module()
           .map(|m| m.raw_request().to_string());
 
-        // 收集依赖关系
+        // 收集依赖关系（转换为数字 ID）
         // let dependencies = collect_dependencies(&module_graph, &id);
-        let reasons = collect_reasons(&module_graph, &id);
+        let reasons = collect_reasons_with_mapper(&module_graph, &id, id_mapper);
 
         Module {
-          id: id.to_string(),
+          id: numeric_id, // 使用数字 ID
           // name: name.to_string(),
           name_for_condition,
           // user_request,
@@ -103,6 +127,28 @@ impl Modules {
     module_graph: &rspack_core::ModuleGraph,
     compilation: &Compilation,
   ) -> (ModuleKind, Option<Vec<ConcatenatedModuleInfo>>) {
+    // 向后兼容：不使用 ID 映射
+    let mut id_mapper = ModuleIdMapper::new();
+    Self::extract_module_kind_and_concat_with_mapper(
+      module,
+      module_graph,
+      compilation,
+      &mut id_mapper,
+    )
+  }
+
+  /// 判断模块种类并提取 ConcatenatedModule 信息（带 ID 映射器）
+  ///
+  /// 性能优化：
+  /// - 按出现频率排序检查（Normal 最常见 ~92%，优先检查可早返回）
+  /// - 合并了原来的 `get_module_kind()` 和 ConcatenatedModule downcast
+  /// - 避免了对 ConcatenatedModule 的重复 downcast（从 2 次减少到 1 次）
+  fn extract_module_kind_and_concat_with_mapper(
+    module: &dyn rspack_core::Module,
+    module_graph: &rspack_core::ModuleGraph,
+    compilation: &Compilation,
+    id_mapper: &mut ModuleIdMapper,
+  ) -> (ModuleKind, Option<Vec<ConcatenatedModuleInfo>>) {
     let any = module.as_any();
 
     // 按出现频率优化检查顺序（Normal 约 92%，最常见）
@@ -112,7 +158,8 @@ impl Modules {
 
     // Concatenated 约 6%，第二常见，且需要提取内部模块信息
     if let Some(concat_mod) = any.downcast_ref::<ConcatenatedModule>() {
-      let inner_modules = Self::extract_concatenated_info(concat_mod, module_graph, compilation);
+      let inner_modules =
+        Self::extract_concatenated_info_with_mapper(concat_mod, module_graph, compilation, id_mapper);
       return (ModuleKind::Concatenated, Some(inner_modules));
     }
 
@@ -149,10 +196,28 @@ impl Modules {
     module_graph: &rspack_core::ModuleGraph,
     _compilation: &Compilation,
   ) -> Vec<ConcatenatedModuleInfo> {
+    // 向后兼容：不使用 ID 映射
+    let mut id_mapper = ModuleIdMapper::new();
+    Self::extract_concatenated_info_with_mapper(concat_mod, module_graph, _compilation, &mut id_mapper)
+  }
+
+  /// 提取 ConcatenatedModule 的内部模块信息（带 ID 映射器）
+  ///
+  /// ConcatenatedModule 是 rspack 的 scope hoisting 优化产生的合并模块，
+  /// 包含多个原始模块的信息。这个函数提取所有内部模块的详细信息。
+  fn extract_concatenated_info_with_mapper(
+    concat_mod: &ConcatenatedModule,
+    module_graph: &rspack_core::ModuleGraph,
+    _compilation: &Compilation,
+    id_mapper: &mut ModuleIdMapper,
+  ) -> Vec<ConcatenatedModuleInfo> {
     concat_mod
       .get_modules()
       .iter()
       .map(|inner| {
+        // 分配数字 ID
+        let numeric_id = id_mapper.get_or_create(&inner.id.to_string());
+
         // 尝试在 module_graph 中查找原始模块以获取完整信息
         let (inner_name_for_condition, inner_is_node_module) =
           if let Some(inner_module) = module_graph.module_by_identifier(&inner.id) {
@@ -183,7 +248,7 @@ impl Modules {
           };
 
         ConcatenatedModuleInfo {
-          id: inner.id.to_string(),
+          id: numeric_id, // 使用数字 ID
           // name: inner.shorten_id.clone(),
           size: inner.size as u64,
           // module_type: inner_module_type,
@@ -208,13 +273,13 @@ impl Modules {
     // 容量 = 所有 package 的 modules 数量总和
     let estimated_capacity: usize = packages.iter().map(|p| p.modules.len()).sum();
 
-    // 构建 module_id → package 映射（O(n)）
-    let mut module_package_map: HashMap<String, &crate::Package> =
+    // 构建 module_id（数字 ID）→ package 映射（O(n)）
+    let mut module_package_map: HashMap<u32, &crate::Package> =
       HashMap::with_capacity(estimated_capacity);
 
     for package in packages.iter() {
-      for module_id in &package.modules {
-        module_package_map.insert(module_id.clone(), package);
+      for &module_id in &package.modules {
+        module_package_map.insert(module_id, package);
       }
     }
 
@@ -276,6 +341,26 @@ fn collect_reasons(
       // 验证模块存在
       module_graph.module_by_identifier(source_module_id)?;
       Some(source_module_id.to_string())
+    })
+    .collect()
+}
+
+/// 收集模块的入站依赖（哪些模块依赖当前模块），转换为数字 ID
+fn collect_reasons_with_mapper(
+  module_graph: &rspack_core::ModuleGraph,
+  module_id: &rspack_core::ModuleIdentifier,
+  id_mapper: &mut ModuleIdMapper,
+) -> Vec<u32> {
+  let connections = module_graph.get_incoming_connections(module_id);
+
+  connections
+    .into_iter()
+    .filter_map(|connection| {
+      let source_module_id = connection.original_module_identifier.as_ref()?;
+      // 验证模块存在
+      module_graph.module_by_identifier(source_module_id)?;
+      // 转换为数字 ID
+      Some(id_mapper.get_or_create(&source_module_id.to_string()))
     })
     .collect()
 }

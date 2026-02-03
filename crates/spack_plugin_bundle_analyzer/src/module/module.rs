@@ -3,8 +3,8 @@ use super::ModuleKind;
 /// 合并模块中的单个内部模块信息
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ConcatenatedModuleInfo {
-  /// 模块 ID
-  pub id: String,
+  /// 模块数字 ID（映射到原始路径，见 Report.module_id_map）
+  pub id: u32,
   // /// 模块名称
   // pub name: String,
   /// 模块大小
@@ -21,8 +21,8 @@ pub struct ConcatenatedModuleInfo {
 
 #[derive(Debug, serde::Serialize)]
 pub struct Module {
-  // 模块唯一 ID
-  pub id: String,
+  // 模块数字 ID（映射到原始路径，见 Report.module_id_map）
+  pub id: u32,
   // // 可读名称，如 "./src/index.js"
   // pub name: String,
   // 模块大小
@@ -48,6 +48,6 @@ pub struct Module {
   pub raw_request: Option<String>,
   // /// 当前模块的出站依赖列表（当前模块依赖哪些模块的 ID）
   // pub dependencies: Option<Vec<String>>,
-  /// 当前模块的入站依赖列表（哪些模块依赖当前模块的 ID）
-  pub reasons: Option<Vec<String>>,
+  /// 当前模块的入站依赖列表（哪些模块依赖当前模块的数字 ID）
+  pub reasons: Option<Vec<u32>>,
 }

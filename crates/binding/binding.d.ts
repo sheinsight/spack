@@ -19,6 +19,7 @@ export interface JsAsset {
 export interface JsBundleAnalyzerPluginResp {
   timestamp: number
   summary: JsSummary
+  moduleIdMap: Record<string, string>
   assets: Array<JsAsset>
   modules: Array<JsModule>
   chunks: Array<JsChunk>
@@ -29,7 +30,7 @@ export interface JsChunk {
   id: string
   names: Array<string>
   size: number
-  modules: Array<string>
+  modules: Array<number>
   entry: boolean
   initial: boolean
   asyncChunks: boolean
@@ -41,7 +42,7 @@ export interface JsChunk {
 }
 
 export interface JsConcatenatedModuleInfo {
-  id: string
+  id: number
   size: number
   /** 是否来自 node_modules */
   isNodeModule: boolean
@@ -68,7 +69,7 @@ export interface JsLibraryGroup {
 }
 
 export interface JsModule {
-  id: string
+  id: number
   size: number
   chunks: Array<string>
   moduleKind: string
@@ -82,8 +83,8 @@ export interface JsModule {
   packageJsonPath?: string
   /** 原始请求路径（如 loader 链中的完整请求） */
   rawRequest?: string
-  /** 当前模块的入站依赖列表（哪些模块依赖当前模块的 ID） */
-  reasons?: Array<string>
+  /** 当前模块的入站依赖列表（哪些模块依赖当前模块的数字 ID） */
+  reasons?: Array<number>
 }
 
 export interface JsPackage {
@@ -91,7 +92,7 @@ export interface JsPackage {
   version: string
   size: number
   moduleCount: number
-  modules: Array<string>
+  modules: Array<number>
   packageJsonPath: string
 }
 

@@ -8,8 +8,8 @@ pub struct Package {
   pub size: u64,
   // 包含的模块数量
   pub module_count: usize,
-  // 该包包含的所有模块 ID 列表
-  pub modules: Vec<String>,
+  // 该包包含的所有模块数字 ID 列表（映射到原始路径，见 Report.module_id_map）
+  pub modules: Vec<u32>,
   // package.json 文件路径
   pub package_json_path: String,
 }

@@ -1,8 +1,10 @@
 mod module;
+mod module_id_mapper;
 mod module_kind;
 mod module_type;
 mod modules;
 pub use module::{ConcatenatedModuleInfo, Module};
+pub use module_id_mapper::ModuleIdMapper;
 pub use module_kind::ModuleKind;
 pub use module_type::ModuleType;
 pub use modules::Modules;

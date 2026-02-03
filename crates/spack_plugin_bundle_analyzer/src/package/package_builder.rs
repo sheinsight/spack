@@ -22,7 +22,7 @@ impl<'a> PackageBuilder<'a> {
 
   pub fn build(self) -> Package {
     let size: u64 = self.modules.iter().map(|m| m.size).sum();
-    let modules: Vec<String> = self.modules.iter().map(|m| m.id.clone()).collect();
+    let modules: Vec<u32> = self.modules.iter().map(|m| m.id).collect();
 
     Package {
       name: self.info.name,

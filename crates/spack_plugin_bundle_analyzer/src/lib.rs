@@ -19,7 +19,7 @@ use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package
 pub use crate::{
   asset::{Asset, AssetType},
   chunk::Chunk,
-  module::{ConcatenatedModuleInfo, Module, ModuleKind, ModuleType},
+  module::{ConcatenatedModuleInfo, Module, ModuleIdMapper, ModuleKind, ModuleType},
   package::Package,
   reporting::{PerformanceTimings, Report, Summary},
 };
@@ -51,37 +51,48 @@ impl Plugin for BundleAnalyzerPlugin {
 async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Result<()> {
   let start_time = Instant::now();
 
-  // 1. 预构建 module ↔ chunk 映射关系（性能优化）
+  // 1. 创建 ID 映射器（用于减少 JSON 体积）
+  let mut id_mapper = ModuleIdMapper::new();
+
+  // 2. 预构建 module ↔ chunk 映射关系（性能优化）
   let context_start = Instant::now();
   let module_chunk_context = ModuleChunkContext::from(&*compilation);
   let _build_context_ms = context_start.elapsed().as_millis_f64();
 
-  // 2. 收集 Assets（输出文件）
+  // 3. 收集 Assets（输出文件）
   let assets_start = Instant::now();
   let enable_gzip = self.options.gzip_assets.unwrap_or(false);
   let enable_brotli = self.options.brotli_assets.unwrap_or(false);
   let assets = Assets::from_with_compression(&mut *compilation, enable_gzip, enable_brotli);
   let collect_assets_ms = assets_start.elapsed().as_millis_f64();
 
-  // 3. 收集 Modules（源文件，使用预构建的映射）
+  // 4. 收集 Modules（源文件，使用预构建的映射和 ID 映射器）
   let modules_start = Instant::now();
-  let mut modules = Modules::from_with_context(&mut *compilation, &module_chunk_context);
+  let mut modules = Modules::from_with_context_and_mapper(
+    &mut *compilation,
+    &module_chunk_context,
+    &mut id_mapper,
+  );
   let collect_modules_ms = modules_start.elapsed().as_millis_f64();
 
-  // 4. 收集 Chunks（代码块，使用预构建的映射）
+  // 5. 收集 Chunks（代码块，使用预构建的映射和 ID 映射器）
   let chunks_start = Instant::now();
-  let chunks = chunk::Chunks::from_with_context(&mut *compilation, &module_chunk_context);
+  let chunks = chunk::Chunks::from_with_context_and_mapper(
+    &mut *compilation,
+    &module_chunk_context,
+    &id_mapper,
+  );
   let collect_chunks_ms = chunks_start.elapsed().as_millis_f64();
 
-  // 5. 创建包版本解析器（在多个分析阶段复用，避免重复创建和缓存失效）
+  // 6. 创建包版本解析器（在多个分析阶段复用，避免重复创建和缓存失效）
   let mut resolver = package::PackageVersionResolver::new();
 
-  // 6. 分析 Packages（按包名聚合，复用 resolver）
+  // 7. 分析 Packages（按包名聚合，复用 resolver）
   let packages_start = Instant::now();
   let packages = Packages::from_with_resolver(&modules, &mut resolver);
   let analyze_packages_ms = packages_start.elapsed().as_millis_f64();
 
-  // 7. 关联 Module 和 Package（填充 package_json_path）
+  // 8. 关联 Module 和 Package（填充 package_json_path）
   modules.associate_packages(&packages);
 
   // 计算总耗时
@@ -121,9 +132,13 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     .unwrap()
     .as_millis() as u64;
 
+  // 9. 获取映射表
+  let module_id_map = id_mapper.into_map();
+
   let report = Report {
     timestamp,
     summary,
+    module_id_map, // 添加映射表
     assets: assets.into(),
     modules: modules.into(),
     chunks: chunks.into(),

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use derive_more::derive::{Deref, Into};
 use rspack_core::Compilation;
 
-use crate::{Chunk, context::ModuleChunkContext};
+use crate::{Chunk, ModuleIdMapper, context::ModuleChunkContext};
 
 #[derive(Debug, Default, Deref, Into)]
 pub struct Chunks(Vec<Chunk>);
@@ -23,6 +23,22 @@ impl Chunks {
   /// - compilation: 编译上下文
   /// - context: 预构建的 module ↔ chunk 映射关系
   pub fn from_with_context(compilation: &mut Compilation, context: &ModuleChunkContext) -> Self {
+    // 保留原有实现用于向后兼容（不使用 ID 映射）
+    let id_mapper = ModuleIdMapper::new();
+    Self::from_with_context_and_mapper(compilation, context, &id_mapper)
+  }
+
+  /// 使用预构建的上下文和 ID 映射器来避免重复遍历 chunk_graph
+  ///
+  /// 参数:
+  /// - compilation: 编译上下文
+  /// - context: 预构建的 module ↔ chunk 映射关系
+  /// - id_mapper: 模块 ID 映射器（用于将原始路径转换为数字 ID）
+  pub fn from_with_context_and_mapper(
+    compilation: &mut Compilation,
+    context: &ModuleChunkContext,
+    id_mapper: &ModuleIdMapper,
+  ) -> Self {
     let chunk_graph = &compilation.chunk_graph;
 
     // 预先构建 chunk 的 parents 和 children 映射
@@ -35,11 +51,18 @@ impl Chunks {
         let id = ukey.as_u32().to_string();
 
         // O(1) 查找，不需要再次遍历 chunk_graph
-        let (modules, size) = context
+        // 将模块 ID 转换为数字 ID
+        let (module_ids, size) = context
           .chunk_to_modules
           .get(&id)
           .cloned()
           .unwrap_or_default();
+
+        // 转换模块 ID 为数字 ID
+        let modules: Vec<u32> = module_ids
+          .iter()
+          .filter_map(|module_id| id_mapper.get(module_id))
+          .collect();
 
         let names = chunk
           .name()
@@ -59,7 +82,7 @@ impl Chunks {
           id,
           names,
           size,
-          modules,
+          modules, // 使用数字 ID 列表
           entry,
           initial,
           reason,
