@@ -28,8 +28,6 @@ pub struct ModuleDependency {
   pub module_name: String,
   /// 依赖 ID（rspack 内部数字标识）
   pub dependency_id: String,
-  /// 依赖类型（可读名称，如 "esm-import", "cjs-require" 等）
-  pub dependency_type: Option<String>,
 }
 
 /// 模块被引用原因（入站依赖：谁依赖了当前模块）
@@ -41,8 +39,6 @@ pub struct ModuleReason {
   pub module_name: String,
   /// 依赖 ID（rspack 内部数字标识）
   pub dependency_id: String,
-  /// 依赖类型（可读名称）
-  pub dependency_type: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize)]

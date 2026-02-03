@@ -99,14 +99,12 @@ export interface JsModuleDependency {
   moduleId: string
   moduleName: string
   dependencyId: string
-  dependencyType?: string
 }
 
 export interface JsModuleReason {
   moduleId: string
   moduleName: string
   dependencyId: string
-  dependencyType?: string
 }
 
 export interface JsPackage {
