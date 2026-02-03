@@ -55,7 +55,8 @@ impl From<Asset> for JsAsset {
 pub struct JsModuleDependency {
   pub module_id: String,
   pub module_name: String,
-  pub dependency_type: String,
+  pub dependency_id: String,
+  pub dependency_type: Option<String>,
 }
 
 impl From<ModuleDependency> for JsModuleDependency {
@@ -63,6 +64,7 @@ impl From<ModuleDependency> for JsModuleDependency {
     Self {
       module_id: value.module_id,
       module_name: value.module_name,
+      dependency_id: value.dependency_id,
       dependency_type: value.dependency_type,
     }
   }
@@ -73,7 +75,8 @@ impl From<ModuleDependency> for JsModuleDependency {
 pub struct JsModuleReason {
   pub module_id: String,
   pub module_name: String,
-  pub dependency_type: String,
+  pub dependency_id: String,
+  pub dependency_type: Option<String>,
 }
 
 impl From<ModuleReason> for JsModuleReason {
@@ -81,6 +84,7 @@ impl From<ModuleReason> for JsModuleReason {
     Self {
       module_id: value.module_id,
       module_name: value.module_name,
+      dependency_id: value.dependency_id,
       dependency_type: value.dependency_type,
     }
   }

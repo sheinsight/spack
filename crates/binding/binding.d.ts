@@ -98,13 +98,15 @@ export interface JsModule {
 export interface JsModuleDependency {
   moduleId: string
   moduleName: string
-  dependencyType: string
+  dependencyId: string
+  dependencyType?: string
 }
 
 export interface JsModuleReason {
   moduleId: string
   moduleName: string
-  dependencyType: string
+  dependencyId: string
+  dependencyType?: string
 }
 
 export interface JsPackage {

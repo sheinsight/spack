@@ -260,7 +260,8 @@ fn collect_dependencies(
       Some(ModuleDependency {
         module_id: target_module_id.to_string(),
         module_name: target_module.readable_identifier(&Default::default()).to_string(),
-        dependency_type: format!("{:?}", connection.dependency_id),
+        dependency_id: connection.dependency_id.to_string(),
+        dependency_type: None, // TODO: 实现真实的依赖类型提取
       })
     })
     .collect()
@@ -282,7 +283,8 @@ fn collect_reasons(
       Some(ModuleReason {
         module_id: source_module_id.to_string(),
         module_name: source_module.readable_identifier(&Default::default()).to_string(),
-        dependency_type: format!("{:?}", connection.dependency_id),
+        dependency_id: connection.dependency_id.to_string(),
+        dependency_type: None, // TODO: 实现真实的依赖类型提取
       })
     })
     .collect()
