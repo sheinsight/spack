@@ -6,7 +6,7 @@ use rspack_core::{
   SelfModule,
 };
 
-use super::ModuleType;
+// use super::ModuleType;
 use crate::context::ModuleChunkContext;
 use crate::package::Packages;
 use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
@@ -35,18 +35,18 @@ impl Modules {
       .modules()
       .into_iter()
       .map(|(id, module)| {
-        let name = module.readable_identifier(&compilation.options.context);
+        // let name = module.readable_identifier(&compilation.options.context);
 
         let name_for_condition = module
           .name_for_condition()
           .unwrap_or_default()
           .into_string();
 
-        // 识别模块类型（使用 name_for_condition 而不是 name，避免 loader 信息干扰）
-        let module_type = ModuleType::from_path(&name_for_condition);
+        // // 识别模块类型（使用 name_for_condition 而不是 name，避免 loader 信息干扰）
+        // let module_type = ModuleType::from_path(&name_for_condition);
 
         // 判断是否来自 node_modules
-        let is_node_module = name.contains("node_modules/");
+        let is_node_module = name_for_condition.contains("node_modules/");
 
         // O(1) 查找，不需要再次遍历 chunk_graph
         let chunks = context
@@ -59,32 +59,32 @@ impl Modules {
         let (module_kind, concatenated_modules) =
           Self::extract_module_kind_and_concat(module.as_ref(), &module_graph, compilation);
 
-        let user_request = module
-          .as_normal_module()
-          .map(|m| m.user_request().to_string());
+        // let user_request = module
+        //   .as_normal_module()
+        //   .map(|m| m.user_request().to_string());
 
         let raw_request = module
           .as_normal_module()
           .map(|m| m.raw_request().to_string());
 
         // 收集依赖关系
-        let dependencies = collect_dependencies(&module_graph, &id);
+        // let dependencies = collect_dependencies(&module_graph, &id);
         let reasons = collect_reasons(&module_graph, &id);
 
         Module {
           id: id.to_string(),
-          name: name.to_string(),
+          // name: name.to_string(),
           name_for_condition,
-          user_request,
+          // user_request,
           raw_request,
           size: get_module_size(module.as_ref()),
           chunks,
           module_kind,
-          module_type,
+          // module_type,
           is_node_module,
           concatenated_modules,
           package_json_path: None, // 初始为 None，后续通过 associate_packages 关联
-          dependencies: Some(dependencies),
+          // dependencies: Some(dependencies),
           reasons: Some(reasons),
         }
       })
@@ -147,46 +147,46 @@ impl Modules {
   fn extract_concatenated_info(
     concat_mod: &ConcatenatedModule,
     module_graph: &rspack_core::ModuleGraph,
-    compilation: &Compilation,
+    _compilation: &Compilation,
   ) -> Vec<ConcatenatedModuleInfo> {
     concat_mod
       .get_modules()
       .iter()
       .map(|inner| {
         // 尝试在 module_graph 中查找原始模块以获取完整信息
-        let (inner_name_for_condition, inner_is_node_module, inner_module_type) =
+        let (inner_name_for_condition, inner_is_node_module) =
           if let Some(inner_module) = module_graph.module_by_identifier(&inner.id) {
-            let inner_name = inner_module.readable_identifier(&compilation.options.context);
+            // let inner_name = inner_module.readable_identifier(&compilation.options.context);
             let inner_name_for_condition = inner_module
               .name_for_condition()
               .unwrap_or_default()
               .into_string();
-            let inner_is_node_module = inner_name.contains("node_modules/");
-            let inner_module_type = ModuleType::from_path(&inner_name_for_condition);
+            let inner_is_node_module = inner_name_for_condition.contains("node_modules/");
+            // let inner_module_type = ModuleType::from_path(&inner_name_for_condition);
 
             (
               inner_name_for_condition,
               inner_is_node_module,
-              inner_module_type,
+              // inner_module_type,
             )
           } else {
             // Fallback: 从 shorten_id 解析（当原始模块信息不可用时）
             let fallback_name = inner.shorten_id.clone();
             let fallback_is_node_module = fallback_name.contains("node_modules/");
-            let fallback_module_type = ModuleType::from_path(&fallback_name);
+            // let fallback_module_type = ModuleType::from_path(&fallback_name);
 
             (
               fallback_name.clone(),
               fallback_is_node_module,
-              fallback_module_type,
+              // fallback_module_type,
             )
           };
 
         ConcatenatedModuleInfo {
           id: inner.id.to_string(),
-          name: inner.shorten_id.clone(),
+          // name: inner.shorten_id.clone(),
           size: inner.size as u64,
-          module_type: inner_module_type,
+          // module_type: inner_module_type,
           is_node_module: inner_is_node_module,
           name_for_condition: inner_name_for_condition,
           package_json_path: None, // 后续通过 associate_packages 填充
@@ -244,23 +244,23 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
   module.size(None, None) as u64
 }
 
-/// 收集模块的出站依赖（当前模块依赖哪些模块）
-fn collect_dependencies(
-  module_graph: &rspack_core::ModuleGraph,
-  module_id: &rspack_core::ModuleIdentifier,
-) -> Vec<String> {
-  let connections = module_graph.get_outgoing_connections(module_id);
+// /// 收集模块的出站依赖（当前模块依赖哪些模块）
+// fn collect_dependencies(
+//   module_graph: &rspack_core::ModuleGraph,
+//   module_id: &rspack_core::ModuleIdentifier,
+// ) -> Vec<String> {
+//   let connections = module_graph.get_outgoing_connections(module_id);
 
-  connections
-    .into_iter()
-    .filter_map(|connection| {
-      let target_module_id = connection.module_identifier();
-      // 验证模块存在
-      module_graph.module_by_identifier(target_module_id)?;
-      Some(target_module_id.to_string())
-    })
-    .collect()
-}
+//   connections
+//     .into_iter()
+//     .filter_map(|connection| {
+//       let target_module_id = connection.module_identifier();
+//       // 验证模块存在
+//       module_graph.module_by_identifier(target_module_id)?;
+//       Some(target_module_id.to_string())
+//     })
+//     .collect()
+// }
 
 /// 收集模块的入站依赖（哪些模块依赖当前模块）
 fn collect_reasons(

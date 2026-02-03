@@ -42,10 +42,7 @@ export interface JsChunk {
 
 export interface JsConcatenatedModuleInfo {
   id: string
-  name: string
   size: number
-  /** 模块文件类型 */
-  moduleType: string
   /** 是否来自 node_modules */
   isNodeModule: boolean
   /** 模块条件名称 */
@@ -72,11 +69,9 @@ export interface JsLibraryGroup {
 
 export interface JsModule {
   id: string
-  name: string
   size: number
   chunks: Array<string>
   moduleKind: string
-  moduleType: string
   isNodeModule: boolean
   nameForCondition: string
   concatenatedModules?: Array<JsConcatenatedModuleInfo>
@@ -85,12 +80,8 @@ export interface JsModule {
    * 仅三方包模块有值，用于精确匹配对应的 Package
    */
   packageJsonPath?: string
-  /** 用户请求路径（如 require('lodash') 中的 'lodash'） */
-  userRequest?: string
   /** 原始请求路径（如 loader 链中的完整请求） */
   rawRequest?: string
-  /** 当前模块的出站依赖列表（当前模块依赖哪些模块的 ID） */
-  dependencies?: Array<string>
   /** 当前模块的入站依赖列表（哪些模块依赖当前模块的 ID） */
   reasons?: Array<string>
 }

@@ -48,7 +48,7 @@ fn analyze_packages(
   // 1. 遍历所有模块,按 package.json 路径分组
   for module in modules {
     // 从 package.json 解析包名、版本和路径
-    if let Some(info) = resolver.resolve(&module.name) {
+    if let Some(info) = resolver.resolve(&module.name_for_condition) {
       package_map
         .entry(info.path.clone())
         .or_insert_with(|| PackageBuilder::new(info))
