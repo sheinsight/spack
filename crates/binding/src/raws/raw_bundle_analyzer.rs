@@ -65,6 +65,10 @@ pub struct JsModule {
   /// 关联的 Package 的 package.json 路径（唯一标识）
   /// 仅三方包模块有值，用于精确匹配对应的 Package
   pub package_json_path: Option<String>,
+  /// 用户请求路径（如 require('lodash') 中的 'lodash'）
+  pub user_request: Option<String>,
+  /// 原始请求路径（如 loader 链中的完整请求）
+  pub raw_request: Option<String>,
 }
 
 impl From<Module> for JsModule {
@@ -82,6 +86,8 @@ impl From<Module> for JsModule {
         .concatenated_modules
         .map(|modules| modules.into_iter().map(|m| m.into()).collect()),
       package_json_path: value.package_json_path,
+      user_request: value.user_request,
+      raw_request: value.raw_request,
     }
   }
 }

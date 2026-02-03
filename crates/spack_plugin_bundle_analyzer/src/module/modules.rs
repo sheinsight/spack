@@ -2,15 +2,14 @@ use std::collections::HashMap;
 
 use derive_more::derive::{Deref, Into};
 use rspack_core::{
-  ConcatenatedModule, Compilation, ContextModule, ExternalModule, NormalModule, RawModule,
+  Compilation, ConcatenatedModule, ContextModule, ExternalModule, NormalModule, RawModule,
   SelfModule,
 };
 
-use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
+use super::ModuleType;
 use crate::context::ModuleChunkContext;
 use crate::package::Packages;
-
-use super::ModuleType;
+use crate::{ConcatenatedModuleInfo, Module, ModuleKind};
 
 #[derive(Debug, Deref, Into)]
 pub struct Modules(pub Vec<Module>);
@@ -60,10 +59,20 @@ impl Modules {
         let (module_kind, concatenated_modules) =
           Self::extract_module_kind_and_concat(module.as_ref(), &module_graph, compilation);
 
+        let user_request = module
+          .as_normal_module()
+          .map(|m| m.user_request().to_string());
+
+        let raw_request = module
+          .as_normal_module()
+          .map(|m| m.raw_request().to_string());
+
         Module {
           id: id.to_string(),
           name: name.to_string(),
           name_for_condition,
+          user_request,
+          raw_request,
           size: get_module_size(module.as_ref()),
           chunks,
           module_kind,
@@ -149,14 +158,22 @@ impl Modules {
             let inner_is_node_module = inner_name.contains("node_modules/");
             let inner_module_type = ModuleType::from_path(&inner_name_for_condition);
 
-            (inner_name_for_condition, inner_is_node_module, inner_module_type)
+            (
+              inner_name_for_condition,
+              inner_is_node_module,
+              inner_module_type,
+            )
           } else {
             // Fallback: 从 shorten_id 解析（当原始模块信息不可用时）
             let fallback_name = inner.shorten_id.clone();
             let fallback_is_node_module = fallback_name.contains("node_modules/");
             let fallback_module_type = ModuleType::from_path(&fallback_name);
 
-            (fallback_name.clone(), fallback_is_node_module, fallback_module_type)
+            (
+              fallback_name.clone(),
+              fallback_is_node_module,
+              fallback_module_type,
+            )
           };
 
         ConcatenatedModuleInfo {
@@ -220,4 +237,3 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
   // compilation 参数为 None 因为我们不需要编译上下文
   module.size(None, None) as u64
 }
-

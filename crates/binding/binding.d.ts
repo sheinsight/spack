@@ -85,6 +85,10 @@ export interface JsModule {
    * 仅三方包模块有值，用于精确匹配对应的 Package
    */
   packageJsonPath?: string
+  /** 用户请求路径（如 require('lodash') 中的 'lodash'） */
+  userRequest?: string
+  /** 原始请求路径（如 loader 链中的完整请求） */
+  rawRequest?: string
 }
 
 export interface JsPackage {
