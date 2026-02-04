@@ -6,7 +6,7 @@ use flate2::{Compression, write::GzEncoder};
 use rayon::iter::{IntoParallelRefIterator as _, ParallelIterator as _};
 use rspack_core::Compilation;
 
-use crate::{Asset, AssetType};
+use crate::Asset;
 
 #[derive(Debug, Default, Deref, Into)]
 pub struct Assets(Vec<Asset>);
@@ -65,7 +65,7 @@ impl Assets {
           brotli_size,
           chunks,
           emitted: true,
-          asset_type: AssetType::from_filename(name),
+          // asset_type: AssetType::from_filename(name),
         }
       })
       .collect();

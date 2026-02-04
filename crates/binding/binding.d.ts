@@ -13,7 +13,6 @@ export interface JsAsset {
   brotliSize?: number
   chunks: Array<string>
   emitted: boolean
-  assetType: string
 }
 
 export interface JsBundleAnalyzerPluginResp {

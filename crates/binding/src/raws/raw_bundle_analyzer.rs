@@ -35,7 +35,7 @@ pub struct JsAsset {
   pub brotli_size: Option<u32>,
   pub chunks: Vec<String>,
   pub emitted: bool,
-  pub asset_type: String,
+  // pub asset_type: String,
 }
 
 impl From<Asset> for JsAsset {
@@ -47,7 +47,7 @@ impl From<Asset> for JsAsset {
       brotli_size: value.brotli_size.map(|s| s as u32),
       chunks: value.chunks,
       emitted: value.emitted,
-      asset_type: value.asset_type.as_str().to_string(),
+      // asset_type: value.asset_type.as_str().to_string(),
     }
   }
 }
