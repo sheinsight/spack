@@ -2,6 +2,7 @@ use super::ModuleKind;
 
 /// 合并模块中的单个内部模块信息
 #[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConcatenatedModuleInfo {
   /// 模块数字 ID（映射到原始路径，见 Report.module_id_map）
   pub id: u32,
@@ -20,6 +21,7 @@ pub struct ConcatenatedModuleInfo {
 }
 
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Module {
   // 模块数字 ID（映射到原始路径，见 Report.module_id_map）
   pub id: u32,

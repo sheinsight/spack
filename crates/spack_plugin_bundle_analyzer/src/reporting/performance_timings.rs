@@ -1,5 +1,6 @@
 /// 性能计时信息
 #[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PerformanceTimings {
   /// 收集 Assets 耗时（毫秒）
   pub collect_assets_ms: f64,

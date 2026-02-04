@@ -15,11 +15,7 @@ pub enum AssetType {
 impl AssetType {
   /// 从文件名推断资源类型
   pub fn from_filename(filename: &str) -> Self {
-    let extension = filename
-      .rsplit('.')
-      .next()
-      .unwrap_or("")
-      .to_lowercase();
+    let extension = filename.rsplit('.').next().unwrap_or("").to_lowercase();
 
     match extension.as_str() {
       // JavaScript
@@ -60,6 +56,7 @@ impl AssetType {
 }
 
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Asset {
   // 文件名，如 "main.js"
   pub name: String,

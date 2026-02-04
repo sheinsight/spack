@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package};
-
 use super::Summary;
+use crate::{asset::Asset, chunk::Chunk, module::Module, package::Package};
 
 // 核心数据结构
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Report {
   // 元数据
   pub timestamp: u64,

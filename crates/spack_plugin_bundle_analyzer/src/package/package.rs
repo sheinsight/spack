@@ -1,4 +1,5 @@
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Package {
   // 包名,如 "react" 或 "@babel/core"
   pub name: String,

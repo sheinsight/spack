@@ -1,6 +1,7 @@
 use super::PerformanceTimings;
 
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Summary {
   // 总大小（字节）- 原始大小
   pub total_size: u64,

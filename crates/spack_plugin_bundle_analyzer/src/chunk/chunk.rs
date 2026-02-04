@@ -1,4 +1,5 @@
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Chunk {
   // chunk ID
   pub id: String,
