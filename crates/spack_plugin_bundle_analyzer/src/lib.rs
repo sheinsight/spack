@@ -17,7 +17,7 @@ use rspack_hook::{plugin, plugin_hook};
 
 use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package::Packages};
 pub use crate::{
-  asset::{Asset, AssetType},
+  asset::Asset,
   chunk::Chunk,
   module::{ConcatenatedModuleInfo, Module, ModuleIdMapper, ModuleKind, ModuleType},
   package::Package,
