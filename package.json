@@ -8,6 +8,7 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
+    "bundle-viewer:sync": "node scripts/sync-bundle-viewer.mjs",
     "build:dev": "pnpm --filter @shined/spack-binding run build:dev",
     "build:release": "pnpm --filter @shined/spack-binding run build:release",
     "test": "vitest run",

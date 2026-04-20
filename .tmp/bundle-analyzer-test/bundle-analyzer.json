@@ -1,0 +1,90 @@
+{
+  "timestamp": 1776656014070,
+  "summary": {
+    "totalSize": 2410,
+    "totalGzipSize": 0,
+    "totalAssets": 1,
+    "totalModules": 2,
+    "totalChunks": 1,
+    "buildTime": 0.373917,
+    "timings": {
+      "collectAssetsMs": 0.072917,
+      "collectModulesMs": 0.091875,
+      "collectChunksMs": 0.062875,
+      "analyzePackagesMs": 0.001584,
+      "totalMs": 0.373917
+    }
+  },
+  "moduleIdMap": {
+    "0": "/Users/10015448/Git/spack/tests/fixtures/demo/src/index.js",
+    "1": "/Users/10015448/Git/spack/tests/fixtures/demo/src/h.js"
+  },
+  "assets": [
+    {
+      "name": "bundle.js",
+      "size": 2410,
+      "gzipSize": null,
+      "brotliSize": null,
+      "chunks": [
+        "0"
+      ],
+      "emitted": true
+    }
+  ],
+  "modules": [
+    {
+      "id": 0,
+      "size": 28,
+      "chunks": [
+        "0"
+      ],
+      "moduleKind": "Normal",
+      "isNodeModule": false,
+      "nameForCondition": "/Users/10015448/Git/spack/tests/fixtures/demo/src/index.js",
+      "concatenatedModules": null,
+      "packageJsonPath": null,
+      "rawRequest": "/Users/10015448/Git/spack/tests/fixtures/demo/src/index.js",
+      "reasons": []
+    },
+    {
+      "id": 1,
+      "size": 30,
+      "chunks": [
+        "0"
+      ],
+      "moduleKind": "Normal",
+      "isNodeModule": false,
+      "nameForCondition": "/Users/10015448/Git/spack/tests/fixtures/demo/src/h.js",
+      "concatenatedModules": null,
+      "packageJsonPath": null,
+      "rawRequest": "./h",
+      "reasons": [
+        0
+      ]
+    }
+  ],
+  "chunks": [
+    {
+      "id": "0",
+      "names": [
+        "main"
+      ],
+      "size": 58,
+      "modules": [
+        0,
+        1
+      ],
+      "entry": true,
+      "initial": true,
+      "reason": "",
+      "files": [
+        "bundle.js"
+      ],
+      "asyncChunks": false,
+      "runtime": true,
+      "parents": [],
+      "children": []
+    }
+  ],
+  "packages": []
+}

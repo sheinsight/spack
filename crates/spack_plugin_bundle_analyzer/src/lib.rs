@@ -175,12 +175,21 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let html_file = output_dir.join("bundle-analyzer.html");
 
   // 读取 HTML 模板（编译时嵌入）
-  let template = include_str!("index.html");
+  let template = include_str!("../assets/bundle-viewer.html");
 
-  // 替换数据注入点
-  let html_content = template.replace(
+  // 兼容模板中带分号和不带分号的占位写法
+  let placeholder = [
     "window.__bundle_viewer_data__ = null;",
+    "window.__bundle_viewer_data__ = null",
+  ]
+  .into_iter()
+  .find(|candidate| template.contains(candidate))
+  .ok_or_else(|| rspack_error::error!("Bundle viewer template is missing the data injection placeholder"))?;
+
+  let html_content = template.replacen(
+    placeholder,
     &format!("window.__bundle_viewer_data__ = {};", json_data),
+    1,
   );
 
   fs::write(&html_file, html_content).await?;

@@ -15,6 +15,11 @@ const { values,positionals } = require("util").parseArgs({
 });
 
 const { spawn } = require("child_process");
+const napiBin = path.resolve(
+	__dirname,
+	"../node_modules/.bin",
+	process.platform === "win32" ? "napi.cmd" : "napi"
+);
 
 const CARGO_SAFELY_EXIT_CODE = 0;
 
@@ -29,6 +34,8 @@ build().then((value) => {
 });
 
 async function build() {
+	await syncBundleViewer();
+
 	return new Promise((resolve, reject) => {
 		let args = [
 			"build",
@@ -57,7 +64,7 @@ async function build() {
 		}
 		args.push("--no-dts-cache");
 		if (features.length) {
-			args.push("--features " + features.join(","));
+			args.push("--features", features.join(","));
 		}
 
 		if (positionals.length > 0) {
@@ -66,11 +73,10 @@ async function build() {
 			args.push(...positionals);
 		}
 
-		console.log(`Run command: napi ${args.join(" ")}`);
+		console.log(`Run command: ${napiBin} ${args.join(" ")}`);
 
-		let cp = spawn("napi", args, {
+		let cp = spawn(napiBin, args, {
 			stdio: "inherit",
-			shell: true,
 			env: envs,
 		});
 
@@ -92,6 +98,26 @@ async function build() {
 
 			}
 			resolve(code);
+		});
+	});
+}
+
+async function syncBundleViewer() {
+	return new Promise((resolve, reject) => {
+		const script = path.resolve(__dirname, "../../../scripts/sync-bundle-viewer.mjs");
+		const cp = spawn(process.execPath, [script], {
+			stdio: "inherit",
+			env: process.env,
+		});
+
+		cp.on("error", reject);
+		cp.on("exit", (code) => {
+			if (code === CARGO_SAFELY_EXIT_CODE) {
+				resolve();
+				return;
+			}
+
+			reject(new Error(`Failed to sync bundle viewer asset, exit code: ${code}`));
 		});
 	});
 }
