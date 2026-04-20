@@ -116,26 +116,20 @@ impl Modules {
     Modules(modules)
   }
 
-  /// 判断模块种类并提取 ConcatenatedModule 信息（一次 downcast 完成）
-  ///
-  /// 性能优化：
-  /// - 按出现频率排序检查（Normal 最常见 ~92%，优先检查可早返回）
-  /// - 合并了原来的 `get_module_kind()` 和 ConcatenatedModule downcast
-  /// - 避免了对 ConcatenatedModule 的重复 downcast（从 2 次减少到 1 次）
-  fn extract_module_kind_and_concat(
-    module: &dyn rspack_core::Module,
-    module_graph: &rspack_core::ModuleGraph,
-    compilation: &Compilation,
-  ) -> (ModuleKind, Option<Vec<ConcatenatedModuleInfo>>) {
-    // 向后兼容：不使用 ID 映射
-    let mut id_mapper = ModuleIdMapper::new();
-    Self::extract_module_kind_and_concat_with_mapper(
-      module,
-      module_graph,
-      compilation,
-      &mut id_mapper,
-    )
-  }
+  // 已废弃的兼容入口，当前仓库仅保留带 mapper 的实现路径。
+  // fn extract_module_kind_and_concat(
+  //   module: &dyn rspack_core::Module,
+  //   module_graph: &rspack_core::ModuleGraph,
+  //   compilation: &Compilation,
+  // ) -> (ModuleKind, Option<Vec<ConcatenatedModuleInfo>>) {
+  //   let mut id_mapper = ModuleIdMapper::new();
+  //   Self::extract_module_kind_and_concat_with_mapper(
+  //     module,
+  //     module_graph,
+  //     compilation,
+  //     &mut id_mapper,
+  //   )
+  // }
 
   /// 判断模块种类并提取 ConcatenatedModule 信息（带 ID 映射器）
   ///
@@ -187,19 +181,15 @@ impl Modules {
     (ModuleKind::Normal, None)
   }
 
-  /// 提取 ConcatenatedModule 的内部模块信息
-  ///
-  /// ConcatenatedModule 是 rspack 的 scope hoisting 优化产生的合并模块，
-  /// 包含多个原始模块的信息。这个函数提取所有内部模块的详细信息。
-  fn extract_concatenated_info(
-    concat_mod: &ConcatenatedModule,
-    module_graph: &rspack_core::ModuleGraph,
-    _compilation: &Compilation,
-  ) -> Vec<ConcatenatedModuleInfo> {
-    // 向后兼容：不使用 ID 映射
-    let mut id_mapper = ModuleIdMapper::new();
-    Self::extract_concatenated_info_with_mapper(concat_mod, module_graph, _compilation, &mut id_mapper)
-  }
+  // 已废弃的兼容入口，当前仓库仅保留带 mapper 的实现路径。
+  // fn extract_concatenated_info(
+  //   concat_mod: &ConcatenatedModule,
+  //   module_graph: &rspack_core::ModuleGraph,
+  //   _compilation: &Compilation,
+  // ) -> Vec<ConcatenatedModuleInfo> {
+  //   let mut id_mapper = ModuleIdMapper::new();
+  //   Self::extract_concatenated_info_with_mapper(concat_mod, module_graph, _compilation, &mut id_mapper)
+  // }
 
   /// 提取 ConcatenatedModule 的内部模块信息（带 ID 映射器）
   ///
@@ -327,23 +317,22 @@ fn get_module_size(module: &dyn rspack_core::Module) -> u64 {
 //     .collect()
 // }
 
-/// 收集模块的入站依赖（哪些模块依赖当前模块）
-fn collect_reasons(
-  module_graph: &rspack_core::ModuleGraph,
-  module_id: &rspack_core::ModuleIdentifier,
-) -> Vec<String> {
-  let connections = module_graph.get_incoming_connections(module_id);
-
-  connections
-    .into_iter()
-    .filter_map(|connection| {
-      let source_module_id = connection.original_module_identifier.as_ref()?;
-      // 验证模块存在
-      module_graph.module_by_identifier(source_module_id)?;
-      Some(source_module_id.to_string())
-    })
-    .collect()
-}
+// 已废弃的字符串 ID 收集入口，当前仓库统一使用数字 ID 映射版本。
+// fn collect_reasons(
+//   module_graph: &rspack_core::ModuleGraph,
+//   module_id: &rspack_core::ModuleIdentifier,
+// ) -> Vec<String> {
+//   let connections = module_graph.get_incoming_connections(module_id);
+//
+//   connections
+//     .into_iter()
+//     .filter_map(|connection| {
+//       let source_module_id = connection.original_module_identifier.as_ref()?;
+//       module_graph.module_by_identifier(source_module_id)?;
+//       Some(source_module_id.to_string())
+//     })
+//     .collect()
+// }
 
 /// 收集模块的入站依赖（哪些模块依赖当前模块），转换为数字 ID
 fn collect_reasons_with_mapper(
