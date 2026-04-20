@@ -33,6 +33,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download bundle-viewer asset
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle-viewer-html
+          path: .generated/bundle-viewer
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10.33.0
@@ -79,6 +85,7 @@ jobs:
           image: ${{ inputs.docker }}
           options: |
             -e DEBUG=napi:build
+            -e SPACK_BUNDLE_VIEWER_HTML=/build/.generated/bundle-viewer/bundle-viewer.html
             --user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db 
             -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache 
             -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index 
@@ -89,38 +96,31 @@ jobs:
             set -e 
 
             echo "=== Installing LLVM Dependencies ==="
-            if [[ "${{ inputs.docker }}" == *"alpine"* ]]; then
-              echo "Installing for Alpine..."
-              # apk add --no-cache llvm15-dev llvm15-static clang15-dev clang15-static libffi-dev
-              apk add --no-cache llvm18-dev llvm18-static clang18-dev clang18-static libffi-dev
+            case "${{ inputs.docker }}" in
+              *alpine*)
+                echo "Installing for Alpine..."
+                apk add --no-cache llvm18-dev llvm18-static clang18-dev clang18-static libffi-dev
 
-              
-              # 设置 Alpine 的 LLVM 环境变量
-              # export LLVM_CONFIG_PATH=/usr/bin/llvm15-config
-              # export LIBCLANG_PATH=/usr/lib/libclang.so.15
-              # export CLANG_PATH=/usr/bin/clang-15
-              export LLVM_CONFIG_PATH=/usr/bin/llvm18-config
-              export LIBCLANG_PATH=/usr/lib/libclang.so.18
-              export CLANG_PATH=/usr/bin/clang-18
-              
-              # 验证安装
-              echo "LLVM Config: $(which llvm15-config)"
-              echo "LLVM Version: $(llvm15-config --version)"
-              echo "Clang Version: $(clang-15 --version)"
-              
-            elif [[ "${{ inputs.docker }}" == *"debian"* ]]; then
-              echo "Installing for Debian..."
-              apt-get update && apt-get install -y llvm-dev libclang-dev clang
-              
-              # 设置 Debian 的 LLVM 环境变量
-              export LLVM_CONFIG_PATH=$(which llvm-config)
-              export LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu/libclang-1.so
-              
-              # 验证安装
-              echo "LLVM Config: $(which llvm-config)"
-              echo "LLVM Version: $(llvm-config --version)"
-              echo "Clang Version: $(clang --version)"
-            fi
+                export LLVM_CONFIG_PATH=/usr/bin/llvm18-config
+                export LIBCLANG_PATH=/usr/lib/libclang.so.18
+                export CLANG_PATH=/usr/bin/clang-18
+
+                echo "LLVM Config: $(which llvm18-config)"
+                echo "LLVM Version: $(llvm18-config --version)"
+                echo "Clang Version: $(clang-18 --version)"
+                ;;
+              *debian*)
+                echo "Installing for Debian..."
+                apt-get update && apt-get install -y llvm-dev libclang-dev clang
+
+                export LLVM_CONFIG_PATH=$(which llvm-config)
+                export LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu/libclang-1.so
+
+                echo "LLVM Config: $(which llvm-config)"
+                echo "LLVM Version: $(llvm-config --version)"
+                echo "Clang Version: $(clang --version)"
+                ;;
+            esac
 
             # 显示设置的环境变量
             echo "=== Environment Variables ==="
@@ -159,6 +159,8 @@ jobs:
       - name: Build binding
         if: ${{ contains(inputs.target, 'apple') }}
         shell: bash
+        env:
+          SPACK_BUNDLE_VIEWER_HTML: ${{ github.workspace }}/.generated/bundle-viewer/bundle-viewer.html
         run: |
           RUST_TARGET=${{ inputs.target }} pnpm --filter ${{ inputs.npm_package_name }} run build:release
 
@@ -166,16 +168,22 @@ jobs:
       - name: Build i686-pc-windows-msvc
         if: ${{ inputs.target == 'i686-pc-windows-msvc' }}
         shell: bash
+        env:
+          SPACK_BUNDLE_VIEWER_HTML: ${{ github.workspace }}/.generated/bundle-viewer/bundle-viewer.html
         run: RUST_TARGET=${{ inputs.target }} DISABLE_PLUGIN=1  pnpm --filter ${{ inputs.npm_package_name }} run build:release
 
       - name: Build x86_64-pc-windows-msvc
         if: ${{ inputs.target == 'x86_64-pc-windows-msvc' }}
         shell: bash
+        env:
+          SPACK_BUNDLE_VIEWER_HTML: ${{ github.workspace }}/.generated/bundle-viewer/bundle-viewer.html
         run: RUST_TARGET=${{ inputs.target }}  pnpm --filter ${{ inputs.npm_package_name }} run build:release
 
       - name: Build aarch64-pc-windows-msvc
         if: ${{ inputs.target == 'aarch64-pc-windows-msvc' }}
         shell: bash
+        env:
+          SPACK_BUNDLE_VIEWER_HTML: ${{ github.workspace }}/.generated/bundle-viewer/bundle-viewer.html
         run: RUST_TARGET=${{ inputs.target }} DISABLE_PLUGIN=1  pnpm --filter ${{ inputs.npm_package_name }} run build:release
 
       - name: Show binary

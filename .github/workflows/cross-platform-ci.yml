@@ -13,7 +13,11 @@ on:
       - main
 
 jobs:
+  bundle-viewer-assets:
+    uses: ./.github/workflows/bundle-viewer-assets.yml
+
   test-platforms:
+    needs: [bundle-viewer-assets]
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +42,7 @@ jobs:
       target: ${{ matrix.platform.target }}
 
   build-platforms:
+    needs: [bundle-viewer-assets]
     strategy:
       fail-fast: false
       matrix:

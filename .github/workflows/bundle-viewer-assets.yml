@@ -1,0 +1,40 @@
+name: Bundle Viewer Assets
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: '**/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
+      - name: Build bundle-viewer asset
+        run: pnpm run bundle-viewer:build-asset
+
+      - name: Upload bundle-viewer asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-viewer-html
+          path: .generated/bundle-viewer/bundle-viewer.html
+          if-no-files-found: error

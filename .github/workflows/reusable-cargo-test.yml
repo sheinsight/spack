@@ -21,6 +21,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download bundle-viewer asset
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle-viewer-html
+          path: .generated/bundle-viewer
+
       - name: Cache cargo
         uses: actions/cache@v4
         with:
@@ -53,5 +59,7 @@ jobs:
 
       - name: Cargo test
         shell: bash
+        env:
+          SPACK_BUNDLE_VIEWER_HTML: ${{ github.workspace }}/.generated/bundle-viewer/bundle-viewer.html
         run: |
           cargo test --target ${{ inputs.target }}

@@ -175,7 +175,7 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   let html_file = output_dir.join("bundle-analyzer.html");
 
   // 读取 HTML 模板（编译时嵌入）
-  let template = include_str!("../assets/bundle-viewer.html");
+  let template = include_str!(concat!(env!("OUT_DIR"), "/bundle-viewer.html"));
 
   // 兼容模板中带分号和不带分号的占位写法
   let placeholder = [
