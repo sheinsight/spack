@@ -15,12 +15,10 @@ const { values, positionals } = require("util").parseArgs({
 });
 
 const { spawn } = require("child_process");
-const napiBin = path.resolve(
-	__dirname,
-	"../node_modules/.bin",
-	process.platform === "win32" ? "napi.cmd" : "napi"
-);
-const pnpmBin = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+const isWindows = process.platform === "win32";
+const napiBin = "napi";
+const pnpmBin = "pnpm";
+const bindingBinDir = path.resolve(__dirname, "../node_modules/.bin");
 const rootDir = path.resolve(__dirname, "../../..");
 const bundleViewerAssetPath = path.join(
 	rootDir,
@@ -84,6 +82,7 @@ async function build() {
 				let cp = spawn(napiBin, args, {
 					stdio: "inherit",
 					env: envs,
+					shell: isWindows,
 				});
 
 				cp.on("error", reject);
@@ -108,7 +107,7 @@ async function build() {
 }
 
 async function prepareBundleViewerAsset() {
-	let envs = { ...process.env };
+	let envs = withPrependedPath(process.env, bindingBinDir);
 
 	if (envs.SPACK_BUNDLE_VIEWER_HTML) {
 		return envs;
@@ -133,7 +132,8 @@ async function buildBundleViewerAsset() {
 	return new Promise((resolve, reject) => {
 		const cp = spawn(pnpmBin, ["--dir", rootDir, "run", "bundle-viewer:build-asset"], {
 			stdio: "inherit",
-			env: process.env,
+			env: withPrependedPath(process.env, bindingBinDir),
+			shell: isWindows,
 		});
 
 		cp.on("error", reject);
@@ -146,4 +146,16 @@ async function buildBundleViewerAsset() {
 			reject(new Error(`Failed to build bundle viewer asset, exit code: ${code}`));
 		});
 	});
+}
+
+function withPrependedPath(env, ...pathsToAdd) {
+	let nextEnv = { ...env };
+	let currentPath = nextEnv.PATH || nextEnv.Path || "";
+	let prepended = pathsToAdd.filter(Boolean).join(path.delimiter);
+	let mergedPath = prepended ? `${prepended}${path.delimiter}${currentPath}` : currentPath;
+
+	nextEnv.PATH = mergedPath;
+	nextEnv.Path = mergedPath;
+
+	return nextEnv;
 }

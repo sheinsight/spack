@@ -9,11 +9,13 @@ const viewerDir = path.join(rootDir, 'packages', 'bundle-viewer')
 const viewerDistHtml = path.join(viewerDir, 'dist', 'index.html')
 const outputDir = path.join(rootDir, '.generated', 'bundle-viewer')
 const outputHtml = path.join(outputDir, 'bundle-viewer.html')
-const pnpmBin = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+const pnpmBin = 'pnpm'
+const isWindows = process.platform === 'win32'
 
 const buildResult = spawnSync(pnpmBin, ['run', 'build:prod'], {
   cwd: viewerDir,
   stdio: 'inherit',
+  shell: isWindows,
 })
 
 if (buildResult.status !== 0) {
