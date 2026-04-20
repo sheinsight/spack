@@ -6224,7 +6224,6 @@ dependencies = [
  "byte-unit",
  "derive_more 1.0.0",
  "flate2",
- "futures",
  "napi",
  "napi-derive",
  "napi-derive-backend 2.1.3",

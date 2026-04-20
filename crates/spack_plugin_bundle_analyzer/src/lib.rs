@@ -7,15 +7,17 @@ mod opts;
 mod package;
 mod reporting;
 
-use std::env::current_dir;
+use std::{
+  env::current_dir,
+  path::{Path, PathBuf},
+};
 
 use derive_more::Debug;
 use napi::tokio::{fs, time::Instant};
-pub use opts::{BundleAnalyzerPluginOpts, CompilationHookFn};
+pub use opts::BundleAnalyzerPluginOpts;
 use rspack_core::{ApplyContext, Compilation, CompilerAfterEmit, Plugin};
 use rspack_hook::{plugin, plugin_hook};
 
-use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package::Packages};
 pub use crate::{
   asset::Asset,
   chunk::Chunk,
@@ -23,6 +25,7 @@ pub use crate::{
   package::Package,
   reporting::{PerformanceTimings, Report, Summary},
 };
+use crate::{asset::Assets, context::ModuleChunkContext, module::Modules, package::Packages};
 
 #[plugin]
 #[derive(Debug)]
@@ -33,6 +36,23 @@ pub struct BundleAnalyzerPlugin {
 impl BundleAnalyzerPlugin {
   pub fn new(options: BundleAnalyzerPluginOpts) -> Self {
     Self::new_inner(options)
+  }
+
+  fn resolve_output_dir(&self) -> rspack_error::Result<PathBuf> {
+    let cwd = current_dir()
+      .map_err(|e| rspack_error::error!("Failed to get current working directory: {}", e))?;
+
+    match self.options.output_dir.as_deref() {
+      Some(output_dir) => {
+        let output_path = Path::new(output_dir);
+        if output_path.is_absolute() {
+          Ok(output_path.to_path_buf())
+        } else {
+          Ok(cwd.join(output_path))
+        }
+      }
+      None => Ok(cwd),
+    }
   }
 }
 
@@ -68,11 +88,8 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
 
   // 4. 收集 Modules（源文件，使用预构建的映射和 ID 映射器）
   let modules_start = Instant::now();
-  let mut modules = Modules::from_with_context_and_mapper(
-    &mut *compilation,
-    &module_chunk_context,
-    &mut id_mapper,
-  );
+  let mut modules =
+    Modules::from_with_context_and_mapper(&mut *compilation, &module_chunk_context, &mut id_mapper);
   let collect_modules_ms = modules_start.elapsed().as_millis_f64();
 
   // 5. 收集 Chunks（代码块，使用预构建的映射和 ID 映射器）
@@ -145,16 +162,17 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     packages: packages.into(),
   };
 
-  let dir = current_dir().unwrap();
+  let output_dir = self.resolve_output_dir()?;
+  fs::create_dir_all(&output_dir).await?;
 
   // 1. 写出 JSON 数据文件（用于调试）
-  let json_file = dir.join("bundle-analyzer.json");
+  let json_file = output_dir.join("bundle-analyzer.json");
   let json_data = serde_json::to_string_pretty(&report)
     .map_err(|e| rspack_error::error!("Failed to serialize report: {}", e))?;
   fs::write(&json_file, &json_data).await?;
 
   // 2. 生成 HTML 报告
-  let html_file = dir.join("bundle-analyzer.html");
+  let html_file = output_dir.join("bundle-analyzer.html");
 
   // 读取 HTML 模板（编译时嵌入）
   let template = include_str!("index.html");
@@ -162,23 +180,17 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   // 替换数据注入点
   let html_content = template.replace(
     "window.__bundle_viewer_data__ = null;",
-    &format!("window.__bundle_viewer_data__ = {};", json_data)
+    &format!("window.__bundle_viewer_data__ = {};", json_data),
   );
 
   fs::write(&html_file, html_content).await?;
 
   tracing::info!(
-    "Bundle analysis complete:\n  - JSON: {}\n  - HTML: {}",
+    "Bundle analysis complete:\n  - Output dir: {}\n  - JSON: {}\n  - HTML: {}",
+    output_dir.display(),
     json_file.display(),
     html_file.display()
   );
-
-  // 调用回调函数
-  if let Some(on_analyzed) = &self.options.on_analyzed {
-    if let Err(e) = on_analyzed(report).await {
-      tracing::error!("BundleAnalyzerPlugin callback failed: {:?}", e);
-    }
-  }
 
   Ok(())
 }

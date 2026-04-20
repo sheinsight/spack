@@ -6,51 +6,6 @@ export declare enum CustomPluginNames {
   UnifiedPlugin = 'UnifiedPlugin'
 }
 
-export interface JsAsset {
-  name: string
-  size: number
-  gzipSize?: number
-  brotliSize?: number
-  chunks: Array<string>
-  emitted: boolean
-}
-
-export interface JsBundleAnalyzerPluginResp {
-  timestamp: number
-  summary: JsSummary
-  moduleIdMap: Record<string, string>
-  assets: Array<JsAsset>
-  modules: Array<JsModule>
-  chunks: Array<JsChunk>
-  packages: Array<JsPackage>
-}
-
-export interface JsChunk {
-  id: string
-  names: Array<string>
-  size: number
-  modules: Array<number>
-  entry: boolean
-  initial: boolean
-  asyncChunks: boolean
-  runtime: boolean
-  reason: string
-  files: Array<string>
-  parents: Array<string>
-  children: Array<string>
-}
-
-export interface JsConcatenatedModuleInfo {
-  id: number
-  size: number
-  /** 是否来自 node_modules */
-  isNodeModule: boolean
-  /** 模块条件名称 */
-  nameForCondition: string
-  /** 关联的 Package 的 package.json 路径 */
-  packageJsonPath?: string
-}
-
 export interface JsDuplicateDependencyPluginResp {
   groups: Array<JsLibraryGroup>
   duration: number
@@ -67,54 +22,9 @@ export interface JsLibraryGroup {
   libs: Array<JsLibrary>
 }
 
-export interface JsModule {
-  id: number
-  size: number
-  chunks: Array<string>
-  moduleKind: string
-  isNodeModule: boolean
-  nameForCondition: string
-  concatenatedModules?: Array<JsConcatenatedModuleInfo>
-  /**
-   * 关联的 Package 的 package.json 路径（唯一标识）
-   * 仅三方包模块有值，用于精确匹配对应的 Package
-   */
-  packageJsonPath?: string
-  /** 原始请求路径（如 loader 链中的完整请求） */
-  rawRequest?: string
-  /** 当前模块的入站依赖列表（哪些模块依赖当前模块的数字 ID） */
-  reasons?: Array<number>
-}
-
-export interface JsPackage {
-  name: string
-  version: string
-  size: number
-  moduleCount: number
-  modules: Array<number>
-  packageJsonPath: string
-}
-
-export interface JsPerformanceTimings {
-  collectAssetsMs: number
-  collectModulesMs: number
-  collectChunksMs: number
-  analyzePackagesMs: number
-  totalMs: number
-}
-
-export interface JsSummary {
-  totalSize: number
-  totalGzipSize: number
-  totalAssets: number
-  totalModules: number
-  totalChunks: number
-  buildTime: number
-  timings: JsPerformanceTimings
-}
-
 export interface RawBundleAnalyzerPluginOpts {
-  onAnalyzed?: (response: JsBundleAnalyzerPluginResp) => void|Promise<void>
+  /** 报告输出目录（默认：当前工作目录） */
+  outputDir?: string
   /** 是否计算 gzip 压缩后的大小（默认：false） */
   gzipAssets?: boolean
   /** 是否计算 brotli 压缩后的大小（默认：false） */

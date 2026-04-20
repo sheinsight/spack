@@ -2,11 +2,7 @@ import { test, expect } from 'vitest';
 import { experiments } from '@rspack/core';
 import * as binding from '@shined/spack-binding';
 import { runCompiler } from './test_case.mts';
-import type {
-  RawDemoPluginOpts,
-  RawBundleAnalyzerPluginOpts,
-  JsBundleAnalyzerPluginResp,
-} from '@shined/spack-binding';
+import type { RawBundleAnalyzerPluginOpts } from '@shined/spack-binding';
 
 // binding.registerDemoPlugin();
 
@@ -18,7 +14,7 @@ const BundleAnalyzerPlugin = experiments.createNativePlugin<
 >(binding.CustomPluginNames.BundleAnalyzerPlugin, (opt) => opt);
 
 const plugin = new BundleAnalyzerPlugin({
-  onAnalyzed: async (response: JsBundleAnalyzerPluginResp) => {},
+  outputDir: '.tmp/bundle-analyzer-test',
 });
 
 test('test demo', async () => {
