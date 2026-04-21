@@ -184,7 +184,9 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
   ]
   .into_iter()
   .find(|candidate| template.contains(candidate))
-  .ok_or_else(|| rspack_error::error!("Bundle viewer template is missing the data injection placeholder"))?;
+  .ok_or_else(|| {
+    rspack_error::error!("Bundle viewer template is missing the data injection placeholder")
+  })?;
 
   let html_content = template.replacen(
     placeholder,

@@ -41,13 +41,17 @@ impl Assets {
       .par_iter()
       .map(|(name, size, buffer_opt)| {
         let gzip_size = if enable_gzip {
-          buffer_opt.as_ref().and_then(|buffer| calculate_gzip_size(buffer))
+          buffer_opt
+            .as_ref()
+            .and_then(|buffer| calculate_gzip_size(buffer))
         } else {
           None
         };
 
         let brotli_size = if enable_brotli {
-          buffer_opt.as_ref().and_then(|buffer| calculate_brotli_size(buffer))
+          buffer_opt
+            .as_ref()
+            .and_then(|buffer| calculate_brotli_size(buffer))
         } else {
           None
         };

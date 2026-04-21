@@ -75,13 +75,12 @@ impl Modules {
           .unwrap_or_default();
 
         // 一次性判断模块种类并提取 ConcatenatedModule 信息（避免重复 downcast）
-        let (module_kind, concatenated_modules) =
-          Self::extract_module_kind_and_concat_with_mapper(
-            module.as_ref(),
-            &module_graph,
-            compilation,
-            id_mapper,
-          );
+        let (module_kind, concatenated_modules) = Self::extract_module_kind_and_concat_with_mapper(
+          module.as_ref(),
+          &module_graph,
+          compilation,
+          id_mapper,
+        );
 
         // let user_request = module
         //   .as_normal_module()
@@ -152,8 +151,12 @@ impl Modules {
 
     // Concatenated 约 6%，第二常见，且需要提取内部模块信息
     if let Some(concat_mod) = any.downcast_ref::<ConcatenatedModule>() {
-      let inner_modules =
-        Self::extract_concatenated_info_with_mapper(concat_mod, module_graph, compilation, id_mapper);
+      let inner_modules = Self::extract_concatenated_info_with_mapper(
+        concat_mod,
+        module_graph,
+        compilation,
+        id_mapper,
+      );
       return (ModuleKind::Concatenated, Some(inner_modules));
     }
 
