@@ -16,7 +16,12 @@
     "target": "darwin-arm64"
   },
   "hooks": {
-    "preCommit": "pnpm run lint && pnpm run typecheck",
-    "preBuild": "cargo check"
+    "preCommit": [
+      "pnpm run lint",
+      "pnpm run typecheck"
+    ],
+    "preBuild": [
+      "cargo check"
+    ]
   }
 }
