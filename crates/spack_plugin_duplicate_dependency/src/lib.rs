@@ -68,12 +68,11 @@ async fn after_emit(&self, compilation: &mut Compilation) -> rspack_error::Resul
     let paths = up_finder.find_up("package.json");
     let library = paths.iter().find_map(|p| {
       if let Ok(package_json) = PackageJsonParser::parse(p)
-        && let Some(name) = package_json.name
-        && let Some(version) = package_json.version
-        && let Some(path) = package_json.__raw_path
+        && let Ok(Some(name)) = package_json.name()
+        && let Ok(Some(version)) = package_json.version()
       {
         return Some(Library::new(
-          path.clone(),
+          p.to_string_lossy().to_string(),
           name.to_string(),
           version.to_string(),
         ));

@@ -74,9 +74,11 @@ impl PackageVersionResolver {
       // 使用 package_json_parser 解析文件
       if let Ok(package_json) = PackageJsonParser::parse(path) {
         // 必须同时有 name 和 version 字段
-        if let Some(name) = package_json.name {
+        if let Ok(Some(name)) = package_json.name() {
           let version = package_json
-            .version
+            .version()
+            .ok()
+            .flatten()
             .map(|v| v.to_string())
             .unwrap_or_else(|| "unknown".to_string());
 

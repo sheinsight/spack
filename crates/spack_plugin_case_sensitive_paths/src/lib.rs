@@ -165,13 +165,13 @@ async fn after_resolve(
 
     let mut dep_key_set: HashSet<String> = HashSet::new();
 
-    if let Some(dependencies) = package_json.dependencies {
+    if let Ok(Some(dependencies)) = package_json.dependencies() {
       for item in dependencies.keys() {
         dep_key_set.insert(item.to_string());
       }
     }
 
-    if let Some(dev_dependencies) = package_json.dev_dependencies {
+    if let Ok(Some(dev_dependencies)) = package_json.dev_dependencies() {
       for item in dev_dependencies.keys() {
         dep_key_set.insert(item.to_string());
       }
@@ -196,7 +196,7 @@ async fn after_resolve(
     };
 
     let package_json = PackageJsonParser::parse(package_json).unwrap();
-    let Some(name) = package_json.name else {
+    let Ok(Some(name)) = package_json.name() else {
       return Ok(None);
     };
 

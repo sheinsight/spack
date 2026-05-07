@@ -3277,9 +3277,9 @@ dependencies = [
 
 [[package]]
 name = "package_json_parser"
-version = "0.0.15"
+version = "0.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b910f3919039ddd41a8a99f7a9f836371be35d1e78b287c70490ab1a2524af6"
+checksum = "c1f984f78c7a273bf584b594faa438164a77c0d67741d32de0ad24846a0896a5"
 dependencies = [
  "derive_more 2.0.1",
  "jsonc-parser",

@@ -65,7 +65,7 @@ rustc-hash  = { version = "2.1.1" }
 
 ustr = { package = "ustr-fxhash", version = "1.0.1", default-features = false }
 
-package_json_parser = { version = "0.0.15" }
+package_json_parser = { version = "0.0.17" }
 up_finder           = { version = "0.0.5" }
 
 binding                           = { path = "crates/binding" }
